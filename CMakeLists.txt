@@ -16,12 +16,16 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-project(opendlv-cfsd18)
+project(opendlv.cfsd18)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake.Modules" ${CMAKE_MODULE_PATH})
 set(CMAKE_MODULE_PATH "${OPENDAVINCI_DIR}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
 
 include(ExternalProject)
+include(FindJava REQUIRED)
+
+include(FindodDataStructureGenerator REQUIRED)
+include(FindodCANDataStructureGenerator REQUIRED)
 
 set(INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
 set(PROJECT_ROOT ${CMAKE_SOURCE_DIR})
@@ -37,6 +41,7 @@ else()
   set(MAKE_PACKAGE help)
 endif()
 
+### NAMESPACE BEGIN ###
 ExternalProject_Add (logic-cfsd18
   DOWNLOAD_COMMAND ""
   UPDATE_COMMAND ""
@@ -44,7 +49,10 @@ ExternalProject_Add (logic-cfsd18
   CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}"
   CMAKE_ARGS "-DOPENDAVINCI_DIR=${OPENDAVINCI_DIR}"
   CMAKE_ARGS "-DODVDOPENDLVSTANDARDMESSAGESET_DIR=${ODVDOPENDLVSTANDARDMESSAGESET_DIR}"
+  CMAKE_ARGS "-DODVDCFSD18_DIR=${ODVDCFSD18_DIR}"
   CMAKE_ARGS "-DCXXTEST_INCLUDE_DIR=${CXXTEST_INCLUDE_DIR}"
   CMAKE_ARGS "-DEIGEN3_INCLUDE_DIR=${OPENDAVINCI_DIR}/include/opendavinci"
   TEST_BEFORE_INSTALL 1
   INSTALL_COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR}/logic-cfsd18-prefix/src/logic-cfsd18-build --target install COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR}/logic-cfsd18-prefix/src/logic-cfsd18-build --target ${MAKE_PACKAGE})
+
+### NAMESPACE END ###

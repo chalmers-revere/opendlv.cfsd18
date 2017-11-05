@@ -15,17 +15,15 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 # Date: 2016-10-13
+
 FROM BASEIMAGE
 MAINTAINER Chalmers Revere "revere@chalmers.se"
 
-# Add binaries.
 ADD opt /opt
 
-# Change owner for binaries.
 RUN chown -R 1000:1000 /opt/opendlv.cfsd18
 
-# Environment parameters to allow GUIs.
 ENV QT_X11_NO_MITSHM=1
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/opendlv.cfsd18/lib
-WORKDIR /opt/opendlv.cfsd18/bin
 
+WORKDIR /opt/opendlv.cfsd18/bin
