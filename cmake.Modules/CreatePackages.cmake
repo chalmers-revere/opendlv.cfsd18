@@ -1,5 +1,4 @@
-# OpenDLV - OpenDLV based on OpenDaVINCI
-# Copyright (C) 2017 Chalmers Revere
+# Copyright (C) {{ year }} Chalmers Revere
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# incrementalBuild.sh - Script to build opendlv.cfsd18
 # Copyright (C) 2016 Christian Berger
 #
 # This program is free software; you can redistribute it and/or
@@ -27,17 +28,21 @@ cat <<EOF > /opt/opendlv.cfsd18.build/build.sh
 #!/bin/bash
 cd /opt/opendlv.cfsd18.build
 
-echo "[opendlv.cfsd18 Docker builder] Incremental build."
+### NAMESPACE BEGIN ###
+echo "[Docker builder] Incremental build of {{ series }}.{{ layer }} namespace {{ namespace }}."
 
-mkdir -p build.cfsd18 && cd build.cfsd18
-CCACHE_DIR=/opt/ccache PATH=/usr/lib/ccache:/opt/od4/bin:$PATH cmake -D CXXTEST_INCLUDE_DIR=/opt/opendlv.cfsd18.sources/thirdparty/cxxtest -D OPENDAVINCI_DIR=/opt/od4 -D ODVDOPENDLVSTANDARDMESSAGESET_DIR=/opt/opendlv.core -D EIGEN3_INCLUDE_DIR=/opt/od4/include/opendavinci -D CMAKE_INSTALL_PREFIX=/opt/opendlv.cfsd18 /opt/opendlv.cfsd18.sources/code/logic-cfsd18
+mkdir -p {{ namespace }} && cd {{ namespace }}
+CCACHE_DIR=/opt/ccache PATH=/usr/lib/ccache:/opt/od4/bin:$PATH cmake -D CXXTEST_INCLUDE_DIR=/opt/{{ series }}.{{ layer }}.sources/thirdparty/cxxtest -D OPENDAVINCI_DIR=/opt/od4 -D ODVDOPENDLVSTANDARDMESSAGESET_DIR=/opt/opendlv.core -D ODVDCFSD18_DIR=/opt/opendlv.mantis -D EIGEN3_INCLUDE_DIR=/opt/od4/include/opendavinci -D CMAKE_INSTALL_PREFIX=/opt/{{ series }}.{{ layer }} /opt/{{ series }}.{{ layer }}.sources/code/{{ namespace }}
 
 CCACHE_DIR=/opt/ccache PATH=/usr/lib/ccache:/opt/od4/bin:$PATH make -j4 && make test && make install
+
+cd ..
+### NAMESPACE END ###
+
 EOF
 
-chmod 755 /opt/opendlv.sim.build/build.sh
-chown $UID_AS:$UID_AS /opt/opendlv.sim.build/build.sh
-chown -R $UID_AS:$UID_AS /opt
+chmod 755 /opt/opendlv.cfsd18.build/build.sh
+chown $UID_AS:$UID_AS /opt/opendlv.cfsd18.build/build.sh
 
-su -m `getent passwd $UID_AS|cut -f1 -d":"` -c /opt/opendlv.sim.build/build.sh
+su -m `getent passwd $UID_AS|cut -f1 -d":"` -c /opt/opendlv.cfsd18.build/build.sh
 

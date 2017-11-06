@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# completeBuild.sh - Script to build opendlv.cfsd18
 # Copyright (C) 2016 Christian Berger
 #
 # This program is free software; you can redistribute it and/or
@@ -31,16 +32,15 @@ export CCACHE_DIR=/opt/ccache
 
 cd /opt/opendlv.cfsd18.build
 
-echo "[opendlv Docker builder] Complete build."
+echo "[Docker builder] Complete build of opendlv.cfsd18."
 cmake -E remove_directory .
-CCACHE_DIR=/opt/ccache PATH=/usr/lib/ccache:/opt/od4/bin:$PATH cmake -D CXXTEST_INCLUDE_DIR=/opt/opendlv.cfsd18.sources/thirdparty/cxxtest -D OPENDAVINCI_DIR=/opt/od4 -D PACKAGING_ENABLED=$PACKAGING_ENABLED -D ODVDOPENDLVSTANDARDMESSAGESET_DIR=/opt/opendlv.core -D EIGEN3_INCLUDE_DIR=/opt/od4/include/opendavinci -D CMAKE_INSTALL_PREFIX=/opt/opendlv.cfsd18 /opt/opendlv.cfsd18.sources
+CCACHE_DIR=/opt/ccache PATH=/usr/lib/ccache:/opt/od4/bin:$PATH cmake -D CXXTEST_INCLUDE_DIR=/opt/opendlv.cfsd18.sources/thirdparty/cxxtest -D OPENDAVINCI_DIR=/opt/od4 -D PACKAGING_ENABLED=$PACKAGING_ENABLED -D ODVDOPENDLVSTANDARDMESSAGESET_DIR=/opt/opendlv.core -D ODVDCFSD18_DIR=/opt/opendlv.mantis -D CMAKE_INSTALL_PREFIX=/opt/opendlv.cfsd18 /opt/opendlv.cfsd18.sources
 
 CCACHE_DIR=/opt/ccache PATH=/usr/lib/ccache:/opt/od4/bin:$PATH make -j4
 EOF
 
 chmod 755 /opt/opendlv.cfsd18.build/build.sh
 chown $UID_AS:$UID_AS /opt/opendlv.cfsd18.build/build.sh
-chown -R $UID_AS:$UID_AS /opt
 
 su -m `getent passwd $UID_AS|cut -f1 -d":"` -c /opt/opendlv.cfsd18.build/build.sh
 

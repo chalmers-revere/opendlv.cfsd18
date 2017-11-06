@@ -16,61 +16,49 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-###########################################################################
-# Set the search path for .cmake files.
-SET (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake.Modules" ${CMAKE_MODULE_PATH})
-SET (CMAKE_MODULE_PATH "${CMAKE_INSTALL_PREFIX}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
-SET (CMAKE_MODULE_PATH "${OPENDAVINCI_DIR}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
-SET (CMAKE_MODULE_PATH "${ODVDOPENDLVSTANDARDMESSAGESET_DIR}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
+project(opendlv-logic-cfsd18)
 
-###########################################################################
-# Global compile flags.
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake.Modules" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${CMAKE_INSTALL_PREFIX}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${OPENDAVINCI_DIR}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${ODVDOPENDLVSTANDARDMESSAGESET_DIR}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${ODVDCFSD18_DIR}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
+
 include(CompileFlags)
-
-###########################################################################
-# Find CxxTest.
 include(CheckCxxTestEnvironment)
 
-###########################################################################
-# Find OpenDaVINCI.
+find_package(OpenCV REQUIRED)
+find_package(Wt REQUIRED)
+
 find_package(OpenDaVINCI REQUIRED)
-
-###########################################################################
-# Find ODVDOpenDLVStandardMessageSet.
 find_package(ODVDOpenDLVStandardMessageSet REQUIRED)
+find_package(ODVDcfsd18 REQUIRED)
 
-###########################################################################
-# Find OpenCV.
-IF( (EXISTS "/usr/pkg/include/opencv") OR (EXISTS "/usr/pkg/include/opencv2") )
-    SET(OPENCV_ROOT_DIR "/usr/pkg")
-ENDIF()
-FIND_PACKAGE(OpenCV REQUIRED)
-
-###############################################################################
-# Set header files from OpenCV.
-INCLUDE_DIRECTORIES (SYSTEM ${OpenCV_INCLUDE_DIRS})
-
-###########################################################################
-# Find ODVDOpenDLVDStandardMessageSet.
-find_package(ODVDOpenDLVStandardMessageSet REQUIRED)
-
-###########################################################################
-# Set common include directories.
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
+include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 include_directories(SYSTEM ${OPENDAVINCI_INCLUDE_DIRS})
 include_directories(SYSTEM ${ODVDOPENDLVSTANDARDMESSAGESET_INCLUDE_DIRS})
-include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
+include_directories(SYSTEM ${ODVDCFSD18_INCLUDE_DIRS})
 
-###########################################################################
-# Set libraries to link against.
-set(LIBRARIES ${OPENDAVINCI_LIBRARIES}
-  ${ODVDOPENDLVSTANDARDMESSAGESET_LIBRARIES})
+set(LIBRARIES 
+  ${OPENDAVINCI_LIBRARIES}
+  ${Wt_LIBRARY} ${Wt_HTTP_LIBRARY} ${Wt_EXT_LIBRARY}  
+  ${ODVDOPENDLVSTANDARDMESSAGESET_LIBRARIES}
+  ${ODVDCFSD18_LIBRARIES})
 
-###########################################################################
-# Add subfolders with sources.
-add_subdirectory(flowbend)
-#add_subdirectory(sensor/cameraleadvehicle)
+### MICROSERVICE BEGIN ###
+add_subdirectory(action/lateral)
+add_subdirectory(action/longitudinal)
+add_subdirectory(cognition/acceleration)
+add_subdirectory(cognition/brake)
+add_subdirectory(cognition/limitlateral)
+add_subdirectory(cognition/skidpad)
+add_subdirectory(cognition/track)
+add_subdirectory(perception/detectcone)
+add_subdirectory(perception/detectconelane)
+add_subdirectory(sensation/attention)
+add_subdirectory(sensation/slam)
+### MICROSERVICE END ###
 
-###########################################################################
-# Create packages for selected Linux distributions.
 set(CHANGELOG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../ChangeLog")
 include(CreatePackages)
