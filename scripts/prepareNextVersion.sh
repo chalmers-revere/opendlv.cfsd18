@@ -27,7 +27,7 @@ for i in $(find . -name "ChangeLog" | grep -v "3rdParty"); do
 done
 
 echo "Updating man pages."
-for i in $(find code -name "*.1" | grep -v "build" | grep -v "git" | grep -v "3rdParty" | grep -v "LICENSE"); do
+for i in $(find code -name "*.1"); do
     cat $i | sed -e 's/\".*\"\ \".*\"\ /\"%ODDATE%\"\ \"%ODVERSION%\"\ /' | sed s/%ODVERSION%/$OD_VERSION/ | sed s/%ODDATE%/$OD_DATE/ | tr -s "%" " "  > $i.new && mv $i.new $i
 done
 

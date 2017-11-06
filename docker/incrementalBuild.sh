@@ -29,10 +29,10 @@ cat <<EOF > /opt/opendlv.cfsd18.build/build.sh
 cd /opt/opendlv.cfsd18.build
 
 ### NAMESPACE BEGIN ###
-echo "[Docker builder] Incremental build of {{ series }}.{{ layer }} namespace {{ namespace }}."
+echo "[Docker builder] Incremental build of opendlv.cfsd18 namespace logic-cfsd18."
 
-mkdir -p {{ namespace }} && cd {{ namespace }}
-CCACHE_DIR=/opt/ccache PATH=/usr/lib/ccache:/opt/od4/bin:$PATH cmake -D CXXTEST_INCLUDE_DIR=/opt/{{ series }}.{{ layer }}.sources/thirdparty/cxxtest -D OPENDAVINCI_DIR=/opt/od4 -D ODVDOPENDLVSTANDARDMESSAGESET_DIR=/opt/opendlv.core -D ODVDCFSD18_DIR=/opt/opendlv.mantis -D EIGEN3_INCLUDE_DIR=/opt/od4/include/opendavinci -D CMAKE_INSTALL_PREFIX=/opt/{{ series }}.{{ layer }} /opt/{{ series }}.{{ layer }}.sources/code/{{ namespace }}
+mkdir -p logic-cfsd18 && cd logic-cfsd18
+CCACHE_DIR=/opt/ccache PATH=/usr/lib/ccache:/opt/od4/bin:$PATH cmake -D CXXTEST_INCLUDE_DIR=/opt/opendlv.cfsd18.sources/thirdparty/cxxtest -D OPENDAVINCI_DIR=/opt/od4 -D ODVDOPENDLVSTANDARDMESSAGESET_DIR=/opt/opendlv.core -D ODVDCFSD18_DIR=/opt/opendlv.lynx -D EIGEN3_INCLUDE_DIR=/opt/od4/include/opendavinci -D CMAKE_INSTALL_PREFIX=/opt/opendlv.cfsd18 /opt/opendlv.cfsd18.sources/code/logic-cfsd18
 
 CCACHE_DIR=/opt/ccache PATH=/usr/lib/ccache:/opt/od4/bin:$PATH make -j4 && make test && make install
 
