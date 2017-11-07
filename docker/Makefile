@@ -19,12 +19,12 @@ PROJECT_NAME=opendlv.cfsd18
 
 REPOSITORY=seresearch
 
-IMAGE=opendlv-cfsd18-on-opendlv-mantis-on-opendlv-on-opendlv-core-on-opendavinci-on-base
+IMAGE=opendlv-cfsd18-on-opendlv-lynx-on-opendlv-on-opendlv-core-on-opendavinci-on-base
 IMAGE_PATH=$(REPOSITORY)/$(IMAGE)
 
-BASE_IMAGE=opendlv-mantis-on-opendlv-on-opendlv-core-on-opendavinci-on-base
+BASE_IMAGE=opendlv-lynx-on-opendlv-on-opendlv-core-on-opendavinci-on-base
 BASE_IMAGE_PATH=$(REPOSITORY)/$(BASE_IMAGE)
-BASE_IMAGE_VERSION=v0.0.1
+BASE_IMAGE_VERSION=v0.0.2
 
 DEV_SUFFIX=-dev
 

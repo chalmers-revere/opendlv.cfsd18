@@ -34,7 +34,7 @@ cd /opt/opendlv.cfsd18.build
 
 echo "[Docker builder] Complete build of opendlv.cfsd18."
 cmake -E remove_directory .
-CCACHE_DIR=/opt/ccache PATH=/usr/lib/ccache:/opt/od4/bin:$PATH cmake -D CXXTEST_INCLUDE_DIR=/opt/opendlv.cfsd18.sources/thirdparty/cxxtest -D OPENDAVINCI_DIR=/opt/od4 -D PACKAGING_ENABLED=$PACKAGING_ENABLED -D ODVDOPENDLVSTANDARDMESSAGESET_DIR=/opt/opendlv.core -D ODVDCFSD18_DIR=/opt/opendlv.mantis -D CMAKE_INSTALL_PREFIX=/opt/opendlv.cfsd18 /opt/opendlv.cfsd18.sources
+CCACHE_DIR=/opt/ccache PATH=/usr/lib/ccache:/opt/od4/bin:$PATH cmake -D CXXTEST_INCLUDE_DIR=/opt/opendlv.cfsd18.sources/thirdparty/cxxtest -D OPENDAVINCI_DIR=/opt/od4 -D PACKAGING_ENABLED=$PACKAGING_ENABLED -D ODVDOPENDLVSTANDARDMESSAGESET_DIR=/opt/opendlv.core -D ODVDCFSD18_DIR=/opt/opendlv.lynx -D CMAKE_INSTALL_PREFIX=/opt/opendlv.cfsd18 /opt/opendlv.cfsd18.sources
 
 CCACHE_DIR=/opt/ccache PATH=/usr/lib/ccache:/opt/od4/bin:$PATH make -j4
 EOF
