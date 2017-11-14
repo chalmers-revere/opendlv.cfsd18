@@ -1,0 +1,56 @@
+version: '2'
+# Please note that docker-compose does not prescribe a startup order
+
+services:
+    #odsupercomponent
+    odsupercomponent:
+        build: .
+        network_mode: "host"
+        volumes:
+        - .:/opt/opendlv.data
+        user: odv
+        command: "/opt/od4/bin/odsupercomponent --cid=${CID} --verbose=1 --configuration=/opt/opendlv.data/configuration"
+        
+    #odcockpit
+    odcockpit:
+        build: .
+        network_mode: "host"
+        environment:
+        - DISPLAY=$DISPLAY
+        volumes:
+        - /tmp/.X11-unix:/tmp/.X11-unix
+        - .:/opt/opendlv.data
+        ipc: host
+        user: odv
+        depends_on:
+            - odsupercomponent
+        command: "/opt/od4/bin/odcockpit --cid=${CID}"
+        
+    #proxy-velodyne16
+    velodyne16:
+        build: .
+        network_mode: "host"
+        volumes:
+        - .:/opt/opendlv.data
+        ipc: host
+        user: odv
+        working_dir: "/opt/opendlv.data"
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.core/bin/opendlv-core-system-proxy-velodyne16 --cid=${CID}"
+        
+    #odrecorder.
+    odrecorderh264:
+        build: .
+        depends_on:
+            - odsupercomponent
+            - velodyne16
+        volumes:
+            - ~/recordings:/opt/recordings
+        user: odv
+        network_mode: host
+        ipc: host
+        working_dir: "/opt/recordings"
+        command: "/opt/od4/bin/odrecorderh264 --cid=${CID}"
+        
+

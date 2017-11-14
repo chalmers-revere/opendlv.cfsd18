@@ -1,0 +1,19 @@
+version: '2'
+# Please note that docker-compose does not prescribe a startup order
+
+services:
+    odcockpit:
+        build: .
+        network_mode: "host"
+        environment:
+        - DISPLAY=$DISPLAY
+        volumes:
+        - /tmp/.X11-unix:/tmp/.X11-unix
+        - .:/opt/opendlv.data
+        ipc: host
+        user: odv
+        command: "/opt/od4/bin/odcockpit --cid=${CID}"
+        
+
+        
+
