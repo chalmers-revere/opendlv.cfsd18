@@ -1,0 +1,18 @@
+version: '2'
+
+services:
+    odsupercomponent:
+        image: ${IMAGE}
+        network_mode: host
+        volumes:
+        - .:/opt/opendlv.data
+        command: "/opt/od4/bin/odsupercomponent --cid=${CID} --verbose=1 --configuration=/opt/opendlv.data/configuration"
+
+    # microservice for perception-detectcone
+    logic-cfsd18-perception-detectcone:
+        image: ${IMAGE}
+        depends_on:
+            - odsupercomponent
+        network_mode: host
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectcone --cid=${CID} --id=1"
+

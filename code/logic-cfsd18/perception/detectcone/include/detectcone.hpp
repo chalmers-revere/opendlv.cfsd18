@@ -20,16 +20,23 @@
 #ifndef OPENDLV_LOGIC_CFSD18_PERCEPTION_DETECTCONE_HPP
 #define OPENDLV_LOGIC_CFSD18_PERCEPTION_DETECTCONE_HPP
 
-#include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
-#include <opendavinci/odcore/data/Container.h>
+#include <memory>
+#include <vector>
+#include <cmath>
 
-//#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
-#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
+#include "opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h"
+#include "opendavinci/odcore/data/Container.h"
+ 
+#include <opendavinci/odcore/wrapper/Eigen.h>
+
 
 namespace opendlv {
 namespace logic {
 namespace cfsd18 {
 namespace perception {
+
+using namespace std;
+using namespace Eigen;
 
 class DetectCone : public odcore::base::module::DataTriggeredConferenceClientModule {
  public:
@@ -40,8 +47,16 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   virtual void nextContainer(odcore::data::Container &);
 
  private:
+  void matchPoints(MatrixXd, MatrixXd);
+  void findMatch(MatrixXd, MatrixXd);
   void setUp();
   void tearDown();
+  MatrixXd m_lastLidarData;
+  MatrixXd m_lastCameraData;
+  MatrixXd m_pointMatched;
+  double m_diffVec;
+  MatrixXd m_finalPointCloud;
+  double m_threshold;
 };
 
 }
