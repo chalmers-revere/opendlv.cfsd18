@@ -29,6 +29,9 @@
 #include "opendavinci/generated/odcore/data/SharedPointCloud.h"
 #include "opendavinci/generated/odcore/data/CompactPointCloud.h"
 
+#include <opendavinci/odcore/strings/StringToolbox.h>
+#include <opendavinci/odcore/wrapper/Eigen.h>
+
 namespace opendlv {
 namespace logic {
 namespace cfsd18 {
@@ -39,6 +42,7 @@ using namespace std;
 using namespace odcore::base;
 using namespace odcore::data;
 using namespace odcore::wrapper;
+using namespace Eigen;
 
 class Attention : public odcore::base::module::DataTriggeredConferenceClientModule {
  public:
@@ -52,16 +56,18 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   void setUp();
   void tearDown();
   
-  opendlv::coord::Position SaveOneCPCPointNoIntensity(const uint16_t &distance_integer, const float &azimuth, const float &verticalAngle, const uint8_t &distanceEncoding);
+  void SaveOneCPCPointNoIntensity(const int &pointIndex,const uint16_t &distance_integer, const float &azimuth, const float &verticalAngle, const uint8_t &distanceEncoding);
   void SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const float &startAzimuth, const float &endAzimuth, const uint8_t &distanceEncoding);
  // void SaveCPC32WithIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const float &startAzimuth, const float &endAzimuth, const uint8_t &distanceEncoding, const uint8_t &numberOfBitsForIntensity, const uint8_t &intensityPlacement, const uint16_t &mask, const float &intensityMaxValue);
-
+  void SavePointCloud();
 
   const float START_V_ANGLE = -15.0; //For each azimuth there are 16 points with unique vertical angles from -15 to 15 degrees
   const float V_INCREMENT = 2.0; //The vertical angle increment for the 16 points with the same azimuth is 2 degrees
   const float START_V_ANGLE_32 = -30.67; //The starting angle for HDL-32E. Vertical angle ranges from -30.67 to 10.67 degress, with alternating increment 1.33 and 1.34
   const float V_INCREMENT_32_A = 1.33; //The first vertical angle increment for HDL-32E
   const float V_INCREMENT_32_B = 1.34; //The second vertical angle increment for HDL-32E
+
+  const double DEG2RAD = 0.017453292522222; // PI/180.0
 
   uint8_t m_12_startingSensorID_32; //From which layer for the first part(12 layers) of CPC for HDL-32E
   uint8_t m_11_startingSensorID_32; //From which layer for the second part(11 layers) of CPC for HDL-32E
@@ -81,6 +87,10 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   bool m_SPCReceived;//Set to true when the first shared point cloud is received
   bool m_CPCReceived;//Set to true when the first compact point cloud is received
   uint32_t m_recordingYear;//The year when a recording with CPC was taken
+
+  MatrixXf m_pointCloud;
+  bool m_isFirstPoint;
+  int m_pointIndex;
 
 
 };

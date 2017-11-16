@@ -18,12 +18,15 @@
 */
 
 #include <iostream>
+#include <cmath>
 
 #include <opendavinci/odcore/data/TimeStamp.h>
 #include <opendavinci/odcore/strings/StringToolbox.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
 #include <opendavinci/generated/odcore/data/CompactPointCloud.h>
 #include <opendavinci/odcore/base/Lock.h>
+
+
 #include "attention.hpp"
 
 
@@ -36,6 +39,9 @@ using namespace std;
 using namespace odcore::base;
 using namespace odcore::data;
 using namespace odcore::wrapper;
+
+
+
 
 Attention::Attention(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-sensation-attention")
@@ -55,6 +61,9 @@ Attention::Attention(int32_t const &a_argc, char **a_argv) :
   , m_SPCReceived(false)
   , m_CPCReceived(false)
   , m_recordingYear()
+  , m_pointCloud()
+  , m_isFirstPoint(true)
+  , m_pointIndex(0)
 {
   //#############################################################################
   // Following part are prepared to decode CPC of HDL32 3 parts
@@ -89,6 +98,8 @@ Attention::Attention(int32_t const &a_argc, char **a_argv) :
       m_9_verticalAngles[counter] = sensorIDs_32[currentSensorID + 3];    
   }
   //###########################################################################
+
+  //m_pointCloud = MatrixXf::Zero(1,3);
 }
 
 Attention::~Attention()
@@ -120,40 +131,17 @@ void Attention::nextContainer(odcore::data::Container &a_container)
       odcore::data::Container c1(o1);
       getConference().send(c1);
     */
-    if (m_CPCReceived && !m_SPCReceived) {
+    if (!m_SPCReceived) {
       Lock lockCPC(m_cpcMutex);
       m_cpc = a_container.getData<CompactPointCloud>(); 
-      const float startAzimuth = m_cpc.getStartAzimuth();
-      const float endAzimuth = m_cpc.getEndAzimuth();
       const uint8_t numberOfLayers = m_cpc.getEntriesPerAzimuth();  // Get number of layers
-
-         
-      const uint8_t numberOfBitsForIntensity = m_cpc.getNumberOfBitsForIntensity();
-      
-      /*const uint8_t intensityPlacement = m_cpc.getIntensityPlacement();
-
-      uint16_t tmpMask = 0xFFFF;
-      float intensityMaxValue = 0.0f;
-      if (numberOfBitsForIntensity > 0) {
-        if (intensityPlacement == 0) {
-          tmpMask = tmpMask >> numberOfBitsForIntensity; //higher bits for intensity
-        } 
-        else {
-          tmpMask = tmpMask << numberOfBitsForIntensity; //lower bits for intensity
-        }
-        intensityMaxValue = pow(2.0f, static_cast<float>(numberOfBitsForIntensity)) - 1.0f;
-      }
-      */
-      const uint8_t distanceEncoding = m_cpc.getDistanceEncoding();  
+ 
       
       if (numberOfLayers == 16) {  // Deal with VLP-16
         cout << "Connecting to VLP16" <<  endl;
-        cout << "Start Azimuth angle: " << startAzimuth << "End Azimuth angle: " << endAzimuth << endl;
-
       }
       else {  // Deal with HDL-32
         cout << "Connecting to HDL-32" <<  endl;
-
         const uint64_t currentTime = ts.toMicroseconds();
         //Check if this HDL-32E CPC comes from a new scan. The interval between two scans is roughly 100ms. It is safe to assume that a new CPC comes from a new scan if the interval is longer than 50ms
         const uint64_t deltaTime = (currentTime > m_previousCPC32TimeStamp) ? (currentTime - m_previousCPC32TimeStamp) : (m_previousCPC32TimeStamp - currentTime);
@@ -175,40 +163,10 @@ void Attention::nextContainer(odcore::data::Container &a_container)
         }
       
 
-        if ((m_cpcMask_32 & 0x04) > 0) {//The first part, 12 layers
-          if (numberOfBitsForIntensity == 0) {
-            cout << "The first part, 12 layers, no Intensity" <<  endl;
-            SaveCPC32NoIntensity(1, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding);
-          } 
-          else {
-            cout << "The first part, 12 layers, with Intensity" <<  endl;
-            //drawCPC32withIntensity(1, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
-          }
-        }
-        if ((m_cpcMask_32 & 0x02) > 0) {//The second part, 11 layers
-          if (numberOfBitsForIntensity == 0) {
-            cout << "The second part, 11 layers, no Intensity" <<  endl;
-            SaveCPC32NoIntensity(2, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding);
-          } 
-          else {
-            cout << "The second part, 11 layers, with Intensity" <<  endl;
-            //drawCPC32withIntensity(2, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
-          }
-        }
-        if ((m_cpcMask_32 & 0x01) > 0) {//The third part, 9 layers
-          if (numberOfBitsForIntensity == 0) {
-            cout << "The third part, 9 layers, no Intensity" << endl;
-            SaveCPC32NoIntensity(3, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding);
-          } 
-          else {
-            cout << "The third part, 9 layers, with Intensity" << endl;
-            //drawCPC32withIntensity(3, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
-          }
-        }
       }
     }
-
   }
+  SavePointCloud();
 }
 
 void Attention::setUp()
@@ -244,23 +202,36 @@ void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entries
   uint32_t numberOfAzimuths = numberOfPoints / entriesPerAzimuth;
   float azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;//Calculate the azimuth increment
   uint16_t distance = 0;
+
+  // Initialize m_pointCloud
+  if (part == 1) {
+      m_pointCloud = MatrixXf::Zero(numberOfPoints,3);
+      m_pointIndex = 0;
+  } else {
+      m_pointCloud.conservativeResizeLike(MatrixXf::Zero(m_pointCloud.rows()+numberOfPoints, 3));
+
+  }
+
   
-  opendlv::coord::Position pointPosition;
+  
+
   for (uint32_t azimuthIndex = 0; azimuthIndex < numberOfAzimuths; azimuthIndex++) {
     for (uint8_t sensorIndex = 0; sensorIndex < entriesPerAzimuth; sensorIndex++) {
       sstr.read((char*)(&distance), 2); // Read distance value from the string in a CPC container point by point
       if (part == 1) {
-          pointPosition = SaveOneCPCPointNoIntensity(distance, azimuth, m_12_verticalAngles[sensorIndex], distanceEncoding);
+          SaveOneCPCPointNoIntensity(m_pointIndex,distance, azimuth, m_12_verticalAngles[sensorIndex], distanceEncoding);
+          m_pointIndex ++;
       } else if (part == 2) {
-          pointPosition = SaveOneCPCPointNoIntensity(distance, azimuth, m_11_verticalAngles[sensorIndex], distanceEncoding);
+          SaveOneCPCPointNoIntensity(m_pointIndex,distance, azimuth, m_11_verticalAngles[sensorIndex], distanceEncoding);
+          m_pointIndex ++;
       } else {
-          pointPosition = SaveOneCPCPointNoIntensity(distance, azimuth, m_9_verticalAngles[sensorIndex], distanceEncoding);
+          SaveOneCPCPointNoIntensity(m_pointIndex,distance, azimuth, m_9_verticalAngles[sensorIndex], distanceEncoding);
+          m_pointIndex ++;
       }
     }
     azimuth += azimuthIncrement;
   }
 
-  //return pointPosition;
 }
 //void SaveCPC32WithIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const float &startAzimuth, const float &endAzimuth, const uint8_t &distanceEncoding, const uint8_t &numberOfBitsForIntensity, const uint8_t &intensityPlacement, const uint16_t &mask, const float &intensityMaxValue)
 //{
@@ -268,11 +239,139 @@ void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entries
   //return pointPosition;
 //}
 
-opendlv::coord::Position Attention::SaveOneCPCPointNoIntensity(const uint16_t &, const float &, const float &, const uint8_t &)
+void Attention::SaveOneCPCPointNoIntensity(const int &pointIndex,const uint16_t &distance_integer, const float &azimuth, const float &verticalAngle, const uint8_t &distanceEncoding)
 {
 
-  opendlv::coord::Position pointPosition;
-  return pointPosition;
+  //Recordings before 2017 do not call hton() while storing CPC.
+  //Hence, we only call ntoh() for recordings from 2017.
+  uint16_t distanceCPCPoint = distance_integer;
+  if (m_recordingYear > 2016) {
+      distanceCPCPoint = ntohs(distanceCPCPoint);
+  }
+  float distance = 0.0;
+  switch (distanceEncoding) {
+      case CompactPointCloud::CM : distance = static_cast<float>(distanceCPCPoint / 100.0f); //convert to meter from resolution 1 cm
+                                   break;
+      case CompactPointCloud::MM : distance = static_cast<float>(distanceCPCPoint / 500.0f); //convert to meter from resolution 2 mm
+                                   break;
+      default : cout << "Error, distanceCPCPoint not correctly defined!" << endl;
+                break;
+  }
+  if (distance > 0.0f) {//Only viualize the point when the distance is larger than 0m
+      // Compute x, y, z coordinate based on distance, azimuth, and vertical angle
+      float xyDistance = distance * cos(verticalAngle * static_cast<float>(DEG2RAD));
+      float xData = xyDistance * sin(azimuth * static_cast<float>(DEG2RAD));
+      float yData = xyDistance * cos(azimuth * static_cast<float>(DEG2RAD));
+      float zData = distance * sin(verticalAngle * static_cast<float>(DEG2RAD));
+      m_pointCloud.row(pointIndex) << xData,yData,zData;
+      /*
+      int numberOfPoints = m_pointCloud.rows();
+      if (m_isFirstPoint)
+      {
+        m_pointCloud.row(0) << xData,yData,zData; // if it's first point, just save it to first row of matrix without changing size
+        m_isFirstPoint = false;
+      } else {
+        m_pointCloud.conservativeResizeLike(MatrixXf::Zero(numberOfPoints+1, 3)); // Add one row to matrix
+        m_pointCloud.row(numberOfPoints) << xData,yData,zData; // Save x,y,z data into the added row
+      }*/
+  }
+}
+
+void Attention::SavePointCloud(){
+  if (m_CPCReceived && !m_SPCReceived) {
+    Lock lockCPC(m_cpcMutex);
+    const float startAzimuth = m_cpc.getStartAzimuth();
+    const float endAzimuth = m_cpc.getEndAzimuth();
+    const uint8_t entriesPerAzimuth = m_cpc.getEntriesPerAzimuth(); // numberOfLayers
+    const uint8_t numberOfBitsForIntensity = m_cpc.getNumberOfBitsForIntensity();
+    const uint8_t intensityPlacement = m_cpc.getIntensityPlacement();
+    uint16_t tmpMask = 0xFFFF;
+    //float intensityMaxValue = 0.0f;
+
+    if (numberOfBitsForIntensity > 0) {
+      if (intensityPlacement == 0) {
+        tmpMask = tmpMask >> numberOfBitsForIntensity; //higher bits for intensity
+      } 
+      else {
+        tmpMask = tmpMask << numberOfBitsForIntensity; //lower bits for intensity
+      }
+      //intensityMaxValue = pow(2.0f, static_cast<float>(numberOfBitsForIntensity)) - 1.0f;
+    }
+    const uint8_t distanceEncoding = m_cpc.getDistanceEncoding();
+
+    //#########################################
+    // Need some function to rotate the model for ego vehicle state
+    //#########################################
+
+    uint16_t distance_integer = 0;
+    if (entriesPerAzimuth == 16) {//A VLP-16 CPC
+      float azimuth = startAzimuth;
+      const string distances = m_cpc.getDistances();
+      const uint32_t numberOfPoints = distances.size() / 2;
+      const uint32_t numberOfAzimuths = numberOfPoints / entriesPerAzimuth;
+      const float azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;//Calculate the azimuth increment
+      stringstream sstr(distances);
+      
+      m_pointCloud = MatrixXf::Zero(numberOfPoints,3);
+      m_pointIndex = 0;
+      for (uint32_t azimuthIndex = 0; azimuthIndex < numberOfAzimuths; azimuthIndex++) {
+          float verticalAngle = START_V_ANGLE;
+          for (uint8_t sensorIndex = 0; sensorIndex < entriesPerAzimuth; sensorIndex++) {
+              sstr.read((char*)(&distance_integer), 2); // Read distance value from the string in a CPC container point by point
+              if (numberOfBitsForIntensity == 0) {
+                  SaveOneCPCPointNoIntensity(m_pointIndex,distance_integer, azimuth, verticalAngle, distanceEncoding);
+                  m_pointIndex ++;
+              } else {
+                  //SaveOneCPCPointWithIntensity(distance_integer, azimuth, verticalAngle, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
+              }
+              verticalAngle += V_INCREMENT;
+          }
+          azimuth += azimuthIncrement;
+      }
+      cout << "number of points are:"<< m_pointCloud.rows() << endl;
+      //m_pointCloud = MatrixXf::Zero(1,3); // Empty the point cloud matrix for this scan
+      cout << "One scan complete! " << endl;
+      m_isFirstPoint = false;
+    }  else { //A HDL-32E CPC, one of the three parts of a complete scan  
+      if ((m_cpcMask_32 & 0x04) > 0) {//The first part, 12 layers
+        if (numberOfBitsForIntensity == 0) {
+          cout << "The first part, 12 layers, no Intensity" <<  endl;
+          SaveCPC32NoIntensity(1, entriesPerAzimuth, startAzimuth, endAzimuth, distanceEncoding);
+        } 
+        else {
+          cout << "The first part, 12 layers, with Intensity" <<  endl;
+          //drawCPC32withIntensity(1, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
+        }
+      }
+      if ((m_cpcMask_32 & 0x02) > 0) {//The second part, 11 layers
+        if (numberOfBitsForIntensity == 0) {
+          cout << "The second part, 11 layers, no Intensity" <<  endl;
+          SaveCPC32NoIntensity(2, entriesPerAzimuth, startAzimuth, endAzimuth, distanceEncoding);
+        } 
+        else {
+          cout << "The second part, 11 layers, with Intensity" <<  endl;
+          //drawCPC32withIntensity(2, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
+        }
+      }
+      if ((m_cpcMask_32 & 0x01) > 0) {//The third part, 9 layers
+        if (numberOfBitsForIntensity == 0) {
+          cout << "The third part, 9 layers, no Intensity" << endl;
+          SaveCPC32NoIntensity(3, entriesPerAzimuth, startAzimuth, endAzimuth, distanceEncoding);
+        } 
+        else {
+          cout << "The third part, 9 layers, with Intensity" << endl;
+          //drawCPC32withIntensity(3, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
+        }
+      }
+    } 
+
+
+
+
+  }
+
+
+
 
 }
 

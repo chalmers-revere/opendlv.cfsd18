@@ -57,7 +57,7 @@ proxy-velodyne32.SPCOption = 1 # 0: xyz+intensity; 1: distance+azimuth+vertical 
 proxy-velodyne32.CPCIntensityOption = 0  #0: no intensity, 1: with intensity, 2: both
 proxy-velodyne32.numberOfBitsForIntensity = 2  #Range 0-7. Only used when CPC is enabled.
 proxy-velodyne32.intensityPlacement = 0 #0: higher bits; 1: lower bits
-proxy-velodyne32.distanceEncoding = 0 #0: cm; 1: 2mm
+proxy-velodyne32.distanceEncoding = 1 #0: cm; 1: 2mm
 proxy-velodyne32.sharedMemory.name = velodyne32SM
 #The total size of the shared memory: MAX_POINT_SIZE * NUMBER_OF_COMPONENTS_PER_POINT * sizeof(float), where MAX_POINT_SIZE is the maximum number of points per frame (This upper bound should be set as low as possible, as it affects the shared memory size and thus the frame updating speed), NUMBER_OF_COMPONENTS_PER_POIN=4  Recommended values: MAX_POINT_SIZE=70000->proxy-velodyne32.sharedMemory.size = 1120000 
 proxy-velodyne32.sharedMemory.size = 1120000
