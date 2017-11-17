@@ -35,6 +35,7 @@ services:
             - odsupercomponent
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-sensation-attention --cid=${CID} --verbose=1 --id=1"
 
+
     # microservice for odcockpit
     odcockpit:
         image: ${IMAGE}

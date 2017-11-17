@@ -19,12 +19,14 @@
 
 #include <iostream>
 #include <cmath>
+#include <vector>
 
 #include <opendavinci/odcore/data/TimeStamp.h>
 #include <opendavinci/odcore/strings/StringToolbox.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
 #include <opendavinci/generated/odcore/data/CompactPointCloud.h>
 #include <opendavinci/odcore/base/Lock.h>
+#include <opendlv/data/environment/Point3.h> 
 
 
 #include "attention.hpp"
@@ -62,9 +64,21 @@ Attention::Attention(int32_t const &a_argc, char **a_argv) :
   , m_CPCReceived(false)
   , m_recordingYear()
   , m_pointCloud()
-  , m_isFirstPoint(true)
+  //, pointCloud()
   , m_pointIndex(0)
-{
+  , m_startAngle()
+  , m_endAngle()
+  , m_yBoundary()
+  , m_groundLayerZ()
+  , m_coneHeight()
+  , m_connectDistanceThreshold()
+  , m_layerRangeThreshold()
+  , m_minNumOfPointsForCone()
+  , m_maxNumOfPointsForCone()
+  , m_farConeRadiusThreshold()
+  , m_nearConeRadiusThreshold()
+  , m_zRangeThreshold()
+  {
   //#############################################################################
   // Following part are prepared to decode CPC of HDL32 3 parts
   //#############################################################################
@@ -98,8 +112,6 @@ Attention::Attention(int32_t const &a_argc, char **a_argv) :
       m_9_verticalAngles[counter] = sensorIDs_32[currentSensorID + 3];    
   }
   //###########################################################################
-
-  //m_pointCloud = MatrixXf::Zero(1,3);
 }
 
 Attention::~Attention()
@@ -113,30 +125,17 @@ void Attention::nextContainer(odcore::data::Container &a_container)
   if(a_container.getDataType() == odcore::data::SharedPointCloud::ID()){
     m_SPCReceived = true;
     cout << "Error: Don't use SharedPointCloud here!!!" << endl;
-    /*
-    m_velodyneFrame = c.getData<SharedPointCloud>();//Get shared point cloud
-    if (!m_hasAttachedToSharedImageMemory) {
-      m_velodyneSharedMemory=SharedMemoryFactory::attachToSharedMemory(m_velodyneFrame.getName()); // Attach the shared point cloud to the shared memory.
-      m_hasAttachedToSharedImageMemory = true; 
-    }  */
 }
   if (a_container.getDataType() == odcore::data::CompactPointCloud::ID()) {
     m_CPCReceived = true;
     TimeStamp ts = a_container.getSampleTimeStamp();
     m_recordingYear = ts.getYear();
 
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
-    /*  
-      opendlv::logic::sensation::Attention o1;
-      odcore::data::Container c1(o1);
-      getConference().send(c1);
-    */
     if (!m_SPCReceived) {
       Lock lockCPC(m_cpcMutex);
       m_cpc = a_container.getData<CompactPointCloud>(); 
       const uint8_t numberOfLayers = m_cpc.getEntriesPerAzimuth();  // Get number of layers
- 
-      
+
       if (numberOfLayers == 16) {  // Deal with VLP-16
         cout << "Connecting to VLP16" <<  endl;
       }
@@ -166,22 +165,63 @@ void Attention::nextContainer(odcore::data::Container &a_container)
       }
     }
   }
+
   SavePointCloud();
+  //ConeDetection();
+      /*  
+      opendlv::logic::sensation::Attention o1;
+      odcore::data::Container c1(o1);
+      getConference().send(c1);
+    */
 }
 
 void Attention::setUp()
 {
-  // std::string const exampleConfig = 
-  //   getKeyValueConfiguration().getValue<std::string>(
-  //     "logic-cfsd18-sensation-attention.example-config");
-
-  // if (isVerbose()) {
-  //   std::cout << "Example config is " << exampleConfig << std::endl;
-  // }
+  auto kv = getKeyValueConfiguration();
+  m_startAngle = kv.getValue<float>("logic-cfsd18-sensation-attention.startAngle");
+  m_endAngle = kv.getValue<float>("logic-cfsd18-sensation-attention.endAngle");
+  m_yBoundary = kv.getValue<float>("logic-cfsd18-sensation-attention.yBoundary");
+  m_groundLayerZ = kv.getValue<float>("logic-cfsd18-sensation-attention.groundLayerZ");
+  m_coneHeight = kv.getValue<float>("logic-cfsd18-sensation-attention.coneHeight");
+  m_connectDistanceThreshold = kv.getValue<float>("logic-cfsd18-sensation-attention.connectDistanceThreshold");
+  m_layerRangeThreshold = kv.getValue<float>("logic-cfsd18-sensation-attention.layerRangeThreshold");
+  m_minNumOfPointsForCone = kv.getValue<uint16_t>("logic-cfsd18-sensation-attention.minNumOfPointsForCone");
+  m_maxNumOfPointsForCone = kv.getValue<uint16_t>("logic-cfsd18-sensation-attention.maxNumOfPointsForCone");
+  m_farConeRadiusThreshold = kv.getValue<float>("logic-cfsd18-sensation-attention.farConeRadiusThreshold");
+  m_nearConeRadiusThreshold = kv.getValue<float>("logic-cfsd18-sensation-attention.nearConeRadiusThreshold");
+  m_zRangeThreshold = kv.getValue<float>("logic-cfsd18-sensation-attention.zRangeThreshold");
+  ConeDetection();
 }
 
 void Attention::tearDown()
 {
+}
+
+void Attention::SaveOneCPCPointNoIntensity(const int &pointIndex,const uint16_t &distance_integer, const float &azimuth, const float &verticalAngle, const uint8_t &distanceEncoding)
+{
+
+  //Recordings before 2017 do not call hton() while storing CPC.
+  //Hence, we only call ntoh() for recordings from 2017.
+  uint16_t distanceCPCPoint = distance_integer;
+  if (m_recordingYear > 2016) {
+      distanceCPCPoint = ntohs(distanceCPCPoint);
+  }
+  float distance = 0.0;
+  switch (distanceEncoding) {
+      case CompactPointCloud::CM : distance = static_cast<float>(distanceCPCPoint / 100.0f); //convert to meter from resolution 1 cm
+                                   break;
+      case CompactPointCloud::MM : distance = static_cast<float>(distanceCPCPoint / 500.0f); //convert to meter from resolution 2 mm
+                                   break;
+      default : cout << "Error, distanceCPCPoint not correctly defined!" << endl;
+                break;
+  }
+
+  // Compute x, y, z coordinate based on distance, azimuth, and vertical angle
+  float xyDistance = distance * cos(verticalAngle * static_cast<float>(DEG2RAD));
+  float xData = xyDistance * sin(azimuth * static_cast<float>(DEG2RAD));
+  float yData = xyDistance * cos(azimuth * static_cast<float>(DEG2RAD));
+  float zData = distance * sin(verticalAngle * static_cast<float>(DEG2RAD));
+  m_pointCloud.row(pointIndex) << xData,yData,zData;
 }
 
 void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const float &startAzimuth, const float &endAzimuth, const uint8_t &distanceEncoding)
@@ -211,10 +251,7 @@ void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entries
       m_pointCloud.conservativeResizeLike(MatrixXf::Zero(m_pointCloud.rows()+numberOfPoints, 3));
 
   }
-
-  
-  
-
+  // Loop through all points and save each of them in the point cloud matrix
   for (uint32_t azimuthIndex = 0; azimuthIndex < numberOfAzimuths; azimuthIndex++) {
     for (uint8_t sensorIndex = 0; sensorIndex < entriesPerAzimuth; sensorIndex++) {
       sstr.read((char*)(&distance), 2); // Read distance value from the string in a CPC container point by point
@@ -238,44 +275,6 @@ void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entries
   //opendlv::coord::Position pointPosition;
   //return pointPosition;
 //}
-
-void Attention::SaveOneCPCPointNoIntensity(const int &pointIndex,const uint16_t &distance_integer, const float &azimuth, const float &verticalAngle, const uint8_t &distanceEncoding)
-{
-
-  //Recordings before 2017 do not call hton() while storing CPC.
-  //Hence, we only call ntoh() for recordings from 2017.
-  uint16_t distanceCPCPoint = distance_integer;
-  if (m_recordingYear > 2016) {
-      distanceCPCPoint = ntohs(distanceCPCPoint);
-  }
-  float distance = 0.0;
-  switch (distanceEncoding) {
-      case CompactPointCloud::CM : distance = static_cast<float>(distanceCPCPoint / 100.0f); //convert to meter from resolution 1 cm
-                                   break;
-      case CompactPointCloud::MM : distance = static_cast<float>(distanceCPCPoint / 500.0f); //convert to meter from resolution 2 mm
-                                   break;
-      default : cout << "Error, distanceCPCPoint not correctly defined!" << endl;
-                break;
-  }
-  if (distance > 0.0f) {//Only viualize the point when the distance is larger than 0m
-      // Compute x, y, z coordinate based on distance, azimuth, and vertical angle
-      float xyDistance = distance * cos(verticalAngle * static_cast<float>(DEG2RAD));
-      float xData = xyDistance * sin(azimuth * static_cast<float>(DEG2RAD));
-      float yData = xyDistance * cos(azimuth * static_cast<float>(DEG2RAD));
-      float zData = distance * sin(verticalAngle * static_cast<float>(DEG2RAD));
-      m_pointCloud.row(pointIndex) << xData,yData,zData;
-      /*
-      int numberOfPoints = m_pointCloud.rows();
-      if (m_isFirstPoint)
-      {
-        m_pointCloud.row(0) << xData,yData,zData; // if it's first point, just save it to first row of matrix without changing size
-        m_isFirstPoint = false;
-      } else {
-        m_pointCloud.conservativeResizeLike(MatrixXf::Zero(numberOfPoints+1, 3)); // Add one row to matrix
-        m_pointCloud.row(numberOfPoints) << xData,yData,zData; // Save x,y,z data into the added row
-      }*/
-  }
-}
 
 void Attention::SavePointCloud(){
   if (m_CPCReceived && !m_SPCReceived) {
@@ -331,7 +330,6 @@ void Attention::SavePointCloud(){
       cout << "number of points are:"<< m_pointCloud.rows() << endl;
       //m_pointCloud = MatrixXf::Zero(1,3); // Empty the point cloud matrix for this scan
       cout << "One scan complete! " << endl;
-      m_isFirstPoint = false;
     }  else { //A HDL-32E CPC, one of the three parts of a complete scan  
       if ((m_cpcMask_32 & 0x04) > 0) {//The first part, 12 layers
         if (numberOfBitsForIntensity == 0) {
@@ -364,15 +362,179 @@ void Attention::SavePointCloud(){
         }
       }
     } 
+  }
+}
 
+void Attention::ConeDetection(){
+  m_pointCloud = MatrixXf::Zero(5,3);
+  m_pointCloud << 1.0,2.0,0.2,4.0,2.0,0.2,7.0,8.0,9.0,10.0,11.0,12.0,1.3,2.0,0.0;
+  cout << "original point cloud is " << m_pointCloud << endl;
+  
+  float groundLayerZ = 0.0;
+  float layerRangeThreshold = 0.1;
+  float coneHeight = 3.0;
 
+  MatrixXf pointCloudConeROI = ExtractConeROI(groundLayerZ, layerRangeThreshold, coneHeight);
 
+  cout << "Cone ROI is: " << pointCloudConeROI << endl;
+  cout << "Distance should be 3 and it's calculated as: " << CalculateXYDistance(pointCloudConeROI,0,1) << endl;
+  vector<vector<uint32_t>> objectIndexList = NNSegmentation(pointCloudConeROI, m_connectDistanceThreshold);
+  vector<vector<uint32_t>> coneIndexList = FindConesFromObjects(pointCloudConeROI, objectIndexList, m_minNumOfPointsForCone, m_maxNumOfPointsForCone, m_nearConeRadiusThreshold, m_farConeRadiusThreshold, m_zRangeThreshold);
+  cout << "Number of Object is: " << objectIndexList.size() << endl;
+  cout << "Number of Cones is" << coneIndexList.size() << endl;
+  
+ 
+}
+
+vector<vector<uint32_t>> Attention::NNSegmentation(MatrixXf &pointCloudConeROI, const float &connectDistanceThreshold){
+  uint32_t numberOfPointConeROI = pointCloudConeROI.rows();
+  vector<uint32_t> restPointsList(numberOfPointConeROI);
+  for (uint32_t i = 0; i < numberOfPointConeROI; i++)
+  {
+    restPointsList[i] = i;
+  }
+  vector<vector<uint32_t>> objectIndexList;
+  vector<uint32_t> tmpObjectIndexList; tmpObjectIndexList.push_back(restPointsList[0]);
+  uint32_t tmpPointIndex = restPointsList[0];
+  uint32_t positionOfTmpPointIndexInList = 0;
+  restPointsList.erase(restPointsList.begin());
+
+  while (!restPointsList.empty())
+  {
+    uint32_t numberOfRestPoints = restPointsList.size();
+    float minDistance = 100000; // assign a large value for inilization
+    for (uint32_t i = 0; i < numberOfRestPoints; i++)
+    {
+      float distance = CalculateXYDistance(pointCloudConeROI, tmpPointIndex, restPointsList[i]);
+      cout << "Distance is " << distance << endl;
+      if (distance < minDistance)
+      {
+        tmpPointIndex = restPointsList[i];
+        positionOfTmpPointIndexInList = i;
+        minDistance = distance;
+      }
+ 
+    }
+    // now we have minDistance and tmpPointIndex for next iteration
+    if (minDistance <= connectDistanceThreshold)
+    {
+      tmpObjectIndexList.push_back(tmpPointIndex);
+    } else {
+      if (!tmpObjectIndexList.empty())
+      {
+        objectIndexList.push_back(tmpObjectIndexList);
+      }
+      tmpObjectIndexList.clear();
+      tmpObjectIndexList.push_back(tmpPointIndex);
+    }
+    restPointsList.erase(restPointsList.begin()+positionOfTmpPointIndexInList);
+  }
+  if (!tmpObjectIndexList.empty())
+  {
+    objectIndexList.push_back(tmpObjectIndexList);
+  }
+  return objectIndexList;
+}
+
+vector<vector<uint32_t>> Attention::FindConesFromObjects(MatrixXf &pointCloudConeROI, vector<vector<uint32_t>> &objectIndexList, const float &minNumOfPointsForCone, const float &maxNumOfPointsForCone, const float &nearConeRadiusThreshold, const float &farConeRadiusThreshold, const float &zRangeThreshold)
+{
+  uint32_t numberOfObjects = objectIndexList.size();
+
+  // Select those objects with reasonable number of points and save the object list in a new vector
+  vector<vector<uint32_t>> objectIndexListWithNumOfPointsLimit;
+  for (uint32_t i = 0; i < numberOfObjects; i ++)
+  {
+    vector<uint32_t> objectIndex = objectIndexList[i];
+    uint32_t numberOfPointsOnObject = objectIndex.size();
+
+    bool numberOfPointsLimitation = ((numberOfPointsOnObject > minNumOfPointsForCone) && (numberOfPointsOnObject < maxNumOfPointsForCone));
+    if (numberOfPointsLimitation)
+    {
+      objectIndexListWithNumOfPointsLimit.push_back(objectIndex);
+    }
+  }
+
+  // Select among previous potention cones with reasonable radius
+  vector<vector<uint32_t>> coneIndexList;
+  for (uint32_t i = 0; i < objectIndexListWithNumOfPointsLimit.size(); i ++)
+  {
+    vector<uint32_t> selectedObjectIndex = objectIndexListWithNumOfPointsLimit[i];
+    uint32_t numberOfPointsOnSelectedObject = selectedObjectIndex.size();
+    MatrixXf potentialConePointCloud = MatrixXf::Zero(numberOfPointsOnSelectedObject,3);
+    for (uint32_t j = 0; j < numberOfPointsOnSelectedObject; j++)
+    {
+      potentialConePointCloud.row(j) << pointCloudConeROI(selectedObjectIndex[j],0),pointCloudConeROI(selectedObjectIndex[j],1),pointCloudConeROI(selectedObjectIndex[j],2);
+    }
+    
+    float coneRadius = CalculateConeRadius(potentialConePointCloud);
+    float zRange = GetZRange(potentialConePointCloud);
+    bool condition1 = (coneRadius < farConeRadiusThreshold); //Far point cones
+    bool condition2 = (coneRadius>= farConeRadiusThreshold && coneRadius <= nearConeRadiusThreshold);
+    bool condition3 = (zRange >= zRangeThreshold);  // Near point cones have to cover a larger Z range
+    if (condition1 || (condition2 && condition3))
+    {
+      coneIndexList.push_back(selectedObjectIndex);
+    }
 
   }
 
+  return coneIndexList;
+
+}
+
+float Attention::CalculateConeRadius(MatrixXf &potentialConePointCloud)
+{
+  float coneRadius = 0;
+  uint32_t numberOfPointsOnSelectedObject = potentialConePointCloud.rows();
+  float xMean = potentialConePointCloud.colwise().sum()[0]/numberOfPointsOnSelectedObject;
+  float yMean = potentialConePointCloud.colwise().sum()[1]/numberOfPointsOnSelectedObject;
+  for (uint32_t i = 0; i < numberOfPointsOnSelectedObject; i++)
+  {
+    float radius = sqrt(pow((potentialConePointCloud(i,0)-xMean),2)+pow((potentialConePointCloud(i,1)-yMean),2));
+    if (radius >= coneRadius)
+    {
+      coneRadius = radius;
+    }
+  }
+  return coneRadius;
+
+}
+
+float Attention::GetZRange(MatrixXf &potentialConePointCloud)
+{
+  float zRange = potentialConePointCloud.colwise().maxCoeff()[2]-potentialConePointCloud.colwise().minCoeff()[2];
+  return zRange;
+}
 
 
+MatrixXf Attention::ExtractConeROI(const float &groundLayerZ, const float &layerRangeThreshold, const float &coneHeight){
+  uint32_t numberOfPointsCPC = m_pointCloud.rows();
+  uint32_t numberOfPointConeROI = 0;
+  vector<int> pointIndexConeROI;
+  for (uint32_t i = 0; i < numberOfPointsCPC; i++)
+  {
+    if ((m_pointCloud(i,2) >= groundLayerZ + layerRangeThreshold) && (m_pointCloud(i,2) <= groundLayerZ + coneHeight + layerRangeThreshold))
+    {
+      pointIndexConeROI.push_back(i);
+      numberOfPointConeROI ++;
+    }
+  }
+  MatrixXf pointCloudConeROI = MatrixXf::Zero(numberOfPointConeROI,3);
+  for (uint32_t j = 0; j < numberOfPointConeROI; j++)
+  {
+    pointCloudConeROI.row(j) << m_pointCloud(pointIndexConeROI[j],0),m_pointCloud(pointIndexConeROI[j],1),m_pointCloud(pointIndexConeROI[j],2);
+  }
+  return pointCloudConeROI;
+}
 
+float Attention::CalculateXYDistance(MatrixXf &pointCloud, const uint32_t &index1, const uint32_t &index2)
+{
+  float x1 = pointCloud(index1,0);
+  float y1 = pointCloud(index1,1);
+  float x2 = pointCloud(index2,0);
+  float y2 = pointCloud(index2,1);
+  float distance = sqrt(pow((x1-x2),2) + pow((y1-y2),2));
+  return distance;
 }
 
 }
