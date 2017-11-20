@@ -327,6 +327,7 @@ void Attention::SavePointCloud(){
           }
           azimuth += azimuthIncrement;
       }
+      cout << "Angular resolution is: " << azimuthIncrement << endl;
       cout << "number of points are:"<< m_pointCloud.rows() << endl;
       //m_pointCloud = MatrixXf::Zero(1,3); // Empty the point cloud matrix for this scan
       cout << "One scan complete! " << endl;
@@ -366,8 +367,14 @@ void Attention::SavePointCloud(){
 }
 
 void Attention::ConeDetection(){
-  m_pointCloud = MatrixXf::Zero(5,3);
-  m_pointCloud << 1.0,2.0,0.2,4.0,2.0,0.2,7.0,8.0,9.0,10.0,11.0,12.0,1.3,2.0,0.0;
+  m_pointCloud = MatrixXf::Zero(7,3);
+  m_pointCloud << 1.0,2.0,0.2,  //cone 1 point 1
+                  6.0,2.0,0.2,  // cone 2 point 1
+                  7.0,8.0,9.0,
+                  10.0,11.0,12.0,
+                  1.3,2.0,0.1,  // cone 1 point 2
+                  6.2,2.0,0.2,  // cone 2 point 2
+                  15.0,2.0,0.2; // object but not cone
   cout << "original point cloud is " << m_pointCloud << endl;
   
   float groundLayerZ = 0.0;
@@ -377,11 +384,20 @@ void Attention::ConeDetection(){
   MatrixXf pointCloudConeROI = ExtractConeROI(groundLayerZ, layerRangeThreshold, coneHeight);
 
   cout << "Cone ROI is: " << pointCloudConeROI << endl;
-  cout << "Distance should be 3 and it's calculated as: " << CalculateXYDistance(pointCloudConeROI,0,1) << endl;
+  cout << "Distance should be 5 and it's calculated as: " << CalculateXYDistance(pointCloudConeROI,0,1) << endl;
   vector<vector<uint32_t>> objectIndexList = NNSegmentation(pointCloudConeROI, m_connectDistanceThreshold);
   vector<vector<uint32_t>> coneIndexList = FindConesFromObjects(pointCloudConeROI, objectIndexList, m_minNumOfPointsForCone, m_maxNumOfPointsForCone, m_nearConeRadiusThreshold, m_farConeRadiusThreshold, m_zRangeThreshold);
   cout << "Number of Object is: " << objectIndexList.size() << endl;
-  cout << "Number of Cones is" << coneIndexList.size() << endl;
+  cout << "Number of Cones is: " << coneIndexList.size() << endl;
+
+
+
+  SendingConesPositions(pointCloudConeROI, coneIndexList);
+
+
+
+
+
   
  
 }
@@ -397,6 +413,7 @@ vector<vector<uint32_t>> Attention::NNSegmentation(MatrixXf &pointCloudConeROI, 
   vector<uint32_t> tmpObjectIndexList; tmpObjectIndexList.push_back(restPointsList[0]);
   uint32_t tmpPointIndex = restPointsList[0];
   uint32_t positionOfTmpPointIndexInList = 0;
+  uint32_t tmpPointIndexNext;
   restPointsList.erase(restPointsList.begin());
 
   while (!restPointsList.empty())
@@ -409,12 +426,14 @@ vector<vector<uint32_t>> Attention::NNSegmentation(MatrixXf &pointCloudConeROI, 
       cout << "Distance is " << distance << endl;
       if (distance < minDistance)
       {
-        tmpPointIndex = restPointsList[i];
+        tmpPointIndexNext = restPointsList[i];
         positionOfTmpPointIndexInList = i;
         minDistance = distance;
       }
  
     }
+    tmpPointIndex = tmpPointIndexNext;
+    cout << "Minimum Distance is " << minDistance << endl;
     // now we have minDistance and tmpPointIndex for next iteration
     if (minDistance <= connectDistanceThreshold)
     {
@@ -447,7 +466,7 @@ vector<vector<uint32_t>> Attention::FindConesFromObjects(MatrixXf &pointCloudCon
     vector<uint32_t> objectIndex = objectIndexList[i];
     uint32_t numberOfPointsOnObject = objectIndex.size();
 
-    bool numberOfPointsLimitation = ((numberOfPointsOnObject > minNumOfPointsForCone) && (numberOfPointsOnObject < maxNumOfPointsForCone));
+    bool numberOfPointsLimitation = ((numberOfPointsOnObject >= minNumOfPointsForCone) && (numberOfPointsOnObject <= maxNumOfPointsForCone));
     if (numberOfPointsLimitation)
     {
       objectIndexListWithNumOfPointsLimit.push_back(objectIndex);
@@ -535,6 +554,52 @@ float Attention::CalculateXYDistance(MatrixXf &pointCloud, const uint32_t &index
   float y2 = pointCloud(index2,1);
   float distance = sqrt(pow((x1-x2),2) + pow((y1-y2),2));
   return distance;
+}
+
+void Attention::SendingConesPositions(MatrixXf &pointCloudConeROI, vector<vector<uint32_t>> &coneIndexList)
+{
+  
+  uint32_t numberOfCones = coneIndexList.size();
+  MatrixXf conePoints = MatrixXf::Zero(numberOfCones,3);
+  for (uint32_t i = 0; i < numberOfCones; i++)
+  {
+    uint32_t numberOfPointsOnCone = coneIndexList[i].size();
+    float conePositionX = 0;
+    float conePositionY = 0;
+    float conePositionZ = 0;
+    for (uint32_t j = 0; j< numberOfPointsOnCone; j++)
+    {
+      conePositionX += pointCloudConeROI(coneIndexList[i][j],0);
+      conePositionY += pointCloudConeROI(coneIndexList[i][j],1);
+      conePositionZ += pointCloudConeROI(coneIndexList[i][j],2);
+    }
+    conePositionX = conePositionX / numberOfPointsOnCone;
+    conePositionY = conePositionX / numberOfPointsOnCone;
+    conePositionZ = conePositionX / numberOfPointsOnCone;
+    conePoints.row(i) << conePositionX,conePositionY,conePositionZ;
+
+    opendlv::logic::sensation::Point conePoint = Cartesian2Spherical(conePositionX,conePositionY,conePositionZ);
+    odcore::data::Container c1(conePoint);
+    getConference().send(c1);
+    cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << endl;
+  }
+
+  cout << "Detected Cones are: " << conePoints << endl;
+
+  
+}
+
+opendlv::logic::sensation::Point Attention::Cartesian2Spherical(float &x, float &y, float &z)
+{
+  float distance = sqrt(x*x+y*y+z*z);
+  float azimuthAngle = atan(y/x)*static_cast<float>(RAD2DEG);
+  float zenithAngle = atan(sqrt(x*x+y*y)/z)*static_cast<float>(RAD2DEG);
+  logic::sensation::Point pointInSpherical;
+  pointInSpherical.setDistance(distance);
+  pointInSpherical.setAzimuthAngle(azimuthAngle);
+  pointInSpherical.setZenithAngle(zenithAngle);
+  return pointInSpherical;
+
 }
 
 }

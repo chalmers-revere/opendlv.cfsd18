@@ -68,6 +68,8 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   float CalculateXYDistance(MatrixXf &pointCloud, const uint32_t &index1, const uint32_t &index2);
   float CalculateConeRadius(MatrixXf &potentialConePointCloud);
   float GetZRange(MatrixXf &potentialConePointCloud);
+  void SendingConesPositions(MatrixXf &pointCloudConeROI, vector<vector<uint32_t>> &coneIndexList);
+  opendlv::logic::sensation::Point Cartesian2Spherical(float &x, float &y, float &z);
   // Define constants to decode CPC message
   const float START_V_ANGLE = -15.0; //For each azimuth there are 16 points with unique vertical angles from -15 to 15 degrees
   const float V_INCREMENT = 2.0; //The vertical angle increment for the 16 points with the same azimuth is 2 degrees
@@ -77,6 +79,7 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
 
   // Constants for degree transformation
   const double DEG2RAD = 0.017453292522222; // PI/180.0
+  const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD;
 
   // Variables to handle HDL32 3 parts of message
   uint8_t m_12_startingSensorID_32; //From which layer for the first part(12 layers) of CPC for HDL-32E
