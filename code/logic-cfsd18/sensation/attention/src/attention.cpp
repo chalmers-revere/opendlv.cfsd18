@@ -82,7 +82,7 @@ Attention::Attention(int32_t const &a_argc, char **a_argv) :
   //#############################################################################
   // Following part are prepared to decode CPC of HDL32 3 parts
   //#############################################################################
-  std::array<float, 32>  sensorIDs_32;
+  std::array<double, 32>  sensorIDs_32;
   bool use32IncrementA = true;
   sensorIDs_32[0] = START_V_ANGLE_32;
   //Derive the 32 vertical angles for HDL-32E based on the starting angle and the two increments
@@ -178,18 +178,18 @@ void Attention::nextContainer(odcore::data::Container &a_container)
 void Attention::setUp()
 {
   auto kv = getKeyValueConfiguration();
-  m_startAngle = kv.getValue<float>("logic-cfsd18-sensation-attention.startAngle");
-  m_endAngle = kv.getValue<float>("logic-cfsd18-sensation-attention.endAngle");
-  m_yBoundary = kv.getValue<float>("logic-cfsd18-sensation-attention.yBoundary");
-  m_groundLayerZ = kv.getValue<float>("logic-cfsd18-sensation-attention.groundLayerZ");
-  m_coneHeight = kv.getValue<float>("logic-cfsd18-sensation-attention.coneHeight");
-  m_connectDistanceThreshold = kv.getValue<float>("logic-cfsd18-sensation-attention.connectDistanceThreshold");
-  m_layerRangeThreshold = kv.getValue<float>("logic-cfsd18-sensation-attention.layerRangeThreshold");
+  m_startAngle = kv.getValue<double>("logic-cfsd18-sensation-attention.startAngle");
+  m_endAngle = kv.getValue<double>("logic-cfsd18-sensation-attention.endAngle");
+  m_yBoundary = kv.getValue<double>("logic-cfsd18-sensation-attention.yBoundary");
+  m_groundLayerZ = kv.getValue<double>("logic-cfsd18-sensation-attention.groundLayerZ");
+  m_coneHeight = kv.getValue<double>("logic-cfsd18-sensation-attention.coneHeight");
+  m_connectDistanceThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.connectDistanceThreshold");
+  m_layerRangeThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.layerRangeThreshold");
   m_minNumOfPointsForCone = kv.getValue<uint16_t>("logic-cfsd18-sensation-attention.minNumOfPointsForCone");
   m_maxNumOfPointsForCone = kv.getValue<uint16_t>("logic-cfsd18-sensation-attention.maxNumOfPointsForCone");
-  m_farConeRadiusThreshold = kv.getValue<float>("logic-cfsd18-sensation-attention.farConeRadiusThreshold");
-  m_nearConeRadiusThreshold = kv.getValue<float>("logic-cfsd18-sensation-attention.nearConeRadiusThreshold");
-  m_zRangeThreshold = kv.getValue<float>("logic-cfsd18-sensation-attention.zRangeThreshold");
+  m_farConeRadiusThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.farConeRadiusThreshold");
+  m_nearConeRadiusThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.nearConeRadiusThreshold");
+  m_zRangeThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.zRangeThreshold");
   ConeDetection();
 }
 
@@ -197,7 +197,7 @@ void Attention::tearDown()
 {
 }
 
-void Attention::SaveOneCPCPointNoIntensity(const int &pointIndex,const uint16_t &distance_integer, const float &azimuth, const float &verticalAngle, const uint8_t &distanceEncoding)
+void Attention::SaveOneCPCPointNoIntensity(const int &pointIndex,const uint16_t &distance_integer, const double &azimuth, const double &verticalAngle, const uint8_t &distanceEncoding)
 {
 
   //Recordings before 2017 do not call hton() while storing CPC.
@@ -206,27 +206,27 @@ void Attention::SaveOneCPCPointNoIntensity(const int &pointIndex,const uint16_t 
   if (m_recordingYear > 2016) {
       distanceCPCPoint = ntohs(distanceCPCPoint);
   }
-  float distance = 0.0;
+  double distance = 0.0;
   switch (distanceEncoding) {
-      case CompactPointCloud::CM : distance = static_cast<float>(distanceCPCPoint / 100.0f); //convert to meter from resolution 1 cm
+      case CompactPointCloud::CM : distance = static_cast<double>(distanceCPCPoint / 100.0f); //convert to meter from resolution 1 cm
                                    break;
-      case CompactPointCloud::MM : distance = static_cast<float>(distanceCPCPoint / 500.0f); //convert to meter from resolution 2 mm
+      case CompactPointCloud::MM : distance = static_cast<double>(distanceCPCPoint / 500.0f); //convert to meter from resolution 2 mm
                                    break;
       default : cout << "Error, distanceCPCPoint not correctly defined!" << endl;
                 break;
   }
 
   // Compute x, y, z coordinate based on distance, azimuth, and vertical angle
-  float xyDistance = distance * cos(verticalAngle * static_cast<float>(DEG2RAD));
-  float xData = xyDistance * sin(azimuth * static_cast<float>(DEG2RAD));
-  float yData = xyDistance * cos(azimuth * static_cast<float>(DEG2RAD));
-  float zData = distance * sin(verticalAngle * static_cast<float>(DEG2RAD));
+  double xyDistance = distance * cos(verticalAngle * static_cast<double>(DEG2RAD));
+  double xData = xyDistance * sin(azimuth * static_cast<double>(DEG2RAD));
+  double yData = xyDistance * cos(azimuth * static_cast<double>(DEG2RAD));
+  double zData = distance * sin(verticalAngle * static_cast<double>(DEG2RAD));
   m_pointCloud.row(pointIndex) << xData,yData,zData;
 }
 
-void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const float &startAzimuth, const float &endAzimuth, const uint8_t &distanceEncoding)
+void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const double &startAzimuth, const double &endAzimuth, const uint8_t &distanceEncoding)
 {
-  float azimuth = startAzimuth;
+  double azimuth = startAzimuth;
   uint32_t numberOfPoints;
   stringstream sstr;
   if (part == 1) {
@@ -240,7 +240,7 @@ void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entries
       sstr.str(m_9_cpcDistance_32);
   }
   uint32_t numberOfAzimuths = numberOfPoints / entriesPerAzimuth;
-  float azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;//Calculate the azimuth increment
+  double azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;//Calculate the azimuth increment
   uint16_t distance = 0;
 
   // Initialize m_pointCloud
@@ -270,7 +270,7 @@ void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entries
   }
 
 }
-//void SaveCPC32WithIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const float &startAzimuth, const float &endAzimuth, const uint8_t &distanceEncoding, const uint8_t &numberOfBitsForIntensity, const uint8_t &intensityPlacement, const uint16_t &mask, const float &intensityMaxValue)
+//void SaveCPC32WithIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const double &startAzimuth, const double &endAzimuth, const uint8_t &distanceEncoding, const uint8_t &numberOfBitsForIntensity, const uint8_t &intensityPlacement, const uint16_t &mask, const double &intensityMaxValue)
 //{
   //opendlv::coord::Position pointPosition;
   //return pointPosition;
@@ -279,13 +279,13 @@ void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entries
 void Attention::SavePointCloud(){
   if (m_CPCReceived && !m_SPCReceived) {
     Lock lockCPC(m_cpcMutex);
-    const float startAzimuth = m_cpc.getStartAzimuth();
-    const float endAzimuth = m_cpc.getEndAzimuth();
+    const double startAzimuth = m_cpc.getStartAzimuth();
+    const double endAzimuth = m_cpc.getEndAzimuth();
     const uint8_t entriesPerAzimuth = m_cpc.getEntriesPerAzimuth(); // numberOfLayers
     const uint8_t numberOfBitsForIntensity = m_cpc.getNumberOfBitsForIntensity();
     const uint8_t intensityPlacement = m_cpc.getIntensityPlacement();
     uint16_t tmpMask = 0xFFFF;
-    //float intensityMaxValue = 0.0f;
+    //double intensityMaxValue = 0.0f;
 
     if (numberOfBitsForIntensity > 0) {
       if (intensityPlacement == 0) {
@@ -294,7 +294,7 @@ void Attention::SavePointCloud(){
       else {
         tmpMask = tmpMask << numberOfBitsForIntensity; //lower bits for intensity
       }
-      //intensityMaxValue = pow(2.0f, static_cast<float>(numberOfBitsForIntensity)) - 1.0f;
+      //intensityMaxValue = pow(2.0f, static_cast<double>(numberOfBitsForIntensity)) - 1.0f;
     }
     const uint8_t distanceEncoding = m_cpc.getDistanceEncoding();
 
@@ -304,17 +304,17 @@ void Attention::SavePointCloud(){
 
     uint16_t distance_integer = 0;
     if (entriesPerAzimuth == 16) {//A VLP-16 CPC
-      float azimuth = startAzimuth;
+      double azimuth = startAzimuth;
       const string distances = m_cpc.getDistances();
       const uint32_t numberOfPoints = distances.size() / 2;
       const uint32_t numberOfAzimuths = numberOfPoints / entriesPerAzimuth;
-      const float azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;//Calculate the azimuth increment
+      const double azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;//Calculate the azimuth increment
       stringstream sstr(distances);
       
       m_pointCloud = MatrixXf::Zero(numberOfPoints,3);
       m_pointIndex = 0;
       for (uint32_t azimuthIndex = 0; azimuthIndex < numberOfAzimuths; azimuthIndex++) {
-          float verticalAngle = START_V_ANGLE;
+          double verticalAngle = START_V_ANGLE;
           for (uint8_t sensorIndex = 0; sensorIndex < entriesPerAzimuth; sensorIndex++) {
               sstr.read((char*)(&distance_integer), 2); // Read distance value from the string in a CPC container point by point
               if (numberOfBitsForIntensity == 0) {
@@ -377,9 +377,9 @@ void Attention::ConeDetection(){
                   15.0,2.0,0.2; // object but not cone
   cout << "original point cloud is " << m_pointCloud << endl;
   
-  float groundLayerZ = 0.0;
-  float layerRangeThreshold = 0.1;
-  float coneHeight = 3.0;
+  double groundLayerZ = 0.0;
+  double layerRangeThreshold = 0.1;
+  double coneHeight = 3.0;
 
   MatrixXf pointCloudConeROI = ExtractConeROI(groundLayerZ, layerRangeThreshold, coneHeight);
 
@@ -402,7 +402,7 @@ void Attention::ConeDetection(){
  
 }
 
-vector<vector<uint32_t>> Attention::NNSegmentation(MatrixXf &pointCloudConeROI, const float &connectDistanceThreshold){
+vector<vector<uint32_t>> Attention::NNSegmentation(MatrixXf &pointCloudConeROI, const double &connectDistanceThreshold){
   uint32_t numberOfPointConeROI = pointCloudConeROI.rows();
   vector<uint32_t> restPointsList(numberOfPointConeROI);
   for (uint32_t i = 0; i < numberOfPointConeROI; i++)
@@ -419,10 +419,10 @@ vector<vector<uint32_t>> Attention::NNSegmentation(MatrixXf &pointCloudConeROI, 
   while (!restPointsList.empty())
   {
     uint32_t numberOfRestPoints = restPointsList.size();
-    float minDistance = 100000; // assign a large value for inilization
+    double minDistance = 100000; // assign a large value for inilization
     for (uint32_t i = 0; i < numberOfRestPoints; i++)
     {
-      float distance = CalculateXYDistance(pointCloudConeROI, tmpPointIndex, restPointsList[i]);
+      double distance = CalculateXYDistance(pointCloudConeROI, tmpPointIndex, restPointsList[i]);
       cout << "Distance is " << distance << endl;
       if (distance < minDistance)
       {
@@ -455,7 +455,7 @@ vector<vector<uint32_t>> Attention::NNSegmentation(MatrixXf &pointCloudConeROI, 
   return objectIndexList;
 }
 
-vector<vector<uint32_t>> Attention::FindConesFromObjects(MatrixXf &pointCloudConeROI, vector<vector<uint32_t>> &objectIndexList, const float &minNumOfPointsForCone, const float &maxNumOfPointsForCone, const float &nearConeRadiusThreshold, const float &farConeRadiusThreshold, const float &zRangeThreshold)
+vector<vector<uint32_t>> Attention::FindConesFromObjects(MatrixXf &pointCloudConeROI, vector<vector<uint32_t>> &objectIndexList, const double &minNumOfPointsForCone, const double &maxNumOfPointsForCone, const double &nearConeRadiusThreshold, const double &farConeRadiusThreshold, const double &zRangeThreshold)
 {
   uint32_t numberOfObjects = objectIndexList.size();
 
@@ -485,8 +485,8 @@ vector<vector<uint32_t>> Attention::FindConesFromObjects(MatrixXf &pointCloudCon
       potentialConePointCloud.row(j) << pointCloudConeROI(selectedObjectIndex[j],0),pointCloudConeROI(selectedObjectIndex[j],1),pointCloudConeROI(selectedObjectIndex[j],2);
     }
     
-    float coneRadius = CalculateConeRadius(potentialConePointCloud);
-    float zRange = GetZRange(potentialConePointCloud);
+    double coneRadius = CalculateConeRadius(potentialConePointCloud);
+    double zRange = GetZRange(potentialConePointCloud);
     bool condition1 = (coneRadius < farConeRadiusThreshold); //Far point cones
     bool condition2 = (coneRadius>= farConeRadiusThreshold && coneRadius <= nearConeRadiusThreshold);
     bool condition3 = (zRange >= zRangeThreshold);  // Near point cones have to cover a larger Z range
@@ -501,15 +501,15 @@ vector<vector<uint32_t>> Attention::FindConesFromObjects(MatrixXf &pointCloudCon
 
 }
 
-float Attention::CalculateConeRadius(MatrixXf &potentialConePointCloud)
+double Attention::CalculateConeRadius(MatrixXf &potentialConePointCloud)
 {
-  float coneRadius = 0;
+  double coneRadius = 0;
   uint32_t numberOfPointsOnSelectedObject = potentialConePointCloud.rows();
-  float xMean = potentialConePointCloud.colwise().sum()[0]/numberOfPointsOnSelectedObject;
-  float yMean = potentialConePointCloud.colwise().sum()[1]/numberOfPointsOnSelectedObject;
+  double xMean = potentialConePointCloud.colwise().sum()[0]/numberOfPointsOnSelectedObject;
+  double yMean = potentialConePointCloud.colwise().sum()[1]/numberOfPointsOnSelectedObject;
   for (uint32_t i = 0; i < numberOfPointsOnSelectedObject; i++)
   {
-    float radius = sqrt(pow((potentialConePointCloud(i,0)-xMean),2)+pow((potentialConePointCloud(i,1)-yMean),2));
+    double radius = sqrt(pow((potentialConePointCloud(i,0)-xMean),2)+pow((potentialConePointCloud(i,1)-yMean),2));
     if (radius >= coneRadius)
     {
       coneRadius = radius;
@@ -519,14 +519,14 @@ float Attention::CalculateConeRadius(MatrixXf &potentialConePointCloud)
 
 }
 
-float Attention::GetZRange(MatrixXf &potentialConePointCloud)
+double Attention::GetZRange(MatrixXf &potentialConePointCloud)
 {
-  float zRange = potentialConePointCloud.colwise().maxCoeff()[2]-potentialConePointCloud.colwise().minCoeff()[2];
+  double zRange = potentialConePointCloud.colwise().maxCoeff()[2]-potentialConePointCloud.colwise().minCoeff()[2];
   return zRange;
 }
 
 
-MatrixXf Attention::ExtractConeROI(const float &groundLayerZ, const float &layerRangeThreshold, const float &coneHeight){
+MatrixXf Attention::ExtractConeROI(const double &groundLayerZ, const double &layerRangeThreshold, const double &coneHeight){
   uint32_t numberOfPointsCPC = m_pointCloud.rows();
   uint32_t numberOfPointConeROI = 0;
   vector<int> pointIndexConeROI;
@@ -546,13 +546,13 @@ MatrixXf Attention::ExtractConeROI(const float &groundLayerZ, const float &layer
   return pointCloudConeROI;
 }
 
-float Attention::CalculateXYDistance(MatrixXf &pointCloud, const uint32_t &index1, const uint32_t &index2)
+double Attention::CalculateXYDistance(MatrixXf &pointCloud, const uint32_t &index1, const uint32_t &index2)
 {
-  float x1 = pointCloud(index1,0);
-  float y1 = pointCloud(index1,1);
-  float x2 = pointCloud(index2,0);
-  float y2 = pointCloud(index2,1);
-  float distance = sqrt(pow((x1-x2),2) + pow((y1-y2),2));
+  double x1 = pointCloud(index1,0);
+  double y1 = pointCloud(index1,1);
+  double x2 = pointCloud(index2,0);
+  double y2 = pointCloud(index2,1);
+  double distance = sqrt(pow((x1-x2),2) + pow((y1-y2),2));
   return distance;
 }
 
@@ -564,9 +564,9 @@ void Attention::SendingConesPositions(MatrixXf &pointCloudConeROI, vector<vector
   for (uint32_t i = 0; i < numberOfCones; i++)
   {
     uint32_t numberOfPointsOnCone = coneIndexList[i].size();
-    float conePositionX = 0;
-    float conePositionY = 0;
-    float conePositionZ = 0;
+    double conePositionX = 0;
+    double conePositionY = 0;
+    double conePositionZ = 0;
     for (uint32_t j = 0; j< numberOfPointsOnCone; j++)
     {
       conePositionX += pointCloudConeROI(coneIndexList[i][j],0);
@@ -589,11 +589,11 @@ void Attention::SendingConesPositions(MatrixXf &pointCloudConeROI, vector<vector
   
 }
 
-opendlv::logic::sensation::Point Attention::Cartesian2Spherical(float &x, float &y, float &z)
+opendlv::logic::sensation::Point Attention::Cartesian2Spherical(double &x, double &y, double &z)
 {
-  float distance = sqrt(x*x+y*y+z*z);
-  float azimuthAngle = atan(y/x)*static_cast<float>(RAD2DEG);
-  float zenithAngle = atan(sqrt(x*x+y*y)/z)*static_cast<float>(RAD2DEG);
+  double distance = sqrt(x*x+y*y+z*z);
+  double azimuthAngle = atan(y/x)*static_cast<double>(RAD2DEG);
+  double zenithAngle = atan(sqrt(x*x+y*y)/z)*static_cast<double>(RAD2DEG);
   logic::sensation::Point pointInSpherical;
   pointInSpherical.setDistance(distance);
   pointInSpherical.setAzimuthAngle(azimuthAngle);
