@@ -23,6 +23,14 @@
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+#include "opendavinci/GeneratedHeaders_OpenDaVINCI.h"
+#include "opendavinci/odcore/wrapper/SharedMemoryFactory.h"
+#include "opendavinci/odcore/wrapper/SharedMemory.h"
+
 //#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 #include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 
@@ -42,6 +50,9 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
  private:
   void setUp();
   void tearDown();
+  bool ExtractSharedImage(odcore::data::image::SharedImage *);
+  void featureBased();
+  cv::Mat m_img;
 };
 
 }
