@@ -59,8 +59,11 @@ void Lateral::tearDown()
 
 void Lateral::nextContainer(odcore::data::Container &a_container)
 {
-  if (a_container.getDataType() == opendlv::logic::cognition::GroundSteeringLimit::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
+  if (a_container.getDataType() == opendlv::proxy::GroundSteeringReading::ID()) {
+    auto groundSteeringReading = a_container.getData<opendlv::proxy::GroundSteeringReading>();
+    if (isVerbose()) {
+      std::cout << "[" << getName() << "] Received: " << groundSteeringReading.toString() << std::endl;
+    }
   }
   if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
