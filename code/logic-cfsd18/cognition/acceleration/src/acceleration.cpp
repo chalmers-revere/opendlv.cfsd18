@@ -33,6 +33,7 @@ namespace cognition {
 Acceleration::Acceleration(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-cognition-acceleration")
 {
+
 }
 
 Acceleration::~Acceleration()
@@ -71,7 +72,7 @@ void Acceleration::nextContainer(odcore::data::Container &a_container)
 
 void Acceleration::setUp()
 {
-  // std::string const exampleConfig = 
+  // std::string const exampleConfig =
   //   getKeyValueConfiguration().getValue<std::string>(
   //     "logic-cfsd18-cognition-acceleration.example-config");
 
@@ -82,6 +83,11 @@ void Acceleration::setUp()
 
 void Acceleration::tearDown()
 {
+}
+
+odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Accleration::body()
+{
+  //To do: add specific behavior for acceleration
 }
 
 }
