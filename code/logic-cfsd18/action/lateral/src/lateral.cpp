@@ -31,7 +31,7 @@ namespace cfsd18 {
 namespace action {
 
 Lateral::Lateral(int32_t const &a_argc, char **a_argv) :
-  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-lateral")
+  TimeTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-lateral")
 {
 }
 
@@ -41,19 +41,6 @@ Lateral::~Lateral()
 
 
 
-void Lateral::nextContainer(odcore::data::Container &a_container)
-{
-  if (a_container.getDataType() == opendlv::logic::cognition::GroundSteeringLimit::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
-  }
-  if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
-
-    opendlv::proxy::GroundSteeringRequest o1;
-    odcore::data::Container c1(o1);
-    getConference().send(c1);
-  }
-}
 
 void Lateral::setUp()
 {
@@ -69,6 +56,37 @@ void Lateral::setUp()
 void Lateral::tearDown()
 {
 }
+
+void Lateral::nextContainer(odcore::data::Container &a_container)
+{
+  if (a_container.getDataType() == opendlv::logic::cognition::GroundSteeringLimit::ID()) {
+    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
+  }
+  if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
+    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
+  }
+}
+
+odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Lateral::body()
+{
+  // Todo: actual steering reading
+  while (getModuleStateAndWaitForRemainingTimeInTimeslice() ==
+      odcore::data::dmcp::ModuleStateMessage::RUNNING) {
+    double steeringRequest = 1;
+    sendGroundSteeringRequest(steeringRequest);
+  }
+  return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
+}
+
+void Lateral::sendGroundSteeringRequest(double a_steeringRequest)
+{
+  opendlv::proxy::GroundSteeringRequest gsr(a_steeringRequest);
+  odcore::data::Container c(gsr);
+  getConference().send(c);
+
+  std::cout << "[" << getName() << "] Sending: " << gsr.toString() << std::endl;
+}
+
 
 }
 }
