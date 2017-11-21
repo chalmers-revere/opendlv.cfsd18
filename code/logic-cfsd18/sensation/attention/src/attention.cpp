@@ -574,8 +574,8 @@ void Attention::SendingConesPositions(MatrixXd &pointCloudConeROI, vector<vector
       conePositionZ += pointCloudConeROI(coneIndexList[i][j],2);
     }
     conePositionX = conePositionX / numberOfPointsOnCone;
-    conePositionY = conePositionX / numberOfPointsOnCone;
-    conePositionZ = conePositionX / numberOfPointsOnCone;
+    conePositionY = conePositionY / numberOfPointsOnCone;
+    conePositionZ = conePositionZ / numberOfPointsOnCone;
     conePoints.row(i) << conePositionX,conePositionY,conePositionZ;
 
     opendlv::logic::sensation::Point conePoint = Cartesian2Spherical(conePositionX,conePositionY,conePositionZ);

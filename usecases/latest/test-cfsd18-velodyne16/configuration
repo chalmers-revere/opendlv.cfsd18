@@ -77,8 +77,8 @@ logic-cfsd18-sensation-attention.connectDistanceThreshold = 0.5  #[m]
 logic-cfsd18-sensation-attention.layerRangeThreshold = 0.06   #[m]
 logic-cfsd18-sensation-attention.minNumOfPointsForCone = 2
 logic-cfsd18-sensation-attention.maxNumOfPointsForCone = 1000
-logic-cfsd18-sensation-attention.farConeRadiusThreshold = 0.1
-logic-cfsd18-sensation-attention.nearConeRadiusThreshold = 0.15
+logic-cfsd18-sensation-attention.farConeRadiusThreshold = 0.2
+logic-cfsd18-sensation-attention.nearConeRadiusThreshold = 0.25
 logic-cfsd18-sensation-attention.zRangeThreshold = 0.08  #[m]
 
 
