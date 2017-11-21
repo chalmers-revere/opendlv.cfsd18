@@ -245,10 +245,10 @@ void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entries
 
   // Initialize m_pointCloud
   if (part == 1) {
-      m_pointCloud = MatrixXf::Zero(numberOfPoints,3);
+      m_pointCloud = MatrixXd::Zero(numberOfPoints,3);
       m_pointIndex = 0;
   } else {
-      m_pointCloud.conservativeResizeLike(MatrixXf::Zero(m_pointCloud.rows()+numberOfPoints, 3));
+      m_pointCloud.conservativeResizeLike(MatrixXd::Zero(m_pointCloud.rows()+numberOfPoints, 3));
 
   }
   // Loop through all points and save each of them in the point cloud matrix
@@ -311,7 +311,7 @@ void Attention::SavePointCloud(){
       const double azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;//Calculate the azimuth increment
       stringstream sstr(distances);
       
-      m_pointCloud = MatrixXf::Zero(numberOfPoints,3);
+      m_pointCloud = MatrixXd::Zero(numberOfPoints,3);
       m_pointIndex = 0;
       for (uint32_t azimuthIndex = 0; azimuthIndex < numberOfAzimuths; azimuthIndex++) {
           double verticalAngle = START_V_ANGLE;
@@ -329,7 +329,7 @@ void Attention::SavePointCloud(){
       }
       cout << "Angular resolution is: " << azimuthIncrement << endl;
       cout << "number of points are:"<< m_pointCloud.rows() << endl;
-      //m_pointCloud = MatrixXf::Zero(1,3); // Empty the point cloud matrix for this scan
+      //m_pointCloud = MatrixXd::Zero(1,3); // Empty the point cloud matrix for this scan
       cout << "One scan complete! " << endl;
     }  else { //A HDL-32E CPC, one of the three parts of a complete scan  
       if ((m_cpcMask_32 & 0x04) > 0) {//The first part, 12 layers
@@ -367,7 +367,7 @@ void Attention::SavePointCloud(){
 }
 
 void Attention::ConeDetection(){
-  m_pointCloud = MatrixXf::Zero(7,3);
+  m_pointCloud = MatrixXd::Zero(7,3);
   m_pointCloud << 1.0,2.0,0.2,  //cone 1 point 1
                   6.0,2.0,0.2,  // cone 2 point 1
                   7.0,8.0,9.0,
@@ -381,7 +381,7 @@ void Attention::ConeDetection(){
   double layerRangeThreshold = 0.1;
   double coneHeight = 3.0;
 
-  MatrixXf pointCloudConeROI = ExtractConeROI(groundLayerZ, layerRangeThreshold, coneHeight);
+  MatrixXd pointCloudConeROI = ExtractConeROI(groundLayerZ, layerRangeThreshold, coneHeight);
 
   cout << "Cone ROI is: " << pointCloudConeROI << endl;
   cout << "Distance should be 5 and it's calculated as: " << CalculateXYDistance(pointCloudConeROI,0,1) << endl;
@@ -402,7 +402,7 @@ void Attention::ConeDetection(){
  
 }
 
-vector<vector<uint32_t>> Attention::NNSegmentation(MatrixXf &pointCloudConeROI, const double &connectDistanceThreshold){
+vector<vector<uint32_t>> Attention::NNSegmentation(MatrixXd &pointCloudConeROI, const double &connectDistanceThreshold){
   uint32_t numberOfPointConeROI = pointCloudConeROI.rows();
   vector<uint32_t> restPointsList(numberOfPointConeROI);
   for (uint32_t i = 0; i < numberOfPointConeROI; i++)
@@ -455,7 +455,7 @@ vector<vector<uint32_t>> Attention::NNSegmentation(MatrixXf &pointCloudConeROI, 
   return objectIndexList;
 }
 
-vector<vector<uint32_t>> Attention::FindConesFromObjects(MatrixXf &pointCloudConeROI, vector<vector<uint32_t>> &objectIndexList, const double &minNumOfPointsForCone, const double &maxNumOfPointsForCone, const double &nearConeRadiusThreshold, const double &farConeRadiusThreshold, const double &zRangeThreshold)
+vector<vector<uint32_t>> Attention::FindConesFromObjects(MatrixXd &pointCloudConeROI, vector<vector<uint32_t>> &objectIndexList, const double &minNumOfPointsForCone, const double &maxNumOfPointsForCone, const double &nearConeRadiusThreshold, const double &farConeRadiusThreshold, const double &zRangeThreshold)
 {
   uint32_t numberOfObjects = objectIndexList.size();
 
@@ -479,7 +479,7 @@ vector<vector<uint32_t>> Attention::FindConesFromObjects(MatrixXf &pointCloudCon
   {
     vector<uint32_t> selectedObjectIndex = objectIndexListWithNumOfPointsLimit[i];
     uint32_t numberOfPointsOnSelectedObject = selectedObjectIndex.size();
-    MatrixXf potentialConePointCloud = MatrixXf::Zero(numberOfPointsOnSelectedObject,3);
+    MatrixXd potentialConePointCloud = MatrixXd::Zero(numberOfPointsOnSelectedObject,3);
     for (uint32_t j = 0; j < numberOfPointsOnSelectedObject; j++)
     {
       potentialConePointCloud.row(j) << pointCloudConeROI(selectedObjectIndex[j],0),pointCloudConeROI(selectedObjectIndex[j],1),pointCloudConeROI(selectedObjectIndex[j],2);
@@ -501,7 +501,7 @@ vector<vector<uint32_t>> Attention::FindConesFromObjects(MatrixXf &pointCloudCon
 
 }
 
-double Attention::CalculateConeRadius(MatrixXf &potentialConePointCloud)
+double Attention::CalculateConeRadius(MatrixXd &potentialConePointCloud)
 {
   double coneRadius = 0;
   uint32_t numberOfPointsOnSelectedObject = potentialConePointCloud.rows();
@@ -519,14 +519,14 @@ double Attention::CalculateConeRadius(MatrixXf &potentialConePointCloud)
 
 }
 
-double Attention::GetZRange(MatrixXf &potentialConePointCloud)
+double Attention::GetZRange(MatrixXd &potentialConePointCloud)
 {
   double zRange = potentialConePointCloud.colwise().maxCoeff()[2]-potentialConePointCloud.colwise().minCoeff()[2];
   return zRange;
 }
 
 
-MatrixXf Attention::ExtractConeROI(const double &groundLayerZ, const double &layerRangeThreshold, const double &coneHeight){
+MatrixXd Attention::ExtractConeROI(const double &groundLayerZ, const double &layerRangeThreshold, const double &coneHeight){
   uint32_t numberOfPointsCPC = m_pointCloud.rows();
   uint32_t numberOfPointConeROI = 0;
   vector<int> pointIndexConeROI;
@@ -538,7 +538,7 @@ MatrixXf Attention::ExtractConeROI(const double &groundLayerZ, const double &lay
       numberOfPointConeROI ++;
     }
   }
-  MatrixXf pointCloudConeROI = MatrixXf::Zero(numberOfPointConeROI,3);
+  MatrixXd pointCloudConeROI = MatrixXd::Zero(numberOfPointConeROI,3);
   for (uint32_t j = 0; j < numberOfPointConeROI; j++)
   {
     pointCloudConeROI.row(j) << m_pointCloud(pointIndexConeROI[j],0),m_pointCloud(pointIndexConeROI[j],1),m_pointCloud(pointIndexConeROI[j],2);
@@ -546,7 +546,7 @@ MatrixXf Attention::ExtractConeROI(const double &groundLayerZ, const double &lay
   return pointCloudConeROI;
 }
 
-double Attention::CalculateXYDistance(MatrixXf &pointCloud, const uint32_t &index1, const uint32_t &index2)
+double Attention::CalculateXYDistance(MatrixXd &pointCloud, const uint32_t &index1, const uint32_t &index2)
 {
   double x1 = pointCloud(index1,0);
   double y1 = pointCloud(index1,1);
@@ -556,11 +556,11 @@ double Attention::CalculateXYDistance(MatrixXf &pointCloud, const uint32_t &inde
   return distance;
 }
 
-void Attention::SendingConesPositions(MatrixXf &pointCloudConeROI, vector<vector<uint32_t>> &coneIndexList)
+void Attention::SendingConesPositions(MatrixXd &pointCloudConeROI, vector<vector<uint32_t>> &coneIndexList)
 {
   
   uint32_t numberOfCones = coneIndexList.size();
-  MatrixXf conePoints = MatrixXf::Zero(numberOfCones,3);
+  MatrixXd conePoints = MatrixXd::Zero(numberOfCones,3);
   for (uint32_t i = 0; i < numberOfCones; i++)
   {
     uint32_t numberOfPointsOnCone = coneIndexList[i].size();

@@ -62,13 +62,13 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
 // void SaveCPC32WithIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const double &startAzimuth, const double &endAzimuth, const uint8_t &distanceEncoding, const uint8_t &numberOfBitsForIntensity, const uint8_t &intensityPlacement, const uint16_t &mask, const double &intensityMaxValue);
   void SavePointCloud();
   void ConeDetection();
-  vector<vector<uint32_t>> NNSegmentation(MatrixXf &pointCloudConeROI, const double &connectDistanceThreshold);
-  vector<vector<uint32_t>> FindConesFromObjects(MatrixXf &pointCloudConeROI, vector<vector<uint32_t>> &objectIndexList, const double &minNumOfPointsForCone, const double &maxNumOfPointsForCone, const double &nearConeRadiusThreshold, const double &farConeRadiusThreshold, const double &zRangeThreshold);
-  MatrixXf ExtractConeROI(const double &groundLayerZ, const double &zRangeThreshold, const double &coneHeight);
-  double CalculateXYDistance(MatrixXf &pointCloud, const uint32_t &index1, const uint32_t &index2);
-  double CalculateConeRadius(MatrixXf &potentialConePointCloud);
-  double GetZRange(MatrixXf &potentialConePointCloud);
-  void SendingConesPositions(MatrixXf &pointCloudConeROI, vector<vector<uint32_t>> &coneIndexList);
+  vector<vector<uint32_t>> NNSegmentation(MatrixXd &pointCloudConeROI, const double &connectDistanceThreshold);
+  vector<vector<uint32_t>> FindConesFromObjects(MatrixXd &pointCloudConeROI, vector<vector<uint32_t>> &objectIndexList, const double &minNumOfPointsForCone, const double &maxNumOfPointsForCone, const double &nearConeRadiusThreshold, const double &farConeRadiusThreshold, const double &zRangeThreshold);
+  MatrixXd ExtractConeROI(const double &groundLayerZ, const double &zRangeThreshold, const double &coneHeight);
+  double CalculateXYDistance(MatrixXd &pointCloud, const uint32_t &index1, const uint32_t &index2);
+  double CalculateConeRadius(MatrixXd &potentialConePointCloud);
+  double GetZRange(MatrixXd &potentialConePointCloud);
+  void SendingConesPositions(MatrixXd &pointCloudConeROI, vector<vector<uint32_t>> &coneIndexList);
   opendlv::logic::sensation::Point Cartesian2Spherical(double &x, double &y, double &z);
   // Define constants to decode CPC message
   const double START_V_ANGLE = -15.0; //For each azimuth there are 16 points with unique vertical angles from -15 to 15 degrees
@@ -102,7 +102,7 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   uint32_t m_recordingYear;//The year when a recording with CPC was taken
 
   // Class variables to save point cloud 
-  MatrixXf m_pointCloud;
+  MatrixXd m_pointCloud;
   //vector<data::environment::Point3> pointCloud;
   //vector<logic::sensation::Point> pointCloud;
   int m_pointIndex;
