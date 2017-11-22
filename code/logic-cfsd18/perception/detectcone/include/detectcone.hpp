@@ -27,6 +27,7 @@
 #include "opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h"
 #include "opendavinci/odcore/data/Container.h"
 #include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
+ 
 
 #include "opendavinci/generated/odcore/data/CompactPointCloud.h"
  
@@ -45,6 +46,7 @@ using namespace Eigen;
 using namespace odcore::base;
 using namespace odcore::data;
 using namespace odcore::wrapper;
+
 
 class DetectCone : public odcore::base::module::DataTriggeredConferenceClientModule {
  public:

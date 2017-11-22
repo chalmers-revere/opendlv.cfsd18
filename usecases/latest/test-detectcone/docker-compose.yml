@@ -15,6 +15,7 @@ services:
             - odsupercomponent
         network_mode: host
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectcone --cid=${CID} --id=1"
+<<<<<<< HEAD
     # microservice for cfsd18-sensation-attention
     cfsd18-sensation-attention:
         image: ${IMAGE}
@@ -34,4 +35,6 @@ services:
         depends_on:
             - odsupercomponent
         command: "/opt/opendlv.core/bin/opendlv-core-system-proxy-velodyne16 --cid=${CID}"
+=======
+>>>>>>> f8402012ac82ab72e6f9e2d20f286a2232ef1f9b
 

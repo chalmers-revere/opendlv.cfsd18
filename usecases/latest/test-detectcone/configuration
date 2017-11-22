@@ -65,6 +65,7 @@ odsupercomponent.pulsetimeack.exclude = odcockpit
 ###############################################################################
 ###############################################################################
 
+<<<<<<< HEAD
 logic-cfsd18-perception-detectcone.threshold = 1.5 #[m]
 logic-cfsd18-perception-detectcone.timeDiffMilliseconds = 500 #[ms]
 
@@ -101,6 +102,12 @@ logic-cfsd18-sensation-attention.maxNumOfPointsForCone = 1000
 logic-cfsd18-sensation-attention.farConeRadiusThreshold = 0.2
 logic-cfsd18-sensation-attention.nearConeRadiusThreshold = 0.25
 logic-cfsd18-sensation-attention.zRangeThreshold = 0.08  #[m]
+=======
+logic-cfsd18-perception-detectcone.threshold = 1.5
+
+
+
+>>>>>>> f8402012ac82ab72e6f9e2d20f286a2232ef1f9b
 ###############################################################################
 ###############################################################################
 odcockpit.directoriesForSharedLibaries = /opt/opendlv.cfsd18

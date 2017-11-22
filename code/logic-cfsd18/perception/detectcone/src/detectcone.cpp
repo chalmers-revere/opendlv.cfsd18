@@ -39,6 +39,8 @@
 
 //#include "odvdopendlvdata/GeneratedHeaders_ODVDOpenDLVData.h"
 
+//#include "odvdopendlvdata/GeneratedHeaders_ODVDOpenDLVData.h"
+
 #include "detectcone.hpp"
 
 namespace opendlv {
@@ -48,9 +50,11 @@ namespace perception {
 
 using namespace std;
 using namespace Eigen;
+
 using namespace odcore::base;
 using namespace odcore::data;
 using namespace odcore::wrapper;
+
 
 DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-perception-detectcone")
@@ -84,8 +88,8 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
 {
 
 
-
   if (a_container.getDataType() == opendlv::logic::sensation::Point::ID()) {
+
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
     
     //Retrive data and timestamp
@@ -208,8 +212,9 @@ void DetectCone::findMatch(MatrixXd lidarPoint, MatrixXd cameraPoint)
 
     m_pointMatched = MatrixXd::Zero(4,1);
     m_diffVec = 0;
+
   }
-      
+
 }
 
 MatrixXd DetectCone::Spherical2Cartesian(double azimuth, double zenimuth, double distance)
@@ -289,6 +294,13 @@ void DetectCone::setUp()
   cout << "setup OK " << endl;
 
   /*MatrixXd tDataC = MatrixXd::Zero(4,15);
+=======
+  double const threshold = kv.getValue<double>("logic-cfsd18-perception-detectcone.threshold");
+  m_threshold = threshold;
+
+  /*------------TEST CASE ---------------
+  MatrixXd tDataC = MatrixXd::Zero(4,15);
+>>>>>>> f8402012ac82ab72e6f9e2d20f286a2232ef1f9b
   tDataC << 156.070834564403,  184.601466470279,  12.89492281629822,  181.922585263508,  38.4423334159231,  95.2869772168372,  108.050576050148,  159.876418507748,  104.572187872226,  125.994541306663,  67.7155269296972,  121.351729955313,  95.5718038179233,  112.490754168257,  187.325804192157,
             34.6488968771459,  470.3156219435640,  4.70876340071653,  450.2937622172337,  70.91722137374080,  190.4989903743118,  250.1613172118744,  390.0775417218023,  25.8791158832663,  27.5842177337360,  130.9307211912096,  280.8746836179155,  22.4613982170025,  23.9103149023747,  47.6730787639961,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -299,6 +311,7 @@ void DetectCone::setUp()
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
   matchPoints(tDataL, tDataC);
+<<<<<<< HEAD
   cout << "Points matched 1:" << endl;
   cout << m_finalPointCloud << endl;
 
@@ -329,8 +342,6 @@ void DetectCone::setUp()
   matchPoints(tDataL, tDataC);
   cout << "Points matched 3:" << endl;
   cout << m_finalPointCloud << endl;*/
-  
-
 
 }
 
