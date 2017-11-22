@@ -78,6 +78,8 @@ Attention::Attention(int32_t const &a_argc, char **a_argv) :
   , m_farConeRadiusThreshold()
   , m_nearConeRadiusThreshold()
   , m_zRangeThreshold()
+  , m_CPCReceivedLastTime()
+  , m_algorithmTime()
   {
   //#############################################################################
   // Following part are prepared to decode CPC of HDL32 3 parts
@@ -122,13 +124,33 @@ Attention::~Attention()
 
 void Attention::nextContainer(odcore::data::Container &a_container)
 {
+  TimeStamp incommingDataTime = a_container.getSampleTimeStamp();
+  double timeSinceLastReceive = abs(static_cast<double>(incommingDataTime.toMicroseconds()-m_CPCReceivedLastTime.toMicroseconds())/1000000.0);
+  cout << "Time since between 2 incomming messages: " << timeSinceLastReceive << "s" << endl;
+  if (timeSinceLastReceive>m_algorithmTime)
+  {
+
   if(a_container.getDataType() == odcore::data::SharedPointCloud::ID()){
     m_SPCReceived = true;
     cout << "Error: Don't use SharedPointCloud here!!!" << endl;
 }
   if (a_container.getDataType() == odcore::data::CompactPointCloud::ID()) {
+
+
+
+
+    
     m_CPCReceived = true;
     TimeStamp ts = a_container.getSampleTimeStamp();
+
+    double timeBetween2ProcessedMessage = static_cast<double>(ts.toMicroseconds()-m_CPCReceivedLastTime.toMicroseconds())/1000000.0;
+
+    cout << "Time between 2 processed messages is: " << timeBetween2ProcessedMessage << "s" << endl;
+
+    m_CPCReceivedLastTime = ts;
+
+
+
     m_recordingYear = ts.getYear();
 
     if (!m_SPCReceived) {
@@ -138,6 +160,7 @@ void Attention::nextContainer(odcore::data::Container &a_container)
 
       if (numberOfLayers == 16) {  // Deal with VLP-16
         cout << "Connecting to VLP16" <<  endl;
+
       }
       else {  // Deal with HDL-32
         cout << "Connecting to HDL-32" <<  endl;
@@ -165,14 +188,21 @@ void Attention::nextContainer(odcore::data::Container &a_container)
       }
     }
   }
-
+  odcore::data::TimeStamp TimeBeforeAlgorithm;
   SavePointCloud();
-  //ConeDetection();
+  ConeDetection();
+
+  odcore::data::TimeStamp TimeAfterAlgorithm;
+  double timeForProcessingOneScan = static_cast<double>(TimeAfterAlgorithm.toMicroseconds()-TimeBeforeAlgorithm.toMicroseconds())/1000000.0;
+  //cout << "Speed for algorithm is: " << 1/timeSinceReceiveTheProcessingScan << " FPS" << endl;
+  m_algorithmTime = timeForProcessingOneScan;
+  cout << "Time for processing one scan of data is: " << timeForProcessingOneScan << "s" << endl;
       /*  
       opendlv::logic::sensation::Attention o1;
       odcore::data::Container c1(o1);
       getConference().send(c1);
     */
+  }
 }
 
 void Attention::setUp()
@@ -190,7 +220,7 @@ void Attention::setUp()
   m_farConeRadiusThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.farConeRadiusThreshold");
   m_nearConeRadiusThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.nearConeRadiusThreshold");
   m_zRangeThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.zRangeThreshold");
-  ConeDetection();
+
 }
 
 void Attention::tearDown()
@@ -367,7 +397,7 @@ void Attention::SavePointCloud(){
 }
 
 void Attention::ConeDetection(){
-  m_pointCloud = MatrixXd::Zero(7,3);
+  /*m_pointCloud = MatrixXd::Zero(7,3);
   m_pointCloud << 1.0,2.0,0.2,  //cone 1 point 1
                   6.0,2.0,0.2,  // cone 2 point 1
                   7.0,8.0,9.0,
@@ -380,19 +410,25 @@ void Attention::ConeDetection(){
   double groundLayerZ = 0.0;
   double layerRangeThreshold = 0.1;
   double coneHeight = 3.0;
+  */
+  MatrixXd pointCloudConeROI = ExtractConeROI(m_groundLayerZ, m_layerRangeThreshold, m_coneHeight);
+  cout << "Number of extrected pointCloud is: " << pointCloudConeROI.rows() << endl;
 
-  MatrixXd pointCloudConeROI = ExtractConeROI(groundLayerZ, layerRangeThreshold, coneHeight);
+  //MatrixXd testPointCloud = pointCloudConeROI.topRows<600>();
 
-  cout << "Cone ROI is: " << pointCloudConeROI << endl;
-  cout << "Distance should be 5 and it's calculated as: " << CalculateXYDistance(pointCloudConeROI,0,1) << endl;
+  //cout << "Cone ROI is: " << pointCloudConeROI << endl;
+  //cout << "Distance should be 5 and it's calculated as: " << CalculateXYDistance(pointCloudConeROI,0,1) << endl;
+
+  
   vector<vector<uint32_t>> objectIndexList = NNSegmentation(pointCloudConeROI, m_connectDistanceThreshold);
+  
   vector<vector<uint32_t>> coneIndexList = FindConesFromObjects(pointCloudConeROI, objectIndexList, m_minNumOfPointsForCone, m_maxNumOfPointsForCone, m_nearConeRadiusThreshold, m_farConeRadiusThreshold, m_zRangeThreshold);
   cout << "Number of Object is: " << objectIndexList.size() << endl;
   cout << "Number of Cones is: " << coneIndexList.size() << endl;
 
 
 
-  SendingConesPositions(pointCloudConeROI, coneIndexList);
+  //SendingConesPositions(pointCloudConeROI, coneIndexList);
 
 
 
@@ -423,7 +459,7 @@ vector<vector<uint32_t>> Attention::NNSegmentation(MatrixXd &pointCloudConeROI, 
     for (uint32_t i = 0; i < numberOfRestPoints; i++)
     {
       double distance = CalculateXYDistance(pointCloudConeROI, tmpPointIndex, restPointsList[i]);
-      cout << "Distance is " << distance << endl;
+      //cout << "Distance is " << distance << endl;
       if (distance < minDistance)
       {
         tmpPointIndexNext = restPointsList[i];
@@ -433,7 +469,7 @@ vector<vector<uint32_t>> Attention::NNSegmentation(MatrixXd &pointCloudConeROI, 
  
     }
     tmpPointIndex = tmpPointIndexNext;
-    cout << "Minimum Distance is " << minDistance << endl;
+    //cout << "Minimum Distance is " << minDistance << endl;
     // now we have minDistance and tmpPointIndex for next iteration
     if (minDistance <= connectDistanceThreshold)
     {
@@ -581,7 +617,7 @@ void Attention::SendingConesPositions(MatrixXd &pointCloudConeROI, vector<vector
     opendlv::logic::sensation::Point conePoint = Cartesian2Spherical(conePositionX,conePositionY,conePositionZ);
     odcore::data::Container c1(conePoint);
     getConference().send(c1);
-    cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << endl;
+    //cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << endl;
   }
 
   cout << "Detected Cones are: " << conePoints << endl;

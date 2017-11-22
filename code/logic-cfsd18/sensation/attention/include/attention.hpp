@@ -119,6 +119,8 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   double m_farConeRadiusThreshold;
   double m_nearConeRadiusThreshold;
   double m_zRangeThreshold;
+  odcore::data::TimeStamp m_CPCReceivedLastTime;
+  double m_algorithmTime;
   
 
 
