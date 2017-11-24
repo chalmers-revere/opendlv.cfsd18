@@ -761,117 +761,67 @@ opendlv::logic::sensation::Point Attention::Cartesian2Spherical(double &x, doubl
 MatrixXd Attention::RANSACRemoveGround(MatrixXd pointCloudInRANSAC)
 {
 
-  //Get from configuration
   cout << "RANSAC Start" << endl;
-  //Inlier dearch threshold
-  //double m_inlierSearchThreshold = 0.05;
-  //Best plane inlier removal threshold
-  //double inlierRemovalThreshold = 0.03;
-  //double inlierFoundTreshold = 5000;
-  //k amount of iterations for RANSAC
-  //int k = 100;
-  //Reference vector
 
-  cout << "Test 1" << endl;
   MatrixXd foundPlane(1,4), planeBest(1,4), planeBestBest(1,4), normal(1,3), pointOnPlane(1,3), indexRangeBest,indexDotter ,indexOutliers(pointCloudInRANSAC.rows(),1);
-  //MatrixXd planeBest;
-  //MatrixXd planeBestBest;
   foundPlane << 0,0,0,0;
   normal << 0,0,1;
   double d;
   double indexDotFound = 0;
   
-  cout << "Test 2" << endl;
-  //double inlierBest = 0;
   int M = 1;
   int sizeCloud = pointCloudInRANSAC.rows();
   MatrixXd drawnSamples = MatrixXd::Zero(3,3);
   MatrixXd distance2Plane = MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
   MatrixXd dotProd = MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
   MatrixXd indexDot = MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
-  cout << "Test 3" << endl;
   
   Vector3d planeFromSamples, v0, v1, v2, crossVec1, crossVec2, crossCoefficients;
   double outliersFound, inliersFound, normalBest, normalBestLast;
   normalBestLast = 10000;
-  cout << "Test 4" << endl;
-  /*Vector3d v0;
-  Vector3d v1;
-  Vector3d v2;
-  Vector3d crossVec1;
-  Vector3d crossVec2;
-  Vector3d crossCoefficients;*/
 
   for(int i = 0; i < m_ransacIterations; i++)
   {
     outliersFound = 0;
     inliersFound = 0;
     indexOutliers = MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
-    //cout << "Test 5" << endl;
-    //Draw 3 random samples from pointCloud
 
     for(int j = 0; j < 3; j++){
 
       int indexShuffle = M + rand() / (RAND_MAX / (sizeCloud - M + 1) + 1);
       drawnSamples.row(j) = pointCloudInRANSAC.row(indexShuffle);
-      //cout << indexShuffle << endl;
 
     }
-    //cout << "Drawn Samples" << endl;
-    //cout << drawnSamples << endl;
-    //cout << "Test 6" << endl;
-    //Calculate Plane coefficients [a b c]
     v0 << drawnSamples(0,0), drawnSamples(0,1), drawnSamples(0,2);
     v1 << drawnSamples(1,0), drawnSamples(1,1), drawnSamples(1,2);
     v2 << drawnSamples(2,0), drawnSamples(2,1), drawnSamples(2,2);
-    //cout << "Test 6.1" << endl;
     crossVec1 = v0-v1;
     crossVec2 = v0-v2;
-    //cout << "Test 6.2" << endl;
     crossCoefficients = crossVec2.cross(crossVec1);
-    //cout << "Test 6.3" << endl;
-    //cout << crossCoefficients << endl;
-    //cout << "Test 6.5" << endl;
     crossCoefficients = crossCoefficients.normalized();
-    //cout << "Test 6.4" << endl;
-    //d = crossCoefficients(0)*v0(0) + crossCoefficients(1)*v0(1) + crossCoefficients(2)*v0(2);
     d = v0.dot(crossCoefficients);
     d = d*-1;
   
     foundPlane << crossCoefficients(0), crossCoefficients(1), crossCoefficients(2), d;
-    //cout << "new it" << endl;
-    //cout << v0(0) << " " << v0(1) << " " << v0(2) << " " << endl;
-    //cout << crossCoefficients(0) << " " << crossCoefficients(1) << " " << crossCoefficients(2) << " " << " " <<  d << endl;
-
-    //cout << "Test 6.6" << endl;
-    //cout << "Test 7" << endl;
 
     //Calculate perpendicular distance to found plane
     for(int p = 0; p < pointCloudInRANSAC.rows(); p++){
-      //cout << "Test 7.1" << endl;
+ 
       distance2Plane(p,0) = abs(foundPlane(0,0)*pointCloudInRANSAC(p,0) + foundPlane(0,1)*pointCloudInRANSAC(p,1) + foundPlane(0,2)*pointCloudInRANSAC(p,2) + foundPlane(0,3))/crossCoefficients.norm();
-      //Find index of inliers
-      //cout << "Test 7.2" << endl;
       if(distance2Plane(p,0) >= m_inlierRangeThreshold){
         indexOutliers(outliersFound,0) = p;
         outliersFound++;
 
       }
-      //cout << "Test 7.3" << endl;
     } 
     cout << outliersFound << endl;
-    //cout << "Test 8" << endl;
     if(outliersFound > 0){
       MatrixXd indexRange = MatrixXd::Zero(outliersFound,1);
       indexRange = indexOutliers.topRows(outliersFound+1);
 
       inliersFound = pointCloudInRANSAC.rows()-outliersFound;
-      //cout << "Test 9" << endl;
-      //cout << inliersFound << endl;
       if(inliersFound > m_inlierFoundTreshold){
-
         planeBest = foundPlane;
-
         normalBest = sqrt(pow((planeBest(0,0)-normal(0,0)),2) + pow((planeBest(0,1)-normal(0,1)),2) + pow((planeBest(0,2)-normal(0,2)),2));
 
         if(normalBest < normalBestLast){
@@ -880,8 +830,7 @@ MatrixXd Attention::RANSACRemoveGround(MatrixXd pointCloudInRANSAC)
           planeBestBest = planeBest;
           indexRangeBest.resize(indexRange.rows(),indexRange.cols());
           indexRangeBest = indexRange;
-          pointOnPlane = drawnSamples.row(0);
-        
+          pointOnPlane = drawnSamples.row(0);      
 
         }
 
@@ -904,13 +853,8 @@ MatrixXd Attention::RANSACRemoveGround(MatrixXd pointCloudInRANSAC)
       indexDotFound++;
     }
   }
-  cout << "Test 11" << endl;
   indexDotter.resize(indexDot.rows(),indexDot.cols());
   indexDotter = indexDot.topRows(indexDotFound+1);
-
-  cout << "indexDotter is: " << indexDotter << " and indexRangeBest is : " << indexRangeBest << endl;
-
-  cout << "Test 12" << endl;
   MatrixXd index2Keep(indexDotter.rows()+indexRangeBest.rows(),1);
 
   index2Keep << indexRangeBest,
@@ -918,11 +862,8 @@ MatrixXd Attention::RANSACRemoveGround(MatrixXd pointCloudInRANSAC)
 
   
   //Remove duplicates
-  cout << "Test 13" << endl;
   MatrixXd sortedIndex = RemoveDuplicates(index2Keep);
   //Remove found inlier index from
-
-  //cout << "Test 14" << endl;
   MatrixXd pcRefit = MatrixXd::Zero(sortedIndex.rows(),3);
   for(int i = 0; i < sortedIndex.rows(); i++){
 
