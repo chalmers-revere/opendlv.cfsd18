@@ -70,6 +70,10 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   double GetZRange(MatrixXd &potentialConePointCloud);
   void SendingConesPositions(MatrixXd &pointCloudConeROI, vector<vector<uint32_t>> &coneIndexList);
   opendlv::logic::sensation::Point Cartesian2Spherical(double &x, double &y, double &z);
+  MatrixXd RANSACRemoveGround(MatrixXd);
+  MatrixXd RemoveDuplicates(MatrixXd);
+
+
   // Define constants to decode CPC message
   const double START_V_ANGLE = -15.0; //For each azimuth there are 16 points with unique vertical angles from -15 to 15 degrees
   const double V_INCREMENT = 2.0; //The vertical angle increment for the 16 points with the same azimuth is 2 degrees
@@ -121,6 +125,11 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   double m_zRangeThreshold;
   odcore::data::TimeStamp m_CPCReceivedLastTime;
   double m_algorithmTime;
+  MatrixXd m_generatedPointCloud;
+  double m_inlierRangeThreshold;
+  double m_inlierFoundTreshold;
+  double m_ransacIterations;
+  double m_dotThreshold;
   
 
 

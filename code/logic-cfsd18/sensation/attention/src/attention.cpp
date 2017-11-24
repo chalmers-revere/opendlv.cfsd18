@@ -80,6 +80,11 @@ Attention::Attention(int32_t const &a_argc, char **a_argv) :
   , m_zRangeThreshold()
   , m_CPCReceivedLastTime()
   , m_algorithmTime()
+  , m_generatedPointCloud()
+  , m_inlierRangeThreshold()
+  , m_inlierFoundTreshold()
+  , m_ransacIterations()
+  , m_dotThreshold() 
   {
   //#############################################################################
   // Following part are prepared to decode CPC of HDL32 3 parts
@@ -190,7 +195,7 @@ void Attention::nextContainer(odcore::data::Container &a_container)
   }
   odcore::data::TimeStamp TimeBeforeAlgorithm;
   SavePointCloud();
-  ConeDetection();
+  //ConeDetection();
 
   odcore::data::TimeStamp TimeAfterAlgorithm;
   double timeForProcessingOneScan = static_cast<double>(TimeAfterAlgorithm.toMicroseconds()-TimeBeforeAlgorithm.toMicroseconds())/1000000.0;
@@ -220,6 +225,12 @@ void Attention::setUp()
   m_farConeRadiusThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.farConeRadiusThreshold");
   m_nearConeRadiusThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.nearConeRadiusThreshold");
   m_zRangeThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.zRangeThreshold");
+  m_inlierRangeThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.inlierRangeTreshold");
+  m_inlierFoundTreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.inlierFoundTreshold");
+  m_ransacIterations = kv.getValue<double>("logic-cfsd18-sensation-attention.numberOfIterations");
+  m_dotThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.dotThreshold");
+
+  ConeDetection();
 
 }
 
@@ -397,44 +408,153 @@ void Attention::SavePointCloud(){
 }
 
 void Attention::ConeDetection(){
-  /*m_pointCloud = MatrixXd::Zero(7,3);
-  m_pointCloud << 1.0,2.0,0.2,  //cone 1 point 1
-                  6.0,2.0,0.2,  // cone 2 point 1
-                  7.0,8.0,9.0,
-                  10.0,11.0,12.0,
-                  1.3,2.0,0.1,  // cone 1 point 2
-                  6.2,2.0,0.2,  // cone 2 point 2
-                  15.0,2.0,0.2; // object but not cone
-  cout << "original point cloud is " << m_pointCloud << endl;
-  
-  double groundLayerZ = 0.0;
-  double layerRangeThreshold = 0.1;
-  double coneHeight = 3.0;
-  */
-  MatrixXd pointCloudConeROI = ExtractConeROI(m_groundLayerZ, m_layerRangeThreshold, m_coneHeight);
-  cout << "Number of extrected pointCloud is: " << pointCloudConeROI.rows() << endl;
+  m_generatedPointCloud = MatrixXd::Zero(22000,3);
+  m_pointCloud = MatrixXd::Zero(7,3);
+  m_pointCloud << 1,2,0.2,
+                  1,2,0.3,
+                  1,2,0.4,
+                  10,24,4,
+                  1,2,0.3,
+                  1,2,0.4,
+                  1,2,0.3;
 
-  //MatrixXd testPointCloud = pointCloudConeROI.topRows<600>();
+  for(int i = 0; i < m_generatedPointCloud.rows(); i++){
+
+
+    if(i < 21000){
+
+    double f = (double)rand() / RAND_MAX;
+    double r1 = 5 + f*(5 - 0);
+
+    double ff = (double)rand() / RAND_MAX;
+    double r2 = 5 + ff*(5 - 0);
+    
+    double fff = (double)rand() / RAND_MAX;
+    double r3 =  -0.20 + fff*(-0.15 + 0.20);
+
+    m_generatedPointCloud.row(i) << r1,r2,r3;
+    }
+    if(i >= 18000 && i < 21000){
+
+      double f = (double)rand() / RAND_MAX;
+      double r1 = 40 + f*(40.2 - 40);
+
+      double ff = (double)rand() / RAND_MAX;
+      double r2 = 0.15 + ff*(1 - 0.15);
+      
+      double fff = (double)rand() / RAND_MAX;
+      double r3 =  0.15 + fff*(1 - 0.15);
+
+      m_generatedPointCloud.row(i) << r1,r2,r3;
+
+    }
+
+    if(i >= 21000 && i < 21050){
+
+      double f = (double)rand() / RAND_MAX;
+      double r1 = 3 + f*(3.2 - 3);
+
+      double ff = (double)rand() / RAND_MAX;
+      double r2 = 3 + ff*(3.2 - 3);
+      
+      double fff = (double)rand() / RAND_MAX;
+      double r3 =  -0.15 + fff*(0.1 + 0.15);
+
+      m_generatedPointCloud.row(i) << r1,r2,r3;
+
+    }
+
+    if(i >= 21050 && i < 21100){
+
+      double f = (double)rand() / RAND_MAX;
+      double r1 = 0 + f*(0.2 - 0);
+
+      double ff = (double)rand() / RAND_MAX;
+      double r2 = 3 + ff*(3.2 - 3);
+      
+      double fff = (double)rand() / RAND_MAX;
+      double r3 =  -0.15 + fff*(0.1 + 0.15);
+
+      m_generatedPointCloud.row(i) << r1,r2,r3;
+
+    }
+    if(i >= 21100 && i < 21130){
+
+       double f = (double)rand() / RAND_MAX;
+      double r1 = 3 + f*(3.2 - 3);
+
+      double ff = (double)rand() / RAND_MAX;
+      double r2 = 4 + ff*(4.2 - 4);
+      
+      double fff = (double)rand() / RAND_MAX;
+      double r3 =  -0.15 + fff*(0.1 + 0.15);
+      m_generatedPointCloud.row(i) << r1,r2,r3;
+    }
+
+      if(i >= 21130 && i < 21160){
+
+      double f = (double)rand() / RAND_MAX;
+      double r1 = 0 + f*(0.2 - 0);
+
+      double ff = (double)rand() / RAND_MAX;
+      double r2 = 4 + ff*(4.2 - 4);
+      
+      double fff = (double)rand() / RAND_MAX;
+      double r3 =  -0.15 + fff*(0.1 + 0.15);
+
+      m_generatedPointCloud.row(i) << r1,r2,r3;
+
+    }
+
+    if(i >= 21160 ){
+
+      double f = (double)rand() / RAND_MAX;
+      double r1 = 0 + f*(5 - 0);
+
+      double ff = (double)rand() / RAND_MAX;
+      double r2 = 0 + ff*(5 - 0);
+      
+      double fff = (double)rand() / RAND_MAX;
+      double r3 =  0.15 + fff*(5 - 0.15);
+
+      m_generatedPointCloud.row(i) << r1,r2,r3;
+
+    }
+    
+      
+  }
+  //cout << m_generatedPointCloud << endl;
+  //m_pointCloud << 20, 15, -0.2,
+  //cout << "original point cloud is " << m_pointCloud << endl;
+  
+  //double groundLayerZ = 0.0;
+  //double layerRangeThreshold = 0.1;
+  //double coneHeight = 3.0;
+
+  cout << "RANSAC" << endl;
+  MatrixXd pcRefit = RANSACRemoveGround(m_generatedPointCloud);
+  double pcRrow = pcRefit.rows();
+  cout << "points After RANSAC" << endl;
+  cout << pcRrow << endl;
+  cout << "points before RANSAC" << endl;
+  double pcRaw = m_generatedPointCloud.rows();
+  cout << pcRaw << endl;
+
+  //MatrixXd pointCloudConeROI = ExtractConeROI(groundLayerZ, layerRangeThreshold, coneHeight);
+
+  //Matrix Xd pointCloudFilt
 
   //cout << "Cone ROI is: " << pointCloudConeROI << endl;
-  //cout << "Distance should be 5 and it's calculated as: " << CalculateXYDistance(pointCloudConeROI,0,1) << endl;
-
-  
-  vector<vector<uint32_t>> objectIndexList = NNSegmentation(pointCloudConeROI, m_connectDistanceThreshold);
-  
-  vector<vector<uint32_t>> coneIndexList = FindConesFromObjects(pointCloudConeROI, objectIndexList, m_minNumOfPointsForCone, m_maxNumOfPointsForCone, m_nearConeRadiusThreshold, m_farConeRadiusThreshold, m_zRangeThreshold);
-  cout << "Number of Object is: " << objectIndexList.size() << endl;
+  //cout << "Distance should be 5 and it's calculated as: " << CalculateXYDistance(m_generatedPointCloud,0,1) << endl;
+  vector<vector<uint32_t>> objectIndexList = NNSegmentation(pcRefit, m_connectDistanceThreshold); //out from ransac pointCloudConeROI to pointCloudFilt
+  vector<vector<uint32_t>> coneIndexList = FindConesFromObjects(pcRefit, objectIndexList, m_minNumOfPointsForCone, m_maxNumOfPointsForCone, m_nearConeRadiusThreshold, m_farConeRadiusThreshold, m_zRangeThreshold);
+  //cout << "Number of Object is: " << objectIndexList.size() << endl;
   cout << "Number of Cones is: " << coneIndexList.size() << endl;
 
 
 
-  //SendingConesPositions(pointCloudConeROI, coneIndexList);
-
-
-
-
-
-  
+  SendingConesPositions(pcRefit, coneIndexList);
+    
  
 }
 
@@ -637,6 +757,211 @@ opendlv::logic::sensation::Point Attention::Cartesian2Spherical(double &x, doubl
   return pointInSpherical;
 
 }
+
+MatrixXd Attention::RANSACRemoveGround(MatrixXd pointCloudInRANSAC)
+{
+
+  //Get from configuration
+  cout << "RANSAC Start" << endl;
+  //Inlier dearch threshold
+  //double m_inlierSearchThreshold = 0.05;
+  //Best plane inlier removal threshold
+  //double inlierRemovalThreshold = 0.03;
+  //double inlierFoundTreshold = 5000;
+  //k amount of iterations for RANSAC
+  //int k = 100;
+  //Reference vector
+
+  cout << "Test 1" << endl;
+  MatrixXd foundPlane(1,4), planeBest(1,4), planeBestBest(1,4), normal(1,3), pointOnPlane(1,3), indexRangeBest,indexDotter ,indexOutliers(pointCloudInRANSAC.rows(),1);
+  //MatrixXd planeBest;
+  //MatrixXd planeBestBest;
+  foundPlane << 0,0,0,0;
+  normal << 0,0,1;
+  double d;
+  double indexDotFound = 0;
+  
+  cout << "Test 2" << endl;
+  //double inlierBest = 0;
+  int M = 1;
+  int sizeCloud = pointCloudInRANSAC.rows();
+  MatrixXd drawnSamples = MatrixXd::Zero(3,3);
+  MatrixXd distance2Plane = MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
+  MatrixXd dotProd = MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
+  MatrixXd indexDot = MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
+  cout << "Test 3" << endl;
+  
+  Vector3d planeFromSamples, v0, v1, v2, crossVec1, crossVec2, crossCoefficients;
+  double outliersFound, inliersFound, normalBest, normalBestLast;
+  normalBestLast = 10000;
+  cout << "Test 4" << endl;
+  /*Vector3d v0;
+  Vector3d v1;
+  Vector3d v2;
+  Vector3d crossVec1;
+  Vector3d crossVec2;
+  Vector3d crossCoefficients;*/
+
+  for(int i = 0; i < m_ransacIterations; i++)
+  {
+    outliersFound = 0;
+    inliersFound = 0;
+    indexOutliers = MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
+    //cout << "Test 5" << endl;
+    //Draw 3 random samples from pointCloud
+
+    for(int j = 0; j < 3; j++){
+
+      int indexShuffle = M + rand() / (RAND_MAX / (sizeCloud - M + 1) + 1);
+      drawnSamples.row(j) = pointCloudInRANSAC.row(indexShuffle);
+      //cout << indexShuffle << endl;
+
+    }
+    //cout << "Drawn Samples" << endl;
+    //cout << drawnSamples << endl;
+    //cout << "Test 6" << endl;
+    //Calculate Plane coefficients [a b c]
+    v0 << drawnSamples(0,0), drawnSamples(0,1), drawnSamples(0,2);
+    v1 << drawnSamples(1,0), drawnSamples(1,1), drawnSamples(1,2);
+    v2 << drawnSamples(2,0), drawnSamples(2,1), drawnSamples(2,2);
+    //cout << "Test 6.1" << endl;
+    crossVec1 = v0-v1;
+    crossVec2 = v0-v2;
+    //cout << "Test 6.2" << endl;
+    crossCoefficients = crossVec2.cross(crossVec1);
+    //cout << "Test 6.3" << endl;
+    //cout << crossCoefficients << endl;
+    //cout << "Test 6.5" << endl;
+    crossCoefficients = crossCoefficients.normalized();
+    //cout << "Test 6.4" << endl;
+    //d = crossCoefficients(0)*v0(0) + crossCoefficients(1)*v0(1) + crossCoefficients(2)*v0(2);
+    d = v0.dot(crossCoefficients);
+    d = d*-1;
+  
+    foundPlane << crossCoefficients(0), crossCoefficients(1), crossCoefficients(2), d;
+    //cout << "new it" << endl;
+    //cout << v0(0) << " " << v0(1) << " " << v0(2) << " " << endl;
+    //cout << crossCoefficients(0) << " " << crossCoefficients(1) << " " << crossCoefficients(2) << " " << " " <<  d << endl;
+
+    //cout << "Test 6.6" << endl;
+    //cout << "Test 7" << endl;
+
+    //Calculate perpendicular distance to found plane
+    for(int p = 0; p < pointCloudInRANSAC.rows(); p++){
+      //cout << "Test 7.1" << endl;
+      distance2Plane(p,0) = abs(foundPlane(0,0)*pointCloudInRANSAC(p,0) + foundPlane(0,1)*pointCloudInRANSAC(p,1) + foundPlane(0,2)*pointCloudInRANSAC(p,2) + foundPlane(0,3))/crossCoefficients.norm();
+      //Find index of inliers
+      //cout << "Test 7.2" << endl;
+      if(distance2Plane(p,0) >= m_inlierRangeThreshold){
+        indexOutliers(outliersFound,0) = p;
+        outliersFound++;
+
+      }
+      //cout << "Test 7.3" << endl;
+    } 
+    cout << outliersFound << endl;
+    //cout << "Test 8" << endl;
+    if(outliersFound > 0){
+      MatrixXd indexRange = MatrixXd::Zero(outliersFound,1);
+      indexRange = indexOutliers.topRows(outliersFound+1);
+
+      inliersFound = pointCloudInRANSAC.rows()-outliersFound;
+      //cout << "Test 9" << endl;
+      //cout << inliersFound << endl;
+      if(inliersFound > m_inlierFoundTreshold){
+
+        planeBest = foundPlane;
+
+        normalBest = sqrt(pow((planeBest(0,0)-normal(0,0)),2) + pow((planeBest(0,1)-normal(0,1)),2) + pow((planeBest(0,2)-normal(0,2)),2));
+
+        if(normalBest < normalBestLast){
+
+          normalBestLast = normalBest;
+          planeBestBest = planeBest;
+          indexRangeBest.resize(indexRange.rows(),indexRange.cols());
+          indexRangeBest = indexRange;
+          pointOnPlane = drawnSamples.row(0);
+        
+
+        }
+
+      }
+    }
+    else{
+
+      //cout << "No plane was found" << endl;
+    }
+  }
+
+  cout << "Test 10" << endl;
+  for(int p = 0; p < pointCloudInRANSAC.rows(); p++){
+
+    dotProd(p,0) = planeBestBest(0,0)*(pointCloudInRANSAC(p,0)-pointOnPlane(0,0)) + planeBestBest(0,1)*(pointCloudInRANSAC(p,1)-pointOnPlane(0,1)) + planeBestBest(0,2)*(pointCloudInRANSAC(p,2)-pointOnPlane(0,2)); 
+
+    if(dotProd(p,0) > m_dotThreshold){
+
+      indexDot(indexDotFound,0) = p;
+      indexDotFound++;
+    }
+  }
+  cout << "Test 11" << endl;
+  indexDotter.resize(indexDot.rows(),indexDot.cols());
+  indexDotter = indexDot.topRows(indexDotFound+1);
+
+  cout << "indexDotter is: " << indexDotter << " and indexRangeBest is : " << indexRangeBest << endl;
+
+  cout << "Test 12" << endl;
+  MatrixXd index2Keep(indexDotter.rows()+indexRangeBest.rows(),1);
+
+  index2Keep << indexRangeBest,
+                 indexDotter;
+
+  
+  //Remove duplicates
+  cout << "Test 13" << endl;
+  MatrixXd sortedIndex = RemoveDuplicates(index2Keep);
+  //Remove found inlier index from
+
+  //cout << "Test 14" << endl;
+  MatrixXd pcRefit = MatrixXd::Zero(sortedIndex.rows(),3);
+  for(int i = 0; i < sortedIndex.rows(); i++){
+
+    pcRefit.row(i) = pointCloudInRANSAC.row(sortedIndex(i));
+
+
+  }
+  cout << "Ground plane found:" << endl;
+  cout << planeBestBest << endl;
+
+  return pcRefit;
+
+}
+
+MatrixXd Attention::RemoveDuplicates(MatrixXd needSorting)
+{
+
+  vector<double> vect;
+
+  for(int i=0; i< needSorting.rows(); i++){
+
+    vect.push_back(needSorting(i,0));
+
+  }
+
+  sort(vect.begin(),vect.end());
+  vect.erase(unique(vect.begin(),vect.end()),vect.end());
+  needSorting.resize(vect.size(),1);
+
+  for(unsigned int i=0; i< vect.size(); i++){
+
+    needSorting(i,0)=vect.at(i);
+
+  }
+
+  return needSorting;
+
+}
+
 
 }
 }
