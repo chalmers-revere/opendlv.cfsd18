@@ -104,10 +104,10 @@ logic-cfsd18-sensation-attention.zRangeThreshold = 0.08  #[m]
 
 %RANSAC
 
-logic-cfsd18-sensation-attention.inlierRangeTreshold = 0.2 #[m]
+logic-cfsd18-sensation-attention.inlierRangeTreshold = 0.1 #[m]
 logic-cfsd18-sensation-attention.dotThreshold = 0.3
-logic-cfsd18-sensation-attention.inlierFoundTreshold = 1000 #Number of inliers
-logic-cfsd18-sensation-attention.numberOfIterations = 100 
+logic-cfsd18-sensation-attention.inlierFoundTreshold = 200 #Number of inliers
+logic-cfsd18-sensation-attention.numberOfIterations = 200 
 ###############################################################################
 ###############################################################################
 odcockpit.directoriesForSharedLibaries = /opt/opendlv.cfsd18

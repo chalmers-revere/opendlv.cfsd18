@@ -64,7 +64,7 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   void ConeDetection();
   vector<vector<uint32_t>> NNSegmentation(MatrixXd &pointCloudConeROI, const double &connectDistanceThreshold);
   vector<vector<uint32_t>> FindConesFromObjects(MatrixXd &pointCloudConeROI, vector<vector<uint32_t>> &objectIndexList, const double &minNumOfPointsForCone, const double &maxNumOfPointsForCone, const double &nearConeRadiusThreshold, const double &farConeRadiusThreshold, const double &zRangeThreshold);
-  MatrixXd ExtractConeROI(const double &groundLayerZ, const double &zRangeThreshold, const double &coneHeight);
+  MatrixXd ExtractConeROI(const double &xBoundary, const double &yBoundary, const double &groundLayerZ,  const double &coneHeight);
   double CalculateXYDistance(MatrixXd &pointCloud, const uint32_t &index1, const uint32_t &index2);
   double CalculateConeRadius(MatrixXd &potentialConePointCloud);
   double GetZRange(MatrixXd &potentialConePointCloud);
@@ -72,6 +72,7 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   opendlv::logic::sensation::Point Cartesian2Spherical(double &x, double &y, double &z);
   MatrixXd RANSACRemoveGround(MatrixXd);
   MatrixXd RemoveDuplicates(MatrixXd);
+  MatrixXd GenerateTestPointCloud();
 
 
   // Define constants to decode CPC message
@@ -113,6 +114,7 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   // Define constants and thresolds forclustering algorithm
   double m_startAngle;
   double m_endAngle;
+  double m_xBoundary;
   double m_yBoundary;
   double m_groundLayerZ;
   double m_coneHeight;
@@ -125,11 +127,12 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   double m_zRangeThreshold;
   odcore::data::TimeStamp m_CPCReceivedLastTime;
   double m_algorithmTime;
-  MatrixXd m_generatedPointCloud;
+  MatrixXd m_generatedTestPointCloud;
   double m_inlierRangeThreshold;
   double m_inlierFoundTreshold;
   double m_ransacIterations;
   double m_dotThreshold;
+  MatrixXd m_lastBestPlane;
   
 
 

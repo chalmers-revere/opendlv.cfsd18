@@ -64,10 +64,10 @@ Attention::Attention(int32_t const &a_argc, char **a_argv) :
   , m_CPCReceived(false)
   , m_recordingYear()
   , m_pointCloud()
-  //, pointCloud()
   , m_pointIndex(0)
   , m_startAngle()
   , m_endAngle()
+  , m_xBoundary()
   , m_yBoundary()
   , m_groundLayerZ()
   , m_coneHeight()
@@ -80,11 +80,12 @@ Attention::Attention(int32_t const &a_argc, char **a_argv) :
   , m_zRangeThreshold()
   , m_CPCReceivedLastTime()
   , m_algorithmTime()
-  , m_generatedPointCloud()
+  , m_generatedTestPointCloud()
   , m_inlierRangeThreshold()
   , m_inlierFoundTreshold()
   , m_ransacIterations()
-  , m_dotThreshold() 
+  , m_dotThreshold()
+  , m_lastBestPlane()
   {
   //#############################################################################
   // Following part are prepared to decode CPC of HDL32 3 parts
@@ -195,18 +196,13 @@ void Attention::nextContainer(odcore::data::Container &a_container)
   }
   odcore::data::TimeStamp TimeBeforeAlgorithm;
   SavePointCloud();
-  //ConeDetection();
+  ConeDetection();
 
   odcore::data::TimeStamp TimeAfterAlgorithm;
   double timeForProcessingOneScan = static_cast<double>(TimeAfterAlgorithm.toMicroseconds()-TimeBeforeAlgorithm.toMicroseconds())/1000000.0;
   //cout << "Speed for algorithm is: " << 1/timeSinceReceiveTheProcessingScan << " FPS" << endl;
   m_algorithmTime = timeForProcessingOneScan;
   cout << "Time for processing one scan of data is: " << timeForProcessingOneScan << "s" << endl;
-      /*  
-      opendlv::logic::sensation::Attention o1;
-      odcore::data::Container c1(o1);
-      getConference().send(c1);
-    */
   }
 }
 
@@ -215,6 +211,7 @@ void Attention::setUp()
   auto kv = getKeyValueConfiguration();
   m_startAngle = kv.getValue<double>("logic-cfsd18-sensation-attention.startAngle");
   m_endAngle = kv.getValue<double>("logic-cfsd18-sensation-attention.endAngle");
+  m_xBoundary = kv.getValue<double>("logic-cfsd18-sensation-attention.xBoundary");
   m_yBoundary = kv.getValue<double>("logic-cfsd18-sensation-attention.yBoundary");
   m_groundLayerZ = kv.getValue<double>("logic-cfsd18-sensation-attention.groundLayerZ");
   m_coneHeight = kv.getValue<double>("logic-cfsd18-sensation-attention.coneHeight");
@@ -229,8 +226,10 @@ void Attention::setUp()
   m_inlierFoundTreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.inlierFoundTreshold");
   m_ransacIterations = kv.getValue<double>("logic-cfsd18-sensation-attention.numberOfIterations");
   m_dotThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.dotThreshold");
+  m_lastBestPlane = MatrixXd::Zero(1,4);
+  m_lastBestPlane << 0,0,1,0;
 
-  ConeDetection();
+  //ConeDetection();
 
 }
 
@@ -408,7 +407,9 @@ void Attention::SavePointCloud(){
 }
 
 void Attention::ConeDetection(){
-  m_generatedPointCloud = MatrixXd::Zero(22000,3);
+  m_generatedTestPointCloud = GenerateTestPointCloud();
+  
+  /*
   m_pointCloud = MatrixXd::Zero(7,3);
   m_pointCloud << 1,2,0.2,
                   1,2,0.3,
@@ -416,114 +417,10 @@ void Attention::ConeDetection(){
                   10,24,4,
                   1,2,0.3,
                   1,2,0.4,
-                  1,2,0.3;
-
-  for(int i = 0; i < m_generatedPointCloud.rows(); i++){
-
-
-    if(i < 21000){
-
-    double f = (double)rand() / RAND_MAX;
-    double r1 = 5 + f*(5 - 0);
-
-    double ff = (double)rand() / RAND_MAX;
-    double r2 = 5 + ff*(5 - 0);
-    
-    double fff = (double)rand() / RAND_MAX;
-    double r3 =  -0.20 + fff*(-0.15 + 0.20);
-
-    m_generatedPointCloud.row(i) << r1,r2,r3;
-    }
-    if(i >= 18000 && i < 21000){
-
-      double f = (double)rand() / RAND_MAX;
-      double r1 = 40 + f*(40.2 - 40);
-
-      double ff = (double)rand() / RAND_MAX;
-      double r2 = 0.15 + ff*(1 - 0.15);
-      
-      double fff = (double)rand() / RAND_MAX;
-      double r3 =  0.15 + fff*(1 - 0.15);
-
-      m_generatedPointCloud.row(i) << r1,r2,r3;
-
-    }
-
-    if(i >= 21000 && i < 21050){
-
-      double f = (double)rand() / RAND_MAX;
-      double r1 = 3 + f*(3.2 - 3);
-
-      double ff = (double)rand() / RAND_MAX;
-      double r2 = 3 + ff*(3.2 - 3);
-      
-      double fff = (double)rand() / RAND_MAX;
-      double r3 =  -0.15 + fff*(0.1 + 0.15);
-
-      m_generatedPointCloud.row(i) << r1,r2,r3;
-
-    }
-
-    if(i >= 21050 && i < 21100){
-
-      double f = (double)rand() / RAND_MAX;
-      double r1 = 0 + f*(0.2 - 0);
-
-      double ff = (double)rand() / RAND_MAX;
-      double r2 = 3 + ff*(3.2 - 3);
-      
-      double fff = (double)rand() / RAND_MAX;
-      double r3 =  -0.15 + fff*(0.1 + 0.15);
-
-      m_generatedPointCloud.row(i) << r1,r2,r3;
-
-    }
-    if(i >= 21100 && i < 21130){
-
-       double f = (double)rand() / RAND_MAX;
-      double r1 = 3 + f*(3.2 - 3);
-
-      double ff = (double)rand() / RAND_MAX;
-      double r2 = 4 + ff*(4.2 - 4);
-      
-      double fff = (double)rand() / RAND_MAX;
-      double r3 =  -0.15 + fff*(0.1 + 0.15);
-      m_generatedPointCloud.row(i) << r1,r2,r3;
-    }
-
-      if(i >= 21130 && i < 21160){
-
-      double f = (double)rand() / RAND_MAX;
-      double r1 = 0 + f*(0.2 - 0);
-
-      double ff = (double)rand() / RAND_MAX;
-      double r2 = 4 + ff*(4.2 - 4);
-      
-      double fff = (double)rand() / RAND_MAX;
-      double r3 =  -0.15 + fff*(0.1 + 0.15);
-
-      m_generatedPointCloud.row(i) << r1,r2,r3;
-
-    }
-
-    if(i >= 21160 ){
-
-      double f = (double)rand() / RAND_MAX;
-      double r1 = 0 + f*(5 - 0);
-
-      double ff = (double)rand() / RAND_MAX;
-      double r2 = 0 + ff*(5 - 0);
-      
-      double fff = (double)rand() / RAND_MAX;
-      double r3 =  0.15 + fff*(5 - 0.15);
-
-      m_generatedPointCloud.row(i) << r1,r2,r3;
-
-    }
-    
-      
-  }
-  //cout << m_generatedPointCloud << endl;
+                  1,2,0.3;*/
+  /*
+  */
+  //cout << m_generatedTestPointCloud << endl;
   //m_pointCloud << 20, 15, -0.2,
   //cout << "original point cloud is " << m_pointCloud << endl;
   
@@ -531,21 +428,23 @@ void Attention::ConeDetection(){
   //double layerRangeThreshold = 0.1;
   //double coneHeight = 3.0;
 
+  MatrixXd pointCloudConeROI = ExtractConeROI(m_xBoundary, m_yBoundary, m_groundLayerZ, m_coneHeight);
+
   cout << "RANSAC" << endl;
-  MatrixXd pcRefit = RANSACRemoveGround(m_generatedPointCloud);
+  MatrixXd pcRefit = RANSACRemoveGround(pointCloudConeROI);
   double pcRrow = pcRefit.rows();
   cout << "points After RANSAC" << endl;
   cout << pcRrow << endl;
   cout << "points before RANSAC" << endl;
-  double pcRaw = m_generatedPointCloud.rows();
+  double pcRaw = m_pointCloud.rows();
   cout << pcRaw << endl;
 
-  //MatrixXd pointCloudConeROI = ExtractConeROI(groundLayerZ, layerRangeThreshold, coneHeight);
 
-  //Matrix Xd pointCloudFilt
+
+
 
   //cout << "Cone ROI is: " << pointCloudConeROI << endl;
-  //cout << "Distance should be 5 and it's calculated as: " << CalculateXYDistance(m_generatedPointCloud,0,1) << endl;
+  //cout << "Distance should be 5 and it's calculated as: " << CalculateXYDistance(m_generatedTestPointCloud,0,1) << endl;
   vector<vector<uint32_t>> objectIndexList = NNSegmentation(pcRefit, m_connectDistanceThreshold); //out from ransac pointCloudConeROI to pointCloudFilt
   vector<vector<uint32_t>> coneIndexList = FindConesFromObjects(pcRefit, objectIndexList, m_minNumOfPointsForCone, m_maxNumOfPointsForCone, m_nearConeRadiusThreshold, m_farConeRadiusThreshold, m_zRangeThreshold);
   //cout << "Number of Object is: " << objectIndexList.size() << endl;
@@ -682,13 +581,13 @@ double Attention::GetZRange(MatrixXd &potentialConePointCloud)
 }
 
 
-MatrixXd Attention::ExtractConeROI(const double &groundLayerZ, const double &layerRangeThreshold, const double &coneHeight){
+MatrixXd Attention::ExtractConeROI(const double &xBoundary, const double &yBoundary, const double &groundLayerZ,  const double &coneHeight){
   uint32_t numberOfPointsCPC = m_pointCloud.rows();
   uint32_t numberOfPointConeROI = 0;
   vector<int> pointIndexConeROI;
   for (uint32_t i = 0; i < numberOfPointsCPC; i++)
   {
-    if ((m_pointCloud(i,2) >= groundLayerZ + layerRangeThreshold) && (m_pointCloud(i,2) <= groundLayerZ + coneHeight + layerRangeThreshold))
+    if ((m_pointCloud(i,1) >= -xBoundary) && (m_pointCloud(i,1) <= xBoundary) && (m_pointCloud(i,2) <= yBoundary) && (m_pointCloud(i,2) <= groundLayerZ + coneHeight))
     {
       pointIndexConeROI.push_back(i);
       numberOfPointConeROI ++;
@@ -772,7 +671,7 @@ MatrixXd Attention::RANSACRemoveGround(MatrixXd pointCloudInRANSAC)
   //int k = 100;
   //Reference vector
 
-  cout << "Test 1" << endl;
+  //cout << "Test 1" << endl;
   MatrixXd foundPlane(1,4), planeBest(1,4), planeBestBest(1,4), normal(1,3), pointOnPlane(1,3), indexRangeBest,indexDotter ,indexOutliers(pointCloudInRANSAC.rows(),1);
   //MatrixXd planeBest;
   //MatrixXd planeBestBest;
@@ -780,21 +679,22 @@ MatrixXd Attention::RANSACRemoveGround(MatrixXd pointCloudInRANSAC)
   normal << 0,0,1;
   double d;
   double indexDotFound = 0;
+  int planeCounter = 0;
   
-  cout << "Test 2" << endl;
+  //cout << "Test 2" << endl;
   //double inlierBest = 0;
   int M = 1;
-  int sizeCloud = pointCloudInRANSAC.rows();
+  int sizeCloud = pointCloudInRANSAC.rows()-1;
   MatrixXd drawnSamples = MatrixXd::Zero(3,3);
   MatrixXd distance2Plane = MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
   MatrixXd dotProd = MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
   MatrixXd indexDot = MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
-  cout << "Test 3" << endl;
+  //cout << "Test 3" << endl;
   
   Vector3d planeFromSamples, v0, v1, v2, crossVec1, crossVec2, crossCoefficients;
   double outliersFound, inliersFound, normalBest, normalBestLast;
   normalBestLast = 10000;
-  cout << "Test 4" << endl;
+  //cout << "Test 4" << endl;
   /*Vector3d v0;
   Vector3d v1;
   Vector3d v2;
@@ -813,6 +713,7 @@ MatrixXd Attention::RANSACRemoveGround(MatrixXd pointCloudInRANSAC)
     for(int j = 0; j < 3; j++){
 
       int indexShuffle = M + rand() / (RAND_MAX / (sizeCloud - M + 1) + 1);
+
       drawnSamples.row(j) = pointCloudInRANSAC.row(indexShuffle);
       //cout << indexShuffle << endl;
 
@@ -859,7 +760,7 @@ MatrixXd Attention::RANSACRemoveGround(MatrixXd pointCloudInRANSAC)
       }
       //cout << "Test 7.3" << endl;
     } 
-    cout << outliersFound << endl;
+    //cout << "NUmber of outliers are: " << outliersFound << endl;
     //cout << "Test 8" << endl;
     if(outliersFound > 0){
       MatrixXd indexRange = MatrixXd::Zero(outliersFound,1);
@@ -869,31 +770,43 @@ MatrixXd Attention::RANSACRemoveGround(MatrixXd pointCloudInRANSAC)
       //cout << "Test 9" << endl;
       //cout << inliersFound << endl;
       if(inliersFound > m_inlierFoundTreshold){
-
+  
         planeBest = foundPlane;
-
+        //cout << "Test 10" << endl;
         normalBest = sqrt(pow((planeBest(0,0)-normal(0,0)),2) + pow((planeBest(0,1)-normal(0,1)),2) + pow((planeBest(0,2)-normal(0,2)),2));
 
         if(normalBest < normalBestLast){
 
           normalBestLast = normalBest;
           planeBestBest = planeBest;
+          //cout << "Test 11" << endl;
           indexRangeBest.resize(indexRange.rows(),indexRange.cols());
           indexRangeBest = indexRange;
+          //cout << "Test 12" << endl;
           pointOnPlane = drawnSamples.row(0);
+          planeCounter++;
         
 
         }
-
+        //cout << "Test 13" << endl;
       }
     }
     else{
 
-      //cout << "No plane was found" << endl;
+      cout << "No plane was found" << endl;
+      if(planeCounter > 0){
+
+        m_lastBestPlane = planeBestBest;
+      }
     }
+    //cout << "NUmber of iterations is: " << i << endl;
   }
 
-  cout << "Test 10" << endl;
+  if(planeCounter == 0){
+
+    planeBestBest = m_lastBestPlane;
+  }
+  //cout << "Test 14" << endl;
   for(int p = 0; p < pointCloudInRANSAC.rows(); p++){
 
     dotProd(p,0) = planeBestBest(0,0)*(pointCloudInRANSAC(p,0)-pointOnPlane(0,0)) + planeBestBest(0,1)*(pointCloudInRANSAC(p,1)-pointOnPlane(0,1)) + planeBestBest(0,2)*(pointCloudInRANSAC(p,2)-pointOnPlane(0,2)); 
@@ -904,13 +817,13 @@ MatrixXd Attention::RANSACRemoveGround(MatrixXd pointCloudInRANSAC)
       indexDotFound++;
     }
   }
-  cout << "Test 11" << endl;
+  //cout << "Test 11" << endl;
   indexDotter.resize(indexDot.rows(),indexDot.cols());
   indexDotter = indexDot.topRows(indexDotFound+1);
 
-  cout << "indexDotter is: " << indexDotter << " and indexRangeBest is : " << indexRangeBest << endl;
+  //cout << "indexDotter is: " << indexDotter << " and indexRangeBest is : " << indexRangeBest << endl;
 
-  cout << "Test 12" << endl;
+  //cout << "Test 12" << endl;
   MatrixXd index2Keep(indexDotter.rows()+indexRangeBest.rows(),1);
 
   index2Keep << indexRangeBest,
@@ -918,7 +831,7 @@ MatrixXd Attention::RANSACRemoveGround(MatrixXd pointCloudInRANSAC)
 
   
   //Remove duplicates
-  cout << "Test 13" << endl;
+  //cout << "Test 13" << endl;
   MatrixXd sortedIndex = RemoveDuplicates(index2Keep);
   //Remove found inlier index from
 
@@ -960,6 +873,119 @@ MatrixXd Attention::RemoveDuplicates(MatrixXd needSorting)
 
   return needSorting;
 
+}
+
+MatrixXd Attention::GenerateTestPointCloud()
+{
+  MatrixXd generatedPointCloud = MatrixXd::Zero(22000,3);
+
+  for(int i = 0; i < generatedPointCloud.rows(); i++){
+
+
+    if(i < 21000){
+
+    double f = (double)rand() / RAND_MAX;
+    double r1 = 5 + f*(5 - 0);
+
+    double ff = (double)rand() / RAND_MAX;
+    double r2 = 5 + ff*(5 - 0);
+    
+    double fff = (double)rand() / RAND_MAX;
+    double r3 =  -0.20 + fff*(-0.15 + 0.20);
+
+    generatedPointCloud.row(i) << r1,r2,r3;
+    }
+    if(i >= 18000 && i < 21000){
+
+      double f = (double)rand() / RAND_MAX;
+      double r1 = 40 + f*(40.2 - 40);
+
+      double ff = (double)rand() / RAND_MAX;
+      double r2 = 0.15 + ff*(1 - 0.15);
+      
+      double fff = (double)rand() / RAND_MAX;
+      double r3 =  0.15 + fff*(1 - 0.15);
+
+      generatedPointCloud.row(i) << r1,r2,r3;
+
+    }
+
+    if(i >= 21000 && i < 21050){
+
+      double f = (double)rand() / RAND_MAX;
+      double r1 = 3 + f*(3.2 - 3);
+
+      double ff = (double)rand() / RAND_MAX;
+      double r2 = 3 + ff*(3.2 - 3);
+      
+      double fff = (double)rand() / RAND_MAX;
+      double r3 =  -0.15 + fff*(0.1 + 0.15);
+
+      generatedPointCloud.row(i) << r1,r2,r3;
+
+    }
+
+    if(i >= 21050 && i < 21100){
+
+      double f = (double)rand() / RAND_MAX;
+      double r1 = 0 + f*(0.2 - 0);
+
+      double ff = (double)rand() / RAND_MAX;
+      double r2 = 3 + ff*(3.2 - 3);
+      
+      double fff = (double)rand() / RAND_MAX;
+      double r3 =  -0.15 + fff*(0.1 + 0.15);
+
+      generatedPointCloud.row(i) << r1,r2,r3;
+
+    }
+    if(i >= 21100 && i < 21130){
+
+       double f = (double)rand() / RAND_MAX;
+      double r1 = 3 + f*(3.2 - 3);
+
+      double ff = (double)rand() / RAND_MAX;
+      double r2 = 4 + ff*(4.2 - 4);
+      
+      double fff = (double)rand() / RAND_MAX;
+      double r3 =  -0.15 + fff*(0.1 + 0.15);
+      generatedPointCloud.row(i) << r1,r2,r3;
+    }
+
+      if(i >= 21130 && i < 21160){
+
+      double f = (double)rand() / RAND_MAX;
+      double r1 = 0 + f*(0.2 - 0);
+
+      double ff = (double)rand() / RAND_MAX;
+      double r2 = 4 + ff*(4.2 - 4);
+      
+      double fff = (double)rand() / RAND_MAX;
+      double r3 =  -0.15 + fff*(0.1 + 0.15);
+
+      generatedPointCloud.row(i) << r1,r2,r3;
+
+    }
+
+    if(i >= 21160 ){
+
+      double f = (double)rand() / RAND_MAX;
+      double r1 = 0 + f*(5 - 0);
+
+      double ff = (double)rand() / RAND_MAX;
+      double r2 = 0 + ff*(5 - 0);
+      
+      double fff = (double)rand() / RAND_MAX;
+      double r3 =  0.15 + fff*(5 - 0.15);
+
+      generatedPointCloud.row(i) << r1,r2,r3;
+
+    }
+    
+      
+  }
+
+  return generatedPointCloud;
 }
 
 
