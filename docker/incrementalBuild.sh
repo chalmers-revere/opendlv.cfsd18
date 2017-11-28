@@ -43,6 +43,7 @@ EOF
 
 chmod 755 /opt/opendlv.cfsd18.build/build.sh
 chown $UID_AS:$UID_AS /opt/opendlv.cfsd18.build/build.sh
+chown -R $UID_AS:$UID_AS /opt
 
 su -m `getent passwd $UID_AS|cut -f1 -d":"` -c /opt/opendlv.cfsd18.build/build.sh
 
