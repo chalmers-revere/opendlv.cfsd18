@@ -82,6 +82,11 @@ logic-cfsd18-sensation-attention.farConeRadiusThreshold = 0.2
 logic-cfsd18-sensation-attention.nearConeRadiusThreshold = 0.25
 logic-cfsd18-sensation-attention.zRangeThreshold = 0.08  #[m]
 
+%RANSAC
 
+logic-cfsd18-sensation-attention.inlierRangeTreshold = 0.1 #[m]
+logic-cfsd18-sensation-attention.dotThreshold = 0.3
+logic-cfsd18-sensation-attention.inlierFoundTreshold = 200 #Number of inliers
+logic-cfsd18-sensation-attention.numberOfIterations = 200 
 ###############################################################################
 ###############################################################################

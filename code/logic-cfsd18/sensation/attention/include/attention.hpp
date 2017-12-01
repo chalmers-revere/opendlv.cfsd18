@@ -22,6 +22,7 @@
 
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
+#include <opendavinci/odcore/base/Mutex.h>
 
 //#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 #include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
@@ -43,7 +44,7 @@ using namespace std;
 using namespace odcore::base;
 using namespace odcore::data;
 using namespace odcore::wrapper;
-using namespace Eigen;
+
 
 class Attention : public odcore::base::module::DataTriggeredConferenceClientModule {
  public:
@@ -59,20 +60,19 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   
   void SaveOneCPCPointNoIntensity(const int &pointIndex,const uint16_t &distance_integer, const double &azimuth, const double &verticalAngle, const uint8_t &distanceEncoding);
   void SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const double &startAzimuth, const double &endAzimuth, const uint8_t &distanceEncoding);
-// void SaveCPC32WithIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const double &startAzimuth, const double &endAzimuth, const uint8_t &distanceEncoding, const uint8_t &numberOfBitsForIntensity, const uint8_t &intensityPlacement, const uint16_t &mask, const double &intensityMaxValue);
   void SavePointCloud();
   void ConeDetection();
   vector<vector<uint32_t>> NNSegmentation(MatrixXd &pointCloudConeROI, const double &connectDistanceThreshold);
   vector<vector<uint32_t>> FindConesFromObjects(MatrixXd &pointCloudConeROI, vector<vector<uint32_t>> &objectIndexList, const double &minNumOfPointsForCone, const double &maxNumOfPointsForCone, const double &nearConeRadiusThreshold, const double &farConeRadiusThreshold, const double &zRangeThreshold);
   MatrixXd ExtractConeROI(const double &xBoundary, const double &yBoundary, const double &groundLayerZ,  const double &coneHeight);
-  double CalculateXYDistance(MatrixXd &pointCloud, const uint32_t &index1, const uint32_t &index2);
-  double CalculateConeRadius(MatrixXd &potentialConePointCloud);
-  double GetZRange(MatrixXd &potentialConePointCloud);
-  void SendingConesPositions(MatrixXd &pointCloudConeROI, vector<vector<uint32_t>> &coneIndexList);
+  double CalculateXYDistance(Eigen::MatrixXd &pointCloud, const uint32_t &index1, const uint32_t &index2);
+  double CalculateConeRadius(Eigen::MatrixXd &potentialConePointCloud);
+  double GetZRange(Eigen::MatrixXd &potentialConePointCloud);
+  void SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector<vector<uint32_t>> &coneIndexList);
   opendlv::logic::sensation::Point Cartesian2Spherical(double &x, double &y, double &z);
-  MatrixXd RANSACRemoveGround(MatrixXd);
-  MatrixXd RemoveDuplicates(MatrixXd);
-  MatrixXd GenerateTestPointCloud();
+  Eigen::MatrixXd RANSACRemoveGround(MatrixXd);
+  Eigen::MatrixXd RemoveDuplicates(MatrixXd);
+  Eigen::MatrixXd GenerateTestPointCloud();
 
 
   // Define constants to decode CPC message
@@ -108,8 +108,6 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
 
   // Class variables to save point cloud 
   MatrixXd m_pointCloud;
-  //vector<data::environment::Point3> pointCloud;
-  //vector<logic::sensation::Point> pointCloud;
   int m_pointIndex;
   // Define constants and thresolds forclustering algorithm
   double m_startAngle;
@@ -127,12 +125,13 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   double m_zRangeThreshold;
   odcore::data::TimeStamp m_CPCReceivedLastTime;
   double m_algorithmTime;
-  MatrixXd m_generatedTestPointCloud;
+  Eigen::MatrixXd m_generatedTestPointCloud;
+  // RANSAC thresholds
   double m_inlierRangeThreshold;
   double m_inlierFoundTreshold;
   double m_ransacIterations;
   double m_dotThreshold;
-  MatrixXd m_lastBestPlane;
+  Eigen::MatrixXd m_lastBestPlane;
   
 
 
