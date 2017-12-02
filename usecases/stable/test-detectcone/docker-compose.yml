@@ -11,15 +11,15 @@ services:
     # microservice for perception-detectcone
     logic-cfsd18-perception-detectcone:
         image: ${IMAGE}
+        working_dir: /opt/images/
         depends_on:
             - odsupercomponent
         environment:
             - DISPLAY=$DISPLAY
         volumes:
             - /tmp/.X11-unix:/tmp/.X11-unix
-        user: root
-        volumes:
-            - .:/opt/opendlv.core.configuration
+            - ~/project/cfsd/images/:/opt/images/
+        user: odv
         network_mode: host
         ipc: host
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectcone --cid=${CID} --id=1"
@@ -32,13 +32,13 @@ services:
            - video
         depends_on:
             - odsupercomponent
-        user: root  # This parameter will be replaced as soon as group_add parameter is available in docker-compose, cf. https://github.com/docker/compose/pull/3709.
+        user: odv  # This parameter will be replaced as soon as group_add parameter is available in docker-compose, cf. https://github.com/docker/compose/pull/3709.
         environment:
             - DISPLAY=$DISPLAY
         volumes:
             - /tmp/.X11-unix:/tmp/.X11-unix
             - .:/opt/opendlv.core.configuration
-            - ~/recordings/:/opt/recordings/
+            - ~/project/cfsd/recordings/:/opt/recordings/
         network_mode: host
         ipc: host
         command: "/opt/opendlv.core/bin/opendlv-core-tool-camera-replay --cid=${CID} --freq=5"
