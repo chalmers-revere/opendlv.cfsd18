@@ -42,6 +42,7 @@ class Track : public odcore::base::module::DataTriggeredConferenceClientModule {
  private:
   void setUp();
   void tearDown();
+  void newFunction();
 };
 
 }

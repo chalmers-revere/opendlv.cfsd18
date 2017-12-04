@@ -84,6 +84,11 @@ void Track::tearDown()
 {
 }
 
+void Track::newFunction()
+{
+}
+
+
 }
 }
 }
