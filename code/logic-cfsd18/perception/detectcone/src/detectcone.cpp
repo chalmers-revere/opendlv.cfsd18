@@ -111,29 +111,27 @@ void DetectCone::featureBased() {
 
 void DetectCone::rectify(){
   cv::Mat mtxLeft = (cv::Mat_<double>(3, 3) << 
-    699.8341, 0, 670.6991, 
-    0, 699.9473, 327.9933, 
+    350.6847, 0, 332.4661, 
+    0, 350.0606, 163.7461, 
     0, 0, 1);
-  std::vector<double> distLeft{-0.1708, 0.0267, 0, 0, 0};
+  cv::Mat distLeft = (cv::Mat_<double>(5, 1) << -0.1674, 0.0158, 0.0057, 0, 0);
   cv::Mat mtxRight = (cv::Mat_<double>(3, 3) << 
-    702.2891, 0, 667.0359,
-    0, 701.5237, 358.7018,
+    351.9498, 0, 329.4456,
+    0, 351.0426, 179.0179,
     0, 0, 1);
-  cv::Mat distRight = (cv::Mat_<double>(5, 1) << 
-    -0.1733, 0.0275, 0, 0, 0);
+  cv::Mat distRight = (cv::Mat_<double>(5, 1) << -0.1700, 0.0185, 0.0048, 0, 0);
   cv::Mat R = (cv::Mat_<double>(3, 3) << 
-    0.9998, -0.0016, -0.0215,
-    0.0016, 1, -0.0021,
-    0.0215, 0.0020, 0.9998);
-  cv::transpose(R, R);
-  cv::Mat T = (cv::Mat_<double>(3, 1) << 
-    -119.1632, 0.2062, 0.0252);
-  //double F = 700;
+    0.9997, 0.0015, 0.0215,
+    -0.0015, 1, -0.00008,
+    -0.0215, 0.00004, 0.9997);
+  //cv::transpose(R, R);
+  cv::Mat T = (cv::Mat_<double>(3, 1) << -119.1807, 0.1532, 1.1225);
+  //double F = 350;
   //double d = 120;
-  //double factor = F * d / 2;
+  //double factor = F * d;
 
-  cv::Size stdSize = cv::Size(1280, 720);
-  cv::Mat img = cv::imread("2.png");
+  cv::Size stdSize = cv::Size(640, 360);
+  cv::Mat img = cv::imread("1.png");
   int width = img.cols;
   int height = img.rows;
   cv::Mat imgL(img, cv::Rect(0, 0, width/2, height));
@@ -155,55 +153,32 @@ void DetectCone::rectify(){
   cv::remap(imgL, imgL, rmap[0][0], rmap[0][1], cv::INTER_LINEAR);
   cv::remap(imgR, imgR, rmap[1][0], rmap[1][1], cv::INTER_LINEAR);
 
-  /*
-  cv::imwrite("2_left.png", imgL);
-  cv::imwrite("2_right.png", imgR);
+  //cv::imwrite("2_left.png", imgL);
+  //cv::imwrite("2_right.png", imgR);
 
-  cv::Mat rectify;
-  cv::hconcat(imgL, imgR, rectify);
-  cv::namedWindow("rectify", cv::WINDOW_NORMAL);
-  cv::imshow("rectify", rectify);
+  cv::Mat rectify, disp, result;
+  rectify = imgL + imgR;
+  disp = blockMatching(imgL, imgR);
+
+  cv::namedWindow("disp", cv::WINDOW_NORMAL);
+  cv::imshow("disp", disp);
   cv::waitKey(0);
   cv::destroyAllWindows();
-  */
-  cv::Mat disp;
-  blockMatching(imgL, imgR, disp);
-  std::cout << disp.size() <<std::endl;
 }
 
-void DetectCone::blockMatching(cv::Mat imgL, cv::Mat imgR, cv::Mat disp){
-  cv::Mat grayL, grayR;
+cv::Mat DetectCone::blockMatching(cv::Mat imgL, cv::Mat imgR){
+  cv::Mat grayL, grayR, disp;
 
   cv::cvtColor(imgL, grayL, CV_BGR2GRAY);
   cv::cvtColor(imgR, grayR, CV_BGR2GRAY);
 
   cv::StereoBM sbm;
-  sbm.state->SADWindowSize = 9;
-  sbm.state->numberOfDisparities = 112;
-  sbm.state->preFilterSize = 5;
-  sbm.state->preFilterCap = 61;
-  sbm.state->minDisparity = -39;
-  sbm.state->textureThreshold = 507;
-  sbm.state->uniquenessRatio = 0;
-  sbm.state->speckleWindowSize = 0;
-  sbm.state->speckleRange = 8;
-  sbm.state->disp12MaxDiff = 1;
-/*
-  cv::StereoSGBM sgbm;
-  sgbm.SADWindowSize = 3;
-  sgbm.numberOfDisparities = 112 - 16;
-  sgbm.preFilterCap = 63;
-  sgbm.minDisparity = 16;
-  sgbm.uniquenessRatio = 10;
-  sgbm.speckleWindowSize = 100;
-  sgbm.speckleRange = 32;
-  sgbm.disp12MaxDiff = 1;
-  sgbm.fullDP = false;
-  sgbm.P1 = 8*3*3^2;
-  sgbm.P2 = 32*3*3^2;
-*/
+  sbm.state->SADWindowSize = 17;
+  sbm.state->numberOfDisparities = 32;
+  
   sbm(grayL, grayR, disp);
   cv::normalize(disp, disp, 0, 255, CV_MINMAX, CV_8U);
+  return disp;
 }
 
 

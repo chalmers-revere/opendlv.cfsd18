@@ -53,7 +53,7 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   bool ExtractSharedImage(odcore::data::image::SharedImage *);
   void featureBased();
   void rectify();
-  void blockMatching(cv::Mat, cv::Mat, cv::Mat);
+  cv::Mat blockMatching(cv::Mat, cv::Mat);
 
   cv::Mat m_img;
 };
