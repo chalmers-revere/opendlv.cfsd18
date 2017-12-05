@@ -84,10 +84,19 @@ void Track::tearDown()
 {
 }
 
-void Track::newFunction()
+ArrayXXf Track::getSafeLocalPath(ArrayXXf sidePoints1, ArrayXXf sidePoints2, int nMidPoints)
 {
+  std::cout << "One side:  " << sidePoints1 << std::endl;
+  std::cout << "Other side:  " << sidePoints2 << std::endl;
+  ArrayXXf localPath(nMidPoints,2);
+  return localPath;
 }
 
+ArrayXXf Track::placeEquidistantPoints(ArrayXXf sidePoints, int nEqPoints)
+{
+  std::cout << "nPoints:  " << nEqPoints << std::endl;
+  return sidePoints;
+}
 
 }
 }
