@@ -105,8 +105,73 @@ ArrayXXf Track::findSafeLocalPath(ArrayXXf sidePoints1, ArrayXXf sidePoints2, in
 
 ArrayXXf Track::placeEquidistantPoints(ArrayXXf sidePoints, int nEqPoints)
 {
-  std::cout << "nPoints:  " << nEqPoints << std::endl;
-  return sidePoints;
+  int nCones = sidePoints.rows();
+
+  // Full path length, and save lengths of individual segments
+  float pathLength = 0;
+  ArrayXXf segLength(nCones-1,1);
+  for(int i = 0; i < nCones-1; i = i+1)
+  {
+    segLength(i) = ((sidePoints.row(i+1)-sidePoints.row(i)).matrix()).norm();
+    pathLength = pathLength + segLength(i);
+  }
+  // Calculate equal subdistances
+  int eqDistance = pathLength/(nEqPoints-1);
+
+  // The latest point that you placed
+  ArrayXXf latestPointCoords = sidePoints.row(0);
+  // The latest cone that you passed
+  int latestConeIndex = 0;
+  // How long is left of the current segment
+  float remainderOfSeg = segLength(0);
+  // The new list of lineraly equidistant points
+  ArrayXXf newSidePoints(nEqPoints,2);
+  // The first point should be at the same place as the first cone
+  newSidePoints.row(0) = latestPointCoords;
+
+  // A temporary vector
+  ArrayXXf vec(1,2);
+  // Temporary distances
+  float distanceToGoFromLatestPassedPoint, lengthOfNextSeg;
+  // Start stepping through the given path
+  for(int i = 1; i < nEqPoints-1; i = i+1)
+  {
+    // If the next point should be in the segment you are currently in, simply place it.
+    if(remainderOfSeg > eqDistance)
+    {
+      vec = sidePoints.row(latestConeIndex+1)-latestPointCoords;
+      latestPointCoords = latestPointCoords + (eqDistance/remainderOfSeg)*vec;
+    } 
+    else // If you need to go to the next segment, keep in mind which cones you pass and how long distance you have left to go.
+    {
+      latestConeIndex = latestConeIndex+1;
+      distanceToGoFromLatestPassedPoint = eqDistance-remainderOfSeg;
+      lengthOfNextSeg = segLength(latestConeIndex);
+
+      while(distanceToGoFromLatestPassedPoint > lengthOfNextSeg)
+      {
+        latestConeIndex = latestConeIndex+1;
+        distanceToGoFromLatestPassedPoint = distanceToGoFromLatestPassedPoint - lengthOfNextSeg;
+        lengthOfNextSeg = segLength(latestConeIndex);
+      } // End of while
+
+      latestPointCoords = sidePoints.row(latestConeIndex);
+      vec = sidePoints.row(latestConeIndex+1)-latestPointCoords;
+      latestPointCoords = latestPointCoords + (distanceToGoFromLatestPassedPoint/segLength(latestConeIndex))*vec;
+    } // End of else
+
+    // In every case, save the point you just placed and check how much of that segment is left.
+    newSidePoints.row(i) = latestPointCoords;
+    remainderOfSeg = ((sidePoints.row(latestConeIndex+1)-latestPointCoords).matrix()).norm();
+  } // End of for
+
+  // The last point should be at the same place as the last cone.
+  newSidePoints.row(nEqPoints-1) = sidePoints.row(nCones-1);
+
+  //std::cout << "eqDistance:  " << eqDistance << std::endl;
+  //std::cout << "latestConeIndex:  " << latestConeIndex << std::endl;
+  //std::cout << "remainderOfSeg:  " << remainderOfSeg << std::endl;
+  return newSidePoints;
 }
 
 }
