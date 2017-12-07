@@ -11,14 +11,14 @@ services:
     # microservice for perception-detectcone
     logic-cfsd18-perception-detectcone:
         image: ${IMAGE}
-        working_dir: /opt/images/
+        working_dir: /opt/tmp/
         depends_on:
             - odsupercomponent
         environment:
             - DISPLAY=$DISPLAY
         volumes:
             - /tmp/.X11-unix:/tmp/.X11-unix
-            - ~/project/cfsd/images/:/opt/images/
+            - ~/project/cfsd/tmp/:/opt/tmp/
         user: odv
         network_mode: host
         ipc: host
