@@ -26,13 +26,13 @@
 #include <opendavinci/odcore/wrapper/Eigen.h>
 #include <opendavinci/generated/odcore/data/CompactPointCloud.h>
 #include <opendavinci/odcore/base/Lock.h>
-#include <opstd::endlv/data/environment/Point3.h> 
+
 
 
 #include "attention.hpp"
 
 
-namespace opstd::endlv {
+namespace opendlv {
 namespace logic {
 namespace cfsd18 {
 namespace sensation {
@@ -595,7 +595,7 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
     conePositionZ = conePositionZ / numberOfPointsOnCone;
     conePoints.row(i) << conePositionX,conePositionY,conePositionZ;
 
-    opstd::endlv::logic::sensation::Point conePoint = Cartesian2Spherical(conePositionX,conePositionY,conePositionZ);
+    opendlv::logic::sensation::Point conePoint = Cartesian2Spherical(conePositionX,conePositionY,conePositionZ);
     odcore::data::Container c1(conePoint);
     getConference().send(c1);
     //std::cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << std::endl;
@@ -606,7 +606,7 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
   
 }
 
-opstd::endlv::logic::sensation::Point Attention::Cartesian2Spherical(double &x, double &y, double &z)
+opendlv::logic::sensation::Point Attention::Cartesian2Spherical(double &x, double &y, double &z)
 {
   double distance = sqrt(x*x+y*y+z*z);
   double azimuthAngle = atan(y/x)*static_cast<double>(RAD2DEG);
