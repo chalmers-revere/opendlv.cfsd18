@@ -26,13 +26,13 @@
 #include <opendavinci/odcore/wrapper/Eigen.h>
 #include <opendavinci/generated/odcore/data/CompactPointCloud.h>
 #include <opendavinci/odcore/base/Lock.h>
-#include <opendlv/data/environment/Point3.h> 
+#include <opstd::endlv/data/environment/Point3.h> 
 
 
 #include "attention.hpp"
 
 
-namespace opendlv {
+namespace opstd::endlv {
 namespace logic {
 namespace cfsd18 {
 namespace sensation {
@@ -126,23 +126,23 @@ Attention::~Attention()
 
 void Attention::nextContainer(odcore::data::Container &a_container)
 {
-  TimeStamp incommingDataTime = a_container.getSampleTimeStamp();
+  odcore::data::TimeStamp incommingDataTime = a_container.getSampleTimeStamp();
   double timeSinceLastReceive = abs(static_cast<double>(incommingDataTime.toMicroseconds()-m_CPCReceivedLastTime.toMicroseconds())/1000000.0);
-  cout << "Time since between 2 incomming messages: " << timeSinceLastReceive << "s" << endl;
+  std::cout << "Time since between 2 incomming messages: " << timeSinceLastReceive << "s" << std::endl;
   if (timeSinceLastReceive>m_algorithmTime)
   {
 
   if(a_container.getDataType() == odcore::data::SharedPointCloud::ID()){
     m_SPCReceived = true;
-    cout << "Error: Don't use SharedPointCloud here!!!" << endl;
+    std::cout << "Error: Don't use SharedPointCloud here!!!" << std::endl;
 }
   if (a_container.getDataType() == odcore::data::CompactPointCloud::ID()) {
     m_CPCReceived = true;
-    TimeStamp ts = a_container.getSampleTimeStamp();
+    odcore::data::TimeStamp ts = a_container.getSampleTimeStamp();
 
     double timeBetween2ProcessedMessage = static_cast<double>(ts.toMicroseconds()-m_CPCReceivedLastTime.toMicroseconds())/1000000.0;
 
-    cout << "Time between 2 processed messages is: " << timeBetween2ProcessedMessage << "s" << endl;
+    std::cout << "Time between 2 processed messages is: " << timeBetween2ProcessedMessage << "s" << std::endl;
 
     m_CPCReceivedLastTime = ts;
 
@@ -154,11 +154,11 @@ void Attention::nextContainer(odcore::data::Container &a_container)
       const uint8_t numberOfLayers = m_cpc.getEntriesPerAzimuth();  // Get number of layers
 
       if (numberOfLayers == 16) {  // Deal with VLP-16
-        cout << "Connecting to VLP16" <<  endl;
+        std::cout << "Connecting to VLP16" <<  std::endl;
 
       }
       else {  // Deal with HDL-32
-        cout << "Connecting to HDL-32" <<  endl;
+        std::cout << "Connecting to HDL-32" <<  std::endl;
         const uint64_t currentTime = ts.toMicroseconds();
         //Check if this HDL-32E CPC comes from a new scan. The interval between two scans is roughly 100ms. It is safe to assume that a new CPC comes from a new scan if the interval is longer than 50ms
         const uint64_t deltaTime = (currentTime > m_previousCPC32TimeStamp) ? (currentTime - m_previousCPC32TimeStamp) : (m_previousCPC32TimeStamp - currentTime);
@@ -189,9 +189,8 @@ void Attention::nextContainer(odcore::data::Container &a_container)
 
   odcore::data::TimeStamp TimeAfterAlgorithm;
   double timeForProcessingOneScan = static_cast<double>(TimeAfterAlgorithm.toMicroseconds()-TimeBeforeAlgorithm.toMicroseconds())/1000000.0;
-  //cout << "Speed for algorithm is: " << 1/timeSinceReceiveTheProcessingScan << " FPS" << endl;
   m_algorithmTime = timeForProcessingOneScan;
-  cout << "Time for processing one scan of data is: " << timeForProcessingOneScan << "s" << endl;
+  std::cout << "Time for processing one scan of data is: " << timeForProcessingOneScan << "s" << std::endl;
   }
 }
 
@@ -241,7 +240,7 @@ void Attention::SaveOneCPCPointNoIntensity(const int &pointIndex,const uint16_t 
                                    break;
       case CompactPointCloud::MM : distance = static_cast<double>(distanceCPCPoint / 500.0f); //convert to meter from resolution 2 mm
                                    break;
-      default : cout << "Error, distanceCPCPoint not correctly defined!" << endl;
+      default : std::cout << "Error, distanceCPCPoint not correctly defined!" << std::endl;
                 break;
   }
 
@@ -352,38 +351,38 @@ void Attention::SavePointCloud(){
           }
           azimuth += azimuthIncrement;
       }
-      cout << "Angular resolution is: " << azimuthIncrement << endl;
-      cout << "number of points are:"<< m_pointCloud.rows() << endl;
+      std::cout << "Angular resolution is: " << azimuthIncrement << std::endl;
+      std::cout << "number of points are:"<< m_pointCloud.rows() << std::endl;
       //m_pointCloud = Eigen::MatrixXd::Zero(1,3); // Empty the point cloud matrix for this scan
-      cout << "One scan complete! " << endl;
+      std::cout << "One scan complete! " << std::endl;
     }  else { //A HDL-32E CPC, one of the three parts of a complete scan  
       if ((m_cpcMask_32 & 0x04) > 0) {//The first part, 12 layers
         if (numberOfBitsForIntensity == 0) {
-          cout << "The first part, 12 layers, no Intensity" <<  endl;
+          std::cout << "The first part, 12 layers, no Intensity" <<  std::endl;
           SaveCPC32NoIntensity(1, entriesPerAzimuth, startAzimuth, endAzimuth, distanceEncoding);
         } 
         else {
-          cout << "The first part, 12 layers, with Intensity" <<  endl;
+          std::cout << "The first part, 12 layers, with Intensity" <<  std::endl;
           //drawCPC32withIntensity(1, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
         }
       }
       if ((m_cpcMask_32 & 0x02) > 0) {//The second part, 11 layers
         if (numberOfBitsForIntensity == 0) {
-          cout << "The second part, 11 layers, no Intensity" <<  endl;
+          std::cout << "The second part, 11 layers, no Intensity" <<  std::endl;
           SaveCPC32NoIntensity(2, entriesPerAzimuth, startAzimuth, endAzimuth, distanceEncoding);
         } 
         else {
-          cout << "The second part, 11 layers, with Intensity" <<  endl;
+          std::cout << "The second part, 11 layers, with Intensity" <<  std::endl;
           //drawCPC32withIntensity(2, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
         }
       }
       if ((m_cpcMask_32 & 0x01) > 0) {//The third part, 9 layers
         if (numberOfBitsForIntensity == 0) {
-          cout << "The third part, 9 layers, no Intensity" << endl;
+          std::cout << "The third part, 9 layers, no Intensity" << std::endl;
           SaveCPC32NoIntensity(3, entriesPerAzimuth, startAzimuth, endAzimuth, distanceEncoding);
         } 
         else {
-          cout << "The third part, 9 layers, with Intensity" << endl;
+          std::cout << "The third part, 9 layers, with Intensity" << std::endl;
           //drawCPC32withIntensity(3, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
         }
       }
@@ -396,22 +395,22 @@ void Attention::ConeDetection(){
 
   Eigen::MatrixXd pointCloudConeROI = ExtractConeROI(m_xBoundary, m_yBoundary, m_groundLayerZ, m_coneHeight);
 
-  cout << "RANSAC" << endl;
+  std::cout << "RANSAC" << std::endl;
   Eigen::MatrixXd pcRefit = RANSACRemoveGround(pointCloudConeROI);
   
   double numOfPointsAfterRANSAC = pcRefit.rows();
-  cout << "points After RANSAC" << endl;
-  cout << numOfPointsAfterRANSAC << endl;
+  std::cout << "points After RANSAC" << std::endl;
+  std::cout << numOfPointsAfterRANSAC << std::endl;
   /*
-  cout << "points before RANSAC" << endl;
+  std::cout << "points before RANSAC" << std::endl;
   double pcRaw = m_pointCloud.rows();
-  cout << pcRaw << endl;*/
+  std::cout << pcRaw << std::endl;*/
   if (numOfPointsAfterRANSAC <= 600.0)
   {
     vector<vector<uint32_t>> objectIndexList = NNSegmentation(pcRefit, m_connectDistanceThreshold); //out from ransac pointCloudConeROI to pointCloudFilt
     vector<vector<uint32_t>> coneIndexList = FindConesFromObjects(pcRefit, objectIndexList, m_minNumOfPointsForCone, m_maxNumOfPointsForCone, m_nearConeRadiusThreshold, m_farConeRadiusThreshold, m_zRangeThreshold);
-    //cout << "Number of Object is: " << objectIndexList.size() << endl;
-    cout << "Number of Cones is: " << coneIndexList.size() << endl;
+    //std::cout << "Number of Object is: " << objectIndexList.size() << std::endl;
+    std::cout << "Number of Cones is: " << coneIndexList.size() << std::endl;
     SendingConesPositions(pcRefit, coneIndexList);
     
 
@@ -440,7 +439,7 @@ vector<vector<uint32_t>> Attention::NNSegmentation(Eigen::MatrixXd &pointCloudCo
     for (uint32_t i = 0; i < numberOfRestPoints; i++)
     {
       double distance = CalculateXYDistance(pointCloudConeROI, tmpPointIndex, restPointsList[i]);
-      //cout << "Distance is " << distance << endl;
+      //std::cout << "Distance is " << distance << std::endl;
       if (distance < minDistance)
       {
         tmpPointIndexNext = restPointsList[i];
@@ -450,7 +449,7 @@ vector<vector<uint32_t>> Attention::NNSegmentation(Eigen::MatrixXd &pointCloudCo
  
     }
     tmpPointIndex = tmpPointIndexNext;
-    //cout << "Minimum Distance is " << minDistance << endl;
+    //std::cout << "Minimum Distance is " << minDistance << std::endl;
     // now we have minDistance and tmpPointIndex for next iteration
     if (minDistance <= connectDistanceThreshold)
     {
@@ -596,18 +595,18 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
     conePositionZ = conePositionZ / numberOfPointsOnCone;
     conePoints.row(i) << conePositionX,conePositionY,conePositionZ;
 
-    opendlv::logic::sensation::Point conePoint = Cartesian2Spherical(conePositionX,conePositionY,conePositionZ);
+    opstd::endlv::logic::sensation::Point conePoint = Cartesian2Spherical(conePositionX,conePositionY,conePositionZ);
     odcore::data::Container c1(conePoint);
     getConference().send(c1);
-    //cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << endl;
+    //std::cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << std::endl;
   }
 
-  cout << "Detected Cones are: " << conePoints << endl;
+  std::cout << "Detected Cones are: " << conePoints << std::endl;
 
   
 }
 
-opendlv::logic::sensation::Point Attention::Cartesian2Spherical(double &x, double &y, double &z)
+opstd::endlv::logic::sensation::Point Attention::Cartesian2Spherical(double &x, double &y, double &z)
 {
   double distance = sqrt(x*x+y*y+z*z);
   double azimuthAngle = atan(y/x)*static_cast<double>(RAD2DEG);
@@ -623,153 +622,101 @@ opendlv::logic::sensation::Point Attention::Cartesian2Spherical(double &x, doubl
 Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC)
 {
 
-  //Get from configuration
-  cout << "RANSAC Start" << endl;
-  //Inlier dearch threshold
-  //double m_inlierSearchThreshold = 0.05;
-  //Best plane inlier removal threshold
-  //double inlierRemovalThreshold = 0.03;
-  //double inlierFoundTreshold = 5000;
-  //k amount of iterations for RANSAC
-  //int k = 100;
-  //Reference vector
+  std::cout << "RANSAC Start" << std::endl;
 
-  //cout << "Test 1" << endl;
   Eigen::MatrixXd foundPlane(1,4), planeBest(1,4), planeBestBest(1,4), normal(1,3), pointOnPlane(1,3), indexRangeBest,indexDotter ,indexOutliers(pointCloudInRANSAC.rows(),1);
-  //Eigen::MatrixXd planeBest;
-  //Eigen::MatrixXd planeBestBest;
   foundPlane << 0,0,0,0;
   normal << 0,0,1;
   double d;
   double indexDotFound = 0;
   int planeCounter = 0;
-  
-  //cout << "Test 2" << endl;
-  //double inlierBest = 0;
+
   int M = 1;
   int sizeCloud = pointCloudInRANSAC.rows()-1;
   Eigen::MatrixXd drawnSamples = Eigen::MatrixXd::Zero(3,3);
   Eigen::MatrixXd distance2Plane = Eigen::MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
   Eigen::MatrixXd dotProd = Eigen::MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
   Eigen::MatrixXd indexDot = Eigen::MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
-  //cout << "Test 3" << endl;
   
   Vector3d planeFromSamples, v0, v1, v2, crossVec1, crossVec2, crossCoefficients;
   double outliersFound, inliersFound, normalBest, normalBestLast;
   normalBestLast = 10000;
-  //cout << "Test 4" << endl;
-  /*Vector3d v0;
-  Vector3d v1;
-  Vector3d v2;
-  Vector3d crossVec1;
-  Vector3d crossVec2;
-  Vector3d crossCoefficients;*/
 
   for(int i = 0; i < m_ransacIterations; i++)
   {
     outliersFound = 0;
     inliersFound = 0;
     indexOutliers = Eigen::MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
-    //cout << "Test 5" << endl;
-    //Draw 3 random samples from pointCloud
 
     for(int j = 0; j < 3; j++){
 
       int indexShuffle = M + rand() / (RAND_MAX / (sizeCloud - M + 1) + 1);
 
       drawnSamples.row(j) = pointCloudInRANSAC.row(indexShuffle);
-      //cout << indexShuffle << endl;
-
     }
-    //cout << "Drawn Samples" << endl;
-    //cout << drawnSamples << endl;
-    //cout << "Test 6" << endl;
-    //Calculate Plane coefficients [a b c]
+
     v0 << drawnSamples(0,0), drawnSamples(0,1), drawnSamples(0,2);
     v1 << drawnSamples(1,0), drawnSamples(1,1), drawnSamples(1,2);
     v2 << drawnSamples(2,0), drawnSamples(2,1), drawnSamples(2,2);
-    //cout << "Test 6.1" << endl;
     crossVec1 = v0-v1;
     crossVec2 = v0-v2;
-    //cout << "Test 6.2" << endl;
     crossCoefficients = crossVec2.cross(crossVec1);
-    //cout << "Test 6.3" << endl;
-    //cout << crossCoefficients << endl;
-    //cout << "Test 6.5" << endl;
     crossCoefficients = crossCoefficients.normalized();
-    //cout << "Test 6.4" << endl;
-    //d = crossCoefficients(0)*v0(0) + crossCoefficients(1)*v0(1) + crossCoefficients(2)*v0(2);
     d = v0.dot(crossCoefficients);
     d = d*-1;
   
     foundPlane << crossCoefficients(0), crossCoefficients(1), crossCoefficients(2), d;
-    //cout << "new it" << endl;
-    //cout << v0(0) << " " << v0(1) << " " << v0(2) << " " << endl;
-    //cout << crossCoefficients(0) << " " << crossCoefficients(1) << " " << crossCoefficients(2) << " " << " " <<  d << endl;
-
-    //cout << "Test 6.6" << endl;
-    //cout << "Test 7" << endl;
-
     //Calculate perpendicular distance to found plane
     for(int p = 0; p < pointCloudInRANSAC.rows(); p++){
-      //cout << "Test 7.1" << endl;
       distance2Plane(p,0) = abs(foundPlane(0,0)*pointCloudInRANSAC(p,0) + foundPlane(0,1)*pointCloudInRANSAC(p,1) + foundPlane(0,2)*pointCloudInRANSAC(p,2) + foundPlane(0,3))/crossCoefficients.norm();
       //Find index of inliers
-      //cout << "Test 7.2" << endl;
       if(distance2Plane(p,0) >= m_inlierRangeThreshold){
         indexOutliers(outliersFound,0) = p;
         outliersFound++;
 
       }
-      //cout << "Test 7.3" << endl;
+
     } 
-    //cout << "NUmber of outliers are: " << outliersFound << endl;
-    //cout << "Test 8" << endl;
+
     if(outliersFound > 0){
       Eigen::MatrixXd indexRange = Eigen::MatrixXd::Zero(outliersFound,1);
       indexRange = indexOutliers.topRows(outliersFound+1);
 
       inliersFound = pointCloudInRANSAC.rows()-outliersFound;
-      //cout << "Test 9" << endl;
-      //cout << inliersFound << endl;
       if(inliersFound > m_inlierFoundTreshold){
   
         planeBest = foundPlane;
-        //cout << "Test 10" << endl;
         normalBest = sqrt(pow((planeBest(0,0)-normal(0,0)),2) + pow((planeBest(0,1)-normal(0,1)),2) + pow((planeBest(0,2)-normal(0,2)),2));
 
         if(normalBest < normalBestLast){
 
           normalBestLast = normalBest;
           planeBestBest = planeBest;
-          //cout << "Test 11" << endl;
           indexRangeBest.resize(indexRange.rows(),indexRange.cols());
           indexRangeBest = indexRange;
-          //cout << "Test 12" << endl;
           pointOnPlane = drawnSamples.row(0);
           planeCounter++;
         
-
         }
-        //cout << "Test 13" << endl;
+
       }
     }
     else{
 
-      cout << "No plane was found" << endl;
+      std::cout << "No plane was found" << std::endl;
       if(planeCounter > 0){
 
         m_lastBestPlane = planeBestBest;
       }
     }
-    //cout << "NUmber of iterations is: " << i << endl;
+    //std::cout << "NUmber of iterations is: " << i << std::endl;
   }
 
   if(planeCounter == 0){
 
     planeBestBest = m_lastBestPlane;
   }
-  //cout << "Test 14" << endl;
+
   for(int p = 0; p < pointCloudInRANSAC.rows(); p++){
 
     dotProd(p,0) = planeBestBest(0,0)*(pointCloudInRANSAC(p,0)-pointOnPlane(0,0)) + planeBestBest(0,1)*(pointCloudInRANSAC(p,1)-pointOnPlane(0,1)) + planeBestBest(0,2)*(pointCloudInRANSAC(p,2)-pointOnPlane(0,2)); 
@@ -780,34 +727,23 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
       indexDotFound++;
     }
   }
-  //cout << "Test 11" << endl;
   indexDotter.resize(indexDot.rows(),indexDot.cols());
   indexDotter = indexDot.topRows(indexDotFound+1);
 
-  //cout << "indexDotter is: " << indexDotter << " and indexRangeBest is : " << indexRangeBest << endl;
-
-  //cout << "Test 12" << endl;
   Eigen::MatrixXd index2Keep(indexDotter.rows()+indexRangeBest.rows(),1);
 
   index2Keep << indexRangeBest,
-                 indexDotter;
-
-  
+                 indexDotter; 
   //Remove duplicates
-  //cout << "Test 13" << endl;
   Eigen::MatrixXd sortedIndex = RemoveDuplicates(index2Keep);
   //Remove found inlier index from
-
-  //cout << "Test 14" << endl;
   Eigen::MatrixXd pcRefit = Eigen::MatrixXd::Zero(sortedIndex.rows(),3);
   for(int i = 0; i < sortedIndex.rows(); i++){
-
     pcRefit.row(i) = pointCloudInRANSAC.row(sortedIndex(i));
 
-
   }
-  cout << "Ground plane found:" << endl;
-  cout << planeBestBest << endl;
+  std::cout << "Ground plane found:" << std::endl;
+  std::cout << planeBestBest << std::endl;
 
   return pcRefit;
 
