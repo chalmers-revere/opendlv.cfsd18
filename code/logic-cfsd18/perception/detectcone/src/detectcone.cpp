@@ -29,6 +29,7 @@
 #include <opencv2/calib3d/calib3d.hpp>
 
 #include "detectcone.hpp"
+#include "keras_model.h"
 
 namespace opendlv {
 namespace logic {
@@ -50,7 +51,16 @@ void DetectCone::setUp()
 {
   //rectify();
   //run_cnn("LeNet-model", "test.png");
-  train_cnn();
+  /*
+  tiny_dnn::vec_t data;
+  std::string img_path;
+  for( int a = 0; a < 2; a = a + 1 ) {
+      img_path = "data/yellow/" + std::to_string(a) + ".png";
+      convert_image(img_path, 0, 1, 25, 25, data);
+   }*/
+  keras::KerasModel m("cone.nnet", true);
+  delete m;
+  
 }
 
 void DetectCone::tearDown()
@@ -185,12 +195,27 @@ cv::Mat DetectCone::blockMatching(cv::Mat imgL, cv::Mat imgR){
 }
 
 
-
-
-//run cnn starts
-double DetectCone::rescale(double x) {
-  return 100.0 * (x + 1) / 2;
+//train cnn starts
+/*
+void convert_image(const std::string &imagefilename,
+                   double minv,
+                   double maxv,
+                   int w,
+                   int h,
+                   tiny_dnn::vec_t &data) {
+  tiny_dnn::image<> img(imagefilename, tiny_dnn::image_type::rgb);
+  tiny_dnn::image<> resized = resize_image(img, w, h);
+  data.resize(resized.width() * resized.height() * resized.depth());
+  for (size_t c = 0; c < resized.depth(); ++c) {
+    for (size_t y = 0; y < resized.height(); ++y) {
+      for (size_t x = 0; x < resized.width(); ++x) {
+        data[c * resized.width() * resized.height() + y * resized.width() + x] =
+          (maxv - minv) * (resized[y * resized.width() + x + c]) / 255.0 + minv;
+      }
+    }
+  }
 }
+*/
 
 void DetectCone::convert_image(const std::string &imagefilename,
                    double minv,
@@ -205,6 +230,12 @@ void DetectCone::convert_image(const std::string &imagefilename,
   std::transform(
     resized.begin(), resized.end(), std::back_inserter(data),
     [=](uint8_t c) { return (255 - c) * (maxv - minv) / 255.0 + minv; });
+}
+//train cnn ends
+
+//run cnn starts
+double DetectCone::rescale(double x) {
+  return 100.0 * (x + 1) / 2;
 }
 
 void DetectCone::run_cnn(const std::string &dictionary, const std::string &src_filename) {

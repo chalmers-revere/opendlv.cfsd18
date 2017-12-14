@@ -57,14 +57,17 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   void rectify();
   cv::Mat blockMatching(cv::Mat, cv::Mat);
 
-  //run cnn starts
-  double rescale(double x);
+  //train cnn starts
   void convert_image(const std::string &imagefilename,
                    double minv,
                    double maxv,
                    int w,
                    int h,
                    tiny_dnn::vec_t &data);
+  //train cnn ends
+
+  //run cnn starts
+  double rescale(double x);
   void run_cnn(const std::string &dictionary, const std::string &src_filename);
   //run cnn ends
 
