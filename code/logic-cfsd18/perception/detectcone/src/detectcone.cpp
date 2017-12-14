@@ -64,17 +64,23 @@ void DetectCone::tearDown()
 {
 }
 
-void DetectCone::nextContainer(odcore::data::Container &a_c)
+void DetectCone::nextContainer(odcore::data::Container &a_container)
 {
-  if (a_c.getDataType() == odcore::data::image::SharedImage::ID()) {
+  odcore::data::TimeStamp incommingDataTime = a_container.getSampleTimeStamp();
+  double currentTime = static_cast<double>(incommingDataTime.toMicroseconds())/1000000.0;
+  std::cout << "Current time: " << currentTime << "s" << std::endl;
+
+  if (a_container.getDataType() == odcore::data::image::SharedImage::ID()) {
     odcore::data::image::SharedImage sharedImg =
-        a_c.getData<odcore::data::image::SharedImage>();
+        a_container.getData<odcore::data::image::SharedImage>();
     if (!ExtractSharedImage(&sharedImg)) {
       std::cout << "[" << getName() << "] " << "[Unable to extract shared image."
           << std::endl;
       return;
     }
-    std::cout << "done" << std::endl;
+    std::string img_name = std::to_string(currentTime);
+    std::cout << img_name << std::endl;
+    saveImg(img_name);
   }
 
 }
@@ -108,6 +114,12 @@ bool DetectCone::ExtractSharedImage(
     std::cout << "[" << getName() << "] " << "Sharedmem is not valid." << std::endl;
   }
   return isExtracted;
+}
+
+void DetectCone::saveImg(std::string img_name) {
+  // cv::imshow("img", m_img);
+  // cv::waitKey(0);
+  cv::imwrite("recording/"+img_name+".png", m_img);
 }
 
 void DetectCone::featureBased() {
