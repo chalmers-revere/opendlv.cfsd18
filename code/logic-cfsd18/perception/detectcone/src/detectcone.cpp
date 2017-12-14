@@ -29,7 +29,6 @@
 #include <opencv2/calib3d/calib3d.hpp>
 
 #include "detectcone.hpp"
-#include "keras_model.h"
 
 namespace opendlv {
 namespace logic {
@@ -58,8 +57,6 @@ void DetectCone::setUp()
       img_path = "data/yellow/" + std::to_string(a) + ".png";
       convert_image(img_path, 0, 1, 25, 25, data);
    }*/
-  keras::KerasModel m("cone.nnet", true);
-  delete m;
   
 }
 
