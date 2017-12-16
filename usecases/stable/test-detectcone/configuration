@@ -108,10 +108,10 @@ odrecorderh264.portbaseforchildprocesses = 29000 # Every spawned child processes
 #core-tool-camera-replay.height = 800
 
 
-proxy-camera:1.camera.debug = 0
+proxy-camera:1.camera.debug = 1
 proxy-camera:1.camera.name = computer
-proxy-camera:1.camera.id = 0 # Select here the proper ID for OpenCV
-proxy-camera:1.camera.width = 640 
-proxy-camera:1.camera.height = 480
+proxy-camera:1.camera.id = 1 # Select here the proper ID for OpenCV
+proxy-camera:1.camera.width = 2560 
+proxy-camera:1.camera.height = 720
 proxy-camera:1.camera.bpp = 3
 proxy-camera:1.camera.flipped = 0 # 1=flipped image, 0=not flipped image

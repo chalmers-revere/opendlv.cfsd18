@@ -18,7 +18,7 @@ services:
         volumes:
             - /tmp/.X11-unix:/tmp/.X11-unix
             - ~/project/cfsd/tmp/:/opt/tmp/
-        user: root
+        user: odv
         ipc: host
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectcone --cid=${CID} --id=1"
 
@@ -47,9 +47,9 @@ services:
         group_add:
             - video
         ipc: host
-        user: root
+        user: odv
         devices:
-            - "/dev/video0:/dev/video0"
+            - "/dev/video1:/dev/video1"
         environment:
             - DISPLAY=$DISPLAY
         volumes:
