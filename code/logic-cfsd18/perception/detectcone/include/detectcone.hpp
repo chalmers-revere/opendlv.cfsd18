@@ -67,7 +67,7 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
                    tiny_dnn::vec_t &data);
 
   //double rescale(double x);
-  void run_cnn(const std::string &dictionary, const std::string &src_filename);
+  void sliding_window(const std::string &dictionary, const std::string &src_filename);
   //run cnn ends
 
   cv::Mat m_img;

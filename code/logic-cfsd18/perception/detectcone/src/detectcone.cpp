@@ -49,7 +49,7 @@ DetectCone::~DetectCone()
 void DetectCone::setUp()
 {
   //rectify();
-  run_cnn("sliding_window", "test.png");
+  sliding_window("sliding_window", "test.png");
   /*
   tiny_dnn::vec_t data;
   std::string img_path;
@@ -225,31 +225,25 @@ void DetectCone::convert_image(const std::string &imagefilename,
 //   return 100.0 * (x + 1) / 2;
 // }
 
-void DetectCone::run_cnn(const std::string &dictionary, const std::string &src_filename) {
+void DetectCone::sliding_window(const std::string &dictionary, const std::string &src_filename) {
   using conv    = tiny_dnn::convolutional_layer;
   // using dropout = tiny_dnn::dropout_layer;
-  using pool    = tiny_dnn::max_pooling_layer;
-  using fc      = tiny_dnn::fully_connected_layer;
+  // using pool    = tiny_dnn::max_pooling_layer;
+  // using fc      = tiny_dnn::fully_connected_layer;
   using relu    = tiny_dnn::relu_layer;
-  using softmax = tiny_dnn::softmax_layer;
-
-  const size_t n_fmaps  = 32;  ///< number of feature maps for upper layer
-  const size_t n_fmaps2 = 64;  ///< number of feature maps for lower layer
-  const size_t n_fc = 64;  ///< number of hidden units in fully-connected layer
+  using softmax = tiny_dnn::softmax_layer;  
 
   tiny_dnn::network<tiny_dnn::sequential> nn;
 
-  nn << conv(32, 32, 5, 3, n_fmaps, tiny_dnn::padding::same)  // C1
-     << pool(32, 32, n_fmaps, 2)                              // P2
-     << relu(16, 16, n_fmaps)                                 // activation
-     << conv(16, 16, 5, n_fmaps, n_fmaps, tiny_dnn::padding::same)  // C3
-     << pool(16, 16, n_fmaps, 2)                                    // P4
-     << relu(8, 8, n_fmaps)                                        // activation
-     << conv(8, 8, 5, n_fmaps, n_fmaps2, tiny_dnn::padding::same)  // C5
-     << pool(8, 8, n_fmaps2, 2)                                    // P6
-     << relu(4, 4, n_fmaps2)                                       // activation
-     << fc(4 * 4 * n_fmaps2, n_fc)                                 // FC7
-     << fc(n_fc, 3) << softmax(3);                               // FC10
+  const size_t input_size  = 25;
+  nn << conv(input_size, input_size, 7, 3, 32, tiny_dnn::padding::valid, true, 1, 1) << relu()
+     << conv(input_size-6, input_size-6, 7, 32, 32, tiny_dnn::padding::valid, true, 1, 1) << relu()
+     //<< dropout((input_size-12)*(input_size-12)*32, 0.25)
+     << conv(input_size-12, input_size-12, 5, 32, 32, tiny_dnn::padding::valid, true, 1, 1) << relu()
+     << conv(input_size-16, input_size-16, 5, 32, 32, tiny_dnn::padding::valid, true, 1, 1) << relu()
+     //<< dropout((input_size-20)*(input_size-20)*32, 0.25)
+     << conv(input_size-20, input_size-20, 3, 32, 32, tiny_dnn::padding::valid, true, 1, 1) << relu()
+     << conv(input_size-22, input_size-22, 3, 32, 3, tiny_dnn::padding::valid, true, 1, 1) << softmax(3);
 
   // load nets
   std::ifstream ifs(dictionary.c_str());
@@ -257,7 +251,7 @@ void DetectCone::run_cnn(const std::string &dictionary, const std::string &src_f
 
   // convert imagefile to vec_t
   tiny_dnn::vec_t data;
-  convert_image(src_filename, 0, 1.0, 32, 32, data);
+  convert_image(src_filename, 0, 1.0, input_size, input_size, data);
 
   // recognize
   auto res = nn.predict(data);
