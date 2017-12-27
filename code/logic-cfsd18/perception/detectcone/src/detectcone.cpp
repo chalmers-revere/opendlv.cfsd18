@@ -49,7 +49,7 @@ DetectCone::~DetectCone()
 void DetectCone::setUp()
 {
   //rectify();
-  //run_cnn("LeNet-model", "test.png");
+  run_cnn("sliding_window", "test.png");
   /*
   tiny_dnn::vec_t data;
   std::string img_path;
@@ -78,9 +78,8 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
           << std::endl;
       return;
     }
-    std::string img_name = std::to_string(currentTime);
-    std::cout << img_name << std::endl;
-    saveImg(img_name);
+    
+    // saveImg(currentTime);
   }
 
 }
@@ -116,9 +115,8 @@ bool DetectCone::ExtractSharedImage(
   return isExtracted;
 }
 
-void DetectCone::saveImg(std::string img_name) {
-  // cv::imshow("img", m_img);
-  // cv::waitKey(0);
+void DetectCone::saveImg(double currentTime) {
+  std::string img_name = std::to_string(currentTime);
   cv::imwrite("recording/"+img_name+".png", m_img);
 }
 
@@ -203,17 +201,15 @@ cv::Mat DetectCone::blockMatching(cv::Mat imgL, cv::Mat imgR){
   return disp;
 }
 
-
-//train cnn starts
-/*
-void convert_image(const std::string &imagefilename,
+//run cnn starts
+void DetectCone::convert_image(const std::string &imagefilename,
                    double minv,
                    double maxv,
                    int w,
                    int h,
                    tiny_dnn::vec_t &data) {
   tiny_dnn::image<> img(imagefilename, tiny_dnn::image_type::rgb);
-  tiny_dnn::image<> resized = resize_image(img, w, h);
+  tiny_dnn::image<> resized = tiny_dnn::resize_image(img, w, h);
   data.resize(resized.width() * resized.height() * resized.depth());
   for (size_t c = 0; c < resized.depth(); ++c) {
     for (size_t y = 0; y < resized.height(); ++y) {
@@ -224,62 +220,49 @@ void convert_image(const std::string &imagefilename,
     }
   }
 }
-*/
 
-void DetectCone::convert_image(const std::string &imagefilename,
-                   double minv,
-                   double maxv,
-                   int w,
-                   int h,
-                   tiny_dnn::vec_t &data) {
-  tiny_dnn::image<> img(imagefilename, tiny_dnn::image_type::grayscale);
-  tiny_dnn::image<> resized = resize_image(img, w, h);
-
-  // mnist dataset is "white on black", so negate required
-  std::transform(
-    resized.begin(), resized.end(), std::back_inserter(data),
-    [=](uint8_t c) { return (255 - c) * (maxv - minv) / 255.0 + minv; });
-}
-//train cnn ends
-
-//run cnn starts
-double DetectCone::rescale(double x) {
-  return 100.0 * (x + 1) / 2;
-}
+// double DetectCone::rescale(double x) {
+//   return 100.0 * (x + 1) / 2;
+// }
 
 void DetectCone::run_cnn(const std::string &dictionary, const std::string &src_filename) {
+  using conv    = tiny_dnn::convolutional_layer;
+  // using dropout = tiny_dnn::dropout_layer;
+  using pool    = tiny_dnn::max_pooling_layer;
+  using fc      = tiny_dnn::fully_connected_layer;
+  using relu    = tiny_dnn::relu_layer;
+  using softmax = tiny_dnn::softmax_layer;
+
+  const size_t n_fmaps  = 32;  ///< number of feature maps for upper layer
+  const size_t n_fmaps2 = 64;  ///< number of feature maps for lower layer
+  const size_t n_fc = 64;  ///< number of hidden units in fully-connected layer
+
   tiny_dnn::network<tiny_dnn::sequential> nn;
 
-  nn.load(dictionary);
+  nn << conv(32, 32, 5, 3, n_fmaps, tiny_dnn::padding::same)  // C1
+     << pool(32, 32, n_fmaps, 2)                              // P2
+     << relu(16, 16, n_fmaps)                                 // activation
+     << conv(16, 16, 5, n_fmaps, n_fmaps, tiny_dnn::padding::same)  // C3
+     << pool(16, 16, n_fmaps, 2)                                    // P4
+     << relu(8, 8, n_fmaps)                                        // activation
+     << conv(8, 8, 5, n_fmaps, n_fmaps2, tiny_dnn::padding::same)  // C5
+     << pool(8, 8, n_fmaps2, 2)                                    // P6
+     << relu(4, 4, n_fmaps2)                                       // activation
+     << fc(4 * 4 * n_fmaps2, n_fc)                                 // FC7
+     << fc(n_fc, 3) << softmax(3);                               // FC10
+
+  // load nets
+  std::ifstream ifs(dictionary.c_str());
+  ifs >> nn;
 
   // convert imagefile to vec_t
   tiny_dnn::vec_t data;
-  convert_image(src_filename, -1.0, 1.0, 32, 32, data);
+  convert_image(src_filename, 0, 1.0, 32, 32, data);
 
   // recognize
   auto res = nn.predict(data);
-  std::vector<std::pair<double, int>> scores;
-
-  // sort & print top-3
-  for (int i = 0; i < 10; i++)
-    scores.emplace_back(rescale(res[i]), i);
-
-  sort(scores.begin(), scores.end(), std::greater<std::pair<double, int>>());
-
-  for (int i = 0; i < 3; i++)
-    std::cout << scores[i].second << "," << scores[i].first << std::endl;
-
-  // save outputs of each layer
-  for (size_t i = 0; i < nn.depth(); i++) {
-    auto out_img  = nn[i]->output_to_image();
-    auto filename = "layer_" + std::to_string(i) + ".png";
-    out_img.save(filename);
-  }
-  // save filter shape of first convolutional layer
-  {
-    auto weight   = nn.at<tiny_dnn::convolutional_layer>(0).weight_to_image();
-    auto filename = "weights.png";
-    weight.save(filename);
+  for(uint i=0; i<res.size(); i++){
+    std::cout << res[i] << std::endl;
   }
 }
 //run cnn ends

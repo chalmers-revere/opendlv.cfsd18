@@ -41,20 +41,20 @@ services:
     #     ipc: host
     #     command: "/opt/opendlv.core/bin/opendlv-core-tool-camera-replay --cid=${CID} --freq=5"
 
-    #camera 1
-    proxy1:
-        build: .
-        group_add:
-            - video
-        ipc: host
-        user: odv
-        devices:
-            - "/dev/video1:/dev/video1"
-        environment:
-            - DISPLAY=$DISPLAY
-        volumes:
-            - /tmp/.X11-unix:/tmp/.X11-unix
-        links:
-            - odsupercomponent
-            - logic-cfsd18-perception-detectcone
-        command: "/opt/opendlv.core/bin/opendlv-core-system-proxy-camera --cid=${CID}  --id=1 --freq=20"
+    # #camera 1
+    # proxy1:
+    #     build: .
+    #     group_add:
+    #         - video
+    #     ipc: host
+    #     user: odv
+    #     devices:
+    #         - "/dev/video1:/dev/video1"
+    #     environment:
+    #         - DISPLAY=$DISPLAY
+    #     volumes:
+    #         - /tmp/.X11-unix:/tmp/.X11-unix
+    #     links:
+    #         - odsupercomponent
+    #         - logic-cfsd18-perception-detectcone
+    #     command: "/opt/opendlv.core/bin/opendlv-core-system-proxy-camera --cid=${CID}  --id=1 --freq=20"
