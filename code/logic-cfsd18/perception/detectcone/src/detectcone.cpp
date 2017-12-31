@@ -227,23 +227,32 @@ void DetectCone::convert_image(const std::string &imagefilename,
 
 void DetectCone::sliding_window(const std::string &dictionary, const std::string &src_filename) {
   using conv    = tiny_dnn::convolutional_layer;
-  // using dropout = tiny_dnn::dropout_layer;
-  // using pool    = tiny_dnn::max_pooling_layer;
-  // using fc      = tiny_dnn::fully_connected_layer;
+  using pool    = tiny_dnn::max_pooling_layer;
+  using fc      = tiny_dnn::fully_connected_layer;
   using relu    = tiny_dnn::relu_layer;
-  using softmax = tiny_dnn::softmax_layer;  
+  using softmax = tiny_dnn::softmax_layer;
 
+  const size_t n_fmaps  = 32;  // number of feature maps for upper layer
+  const size_t n_fmaps2 = 64;  // number of feature maps for lower layer
+  const size_t n_fc     = 64;  // number of hidden units in fc layer
+  tiny_dnn::core::backend_t backend_type = tiny_dnn::core::default_engine();
   tiny_dnn::network<tiny_dnn::sequential> nn;
 
-  const size_t input_size  = 25;
-  nn << conv(input_size, input_size, 7, 3, 32, tiny_dnn::padding::valid, true, 1, 1) << relu()
-     << conv(input_size-6, input_size-6, 7, 32, 32, tiny_dnn::padding::valid, true, 1, 1) << relu()
-     //<< dropout((input_size-12)*(input_size-12)*32, 0.25)
-     << conv(input_size-12, input_size-12, 5, 32, 32, tiny_dnn::padding::valid, true, 1, 1) << relu()
-     << conv(input_size-16, input_size-16, 5, 32, 32, tiny_dnn::padding::valid, true, 1, 1) << relu()
-     //<< dropout((input_size-20)*(input_size-20)*32, 0.25)
-     << conv(input_size-20, input_size-20, 3, 32, 32, tiny_dnn::padding::valid, true, 1, 1) << relu()
-     << conv(input_size-22, input_size-22, 3, 32, 3, tiny_dnn::padding::valid, true, 1, 1) << softmax(3);
+  nn << conv(32, 32, 5, 3, n_fmaps, tiny_dnn::padding::same, true, 1, 1,
+             backend_type)                      // C1
+     << pool(32, 32, n_fmaps, 2, backend_type)  // P2
+     << relu()                                  // activation
+     << conv(16, 16, 5, n_fmaps, n_fmaps, tiny_dnn::padding::same, true, 1, 1,
+             backend_type)                      // C3
+     << pool(16, 16, n_fmaps, 2, backend_type)  // P4
+     << relu()                                  // activation
+     << conv(8, 8, 5, n_fmaps, n_fmaps2, tiny_dnn::padding::same, true, 1, 1,
+             backend_type)                                // C5
+     << pool(8, 8, n_fmaps2, 2, backend_type)             // P6
+     << relu()                                            // activation
+     << fc(4 * 4 * n_fmaps2, n_fc, true, backend_type)    // FC7
+     << relu()                                            // activation
+     << fc(n_fc, 3, true, backend_type) << softmax(3);  // FC10
 
   // load nets
   std::ifstream ifs(dictionary.c_str());
@@ -251,13 +260,18 @@ void DetectCone::sliding_window(const std::string &dictionary, const std::string
 
   // convert imagefile to vec_t
   tiny_dnn::vec_t data;
-  convert_image(src_filename, 0, 1.0, input_size, input_size, data);
+  convert_image(src_filename, 0, 1.0, 32, 32, data);
 
   // recognize
-  auto res = nn.predict(data);
-  for(uint i=0; i<res.size(); i++){
-    std::cout << res[i] << std::endl;
-  }
+  auto prob = nn.predict(data);
+  float_t threshold = 0.7;
+  std::cout << prob[0] << " " << prob[1] << " " << prob[2] << std::endl;
+  if(prob[1]>prob[2] && prob[1]>threshold)
+    std::cout << "Yellow cone" << std::endl;
+  else if(prob[2]>prob[1] && prob[2]>threshold)
+    std::cout << "Blue cone" << std::endl;
+  else
+    std::cout << "No cone detected" << std::endl;
 }
 //run cnn ends
 
