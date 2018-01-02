@@ -49,7 +49,7 @@ DetectCone::~DetectCone()
 void DetectCone::setUp()
 {
   //rectify();
-  sliding_window("sliding_window", "test.png");
+  sliding_window("sliding_window", "0.png");
   /*
   tiny_dnn::vec_t data;
   std::string img_path;
@@ -252,7 +252,7 @@ void DetectCone::sliding_window(const std::string &dictionary, const std::string
      << relu()                                            // activation
      << fc(4 * 4 * n_fmaps2, n_fc, true, backend_type)    // FC7
      << relu()                                            // activation
-     << fc(n_fc, 3, true, backend_type) << softmax(3);  // FC10
+     << fc(n_fc, 4, true, backend_type) << softmax(4);  // FC10
 
   // load nets
   std::ifstream ifs(dictionary.c_str());
@@ -264,14 +264,22 @@ void DetectCone::sliding_window(const std::string &dictionary, const std::string
 
   // recognize
   auto prob = nn.predict(data);
-  float_t threshold = 0.7;
-  std::cout << prob[0] << " " << prob[1] << " " << prob[2] << std::endl;
-  if(prob[1]>prob[2] && prob[1]>threshold)
-    std::cout << "Yellow cone" << std::endl;
-  else if(prob[2]>prob[1] && prob[2]>threshold)
-    std::cout << "Blue cone" << std::endl;
-  else
+  float_t threshold = 0.5;
+  std::cout << prob[0] << " " << prob[1] << " " << prob[2] << " " << prob[3] << std::endl;
+  int max_index = 1;
+  float_t max_prob = prob[1];
+  for (int i=2; i<4; i++){
+    if (prob[i] > max_prob){
+      max_index = i;
+      max_prob = prob[i];
+    }
+  }
+  std::string labels[] = {"Yellow", "Blue", "Orange"};
+  if (max_prob < threshold)
     std::cout << "No cone detected" << std::endl;
+  else
+    std::cout << labels[max_index-1] << " cone detected" << std::endl;
+    
 }
 //run cnn ends
 
