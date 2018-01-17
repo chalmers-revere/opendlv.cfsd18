@@ -45,6 +45,7 @@ class Track : public odcore::base::module::DataTriggeredConferenceClientModule {
   void tearDown();
   ArrayXXf findSafeLocalPath(ArrayXXf, ArrayXXf, int);
   ArrayXXf placeEquidistantPoints(ArrayXXf, int);
+  ArrayXXf traceBackToClosestPoint(ArrayXXf, ArrayXXf);
 };
 
 }

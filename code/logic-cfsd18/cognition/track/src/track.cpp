@@ -174,6 +174,18 @@ ArrayXXf Track::placeEquidistantPoints(ArrayXXf sidePoints, int nEqPoints)
   return newSidePoints;
 }
 
+ArrayXXf Track::traceBackToClosestPoint(ArrayXXf p1, ArrayXXf p2)
+{
+   // Input: The coordinates of the first two points. (column vectors)
+   // Output: the point along the line that is closest to the origin.
+
+   ArrayXXf v = p1-p2;	// The line to trace
+   ArrayXXf n(2,1);	// The normal vector
+   n(0,0) = -v(1,0); n(1,0) = v(0,0);
+   int d = (p1(0,0)*v(1,0)-v(0,0)*p1(1,0))/(n(0,0)*v(1,0)-v(0,0)*n(1,0)); // Shortest distance between [0,0] and the vector
+   return n*d;		// Follow the normal vector for that distance
+}
+
 }
 }
 }
