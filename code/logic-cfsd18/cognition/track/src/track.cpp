@@ -43,6 +43,7 @@ Track::~Track()
 
 void Track::nextContainer(odcore::data::Container &a_container)
 {
+//std::cout << "I'M ALIVE !!!!!!!" << std::endl;
   if (a_container.getDataType() == opendlv::logic::perception::Surface::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
@@ -124,7 +125,7 @@ ArrayXXf Track::placeEquidistantPoints(ArrayXXf sidePoints, int nEqPoints)
   int latestConeIndex = 0;
   // How long is left of the current segment
   float remainderOfSeg = segLength(0);
-  // The new list of lineraly equidistant points
+  // The new list of linearly equidistant points
   ArrayXXf newSidePoints(nEqPoints,2);
   // The first point should be at the same place as the first cone
   newSidePoints.row(0) = latestPointCoords;
@@ -176,13 +177,13 @@ ArrayXXf Track::placeEquidistantPoints(ArrayXXf sidePoints, int nEqPoints)
 
 ArrayXXf Track::traceBackToClosestPoint(ArrayXXf p1, ArrayXXf p2)
 {
-   // Input: The coordinates of the first two points. (column vectors)
+   // Input: The coordinates of the first two points. (row vectors)
    // Output: the point along the line that is closest to the origin.
 
    ArrayXXf v = p1-p2;	// The line to trace
-   ArrayXXf n(2,1);	// The normal vector
-   n(0,0) = -v(1,0); n(1,0) = v(0,0);
-   int d = (p1(0,0)*v(1,0)-v(0,0)*p1(1,0))/(n(0,0)*v(1,0)-v(0,0)*n(1,0)); // Shortest distance between [0,0] and the vector
+   ArrayXXf n(1,2);	// The normal vector
+   n(0,0) = -v(0,1); n(0,1) = v(0,0);
+   int d = (p1(0,0)*v(0,1)-v(0,0)*p1(0,1))/(n(0,0)*v(0,1)-v(0,0)*n(0,1)); // Shortest distance between [0,0] and the vector
    return n*d;		// Follow the normal vector for that distance
 }
 
