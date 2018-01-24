@@ -71,7 +71,7 @@ void Track::nextContainer(odcore::data::Container &a_container)
 
 void Track::setUp()
 {
-  // std::string const exampleConfig = 
+  // std::string const exampleConfig =
   //   getKeyValueConfiguration().getValue<std::string>(
   //     "logic-cfsd18-cognition-track.example-config");
 
@@ -88,3 +88,5 @@ void Track::tearDown()
 }
 }
 }
+
+// TESTINGTESTING
