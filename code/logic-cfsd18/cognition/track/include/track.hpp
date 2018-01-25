@@ -25,6 +25,7 @@
 
 //#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 #include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
+#include <opendavinci/odcore/wrapper/Eigen.h>
 
 namespace opendlv {
 namespace logic {
@@ -42,6 +43,9 @@ class Track : public odcore::base::module::DataTriggeredConferenceClientModule {
  private:
   void setUp();
   void tearDown();
+
+  float driverModelSteering(float, float, ArrayXXf);
+  float driverModelVelocity(float, float, float, float, ArrayXXf);
 };
 
 }
