@@ -43,7 +43,40 @@ Track::~Track()
 
 void Track::nextContainer(odcore::data::Container &a_container)
 {
-//std::cout << "I'M ALIVE !!!!!!!" << std::endl;
+//// Map 4
+//ArrayXXf side1(3,2); ArrayXXf side2(3,2);
+//side1 << -1,2,
+//	 0,2.5,
+//	 0,3;
+//side2 << 1,1.5,
+//	 2,2,
+//	 2,2.5;
+
+//// Map 3
+//ArrayXXf side1(9,2); ArrayXXf side2(8,2);
+//side1 << -0.8, 0,
+//	 -0.85, 1,
+//	 -0.85,2,
+//	 -0.8, 3,
+//	 -0.72, 4.3,
+//	 -0.5, 4.8,
+//	 -0.4, 4.8,
+//	 -0.1, 4,
+//	 0, 2;
+//side2 << -0.5, 0,
+//	 -0.6, 1,
+//	 -0.6, 2,
+//	 -0.53, 3,
+//	 -0.43, 3.6,
+//	 -0.35, 3,
+//	 -0.35, 2,
+//	 -0.35, 1;
+
+//// Actual test
+//std::cout << "Side1: " << side1 << std::endl;
+//std::cout << "Side2: " << side2 << std::endl;
+//ArrayXXf localPath = Track::findSafeLocalPath(side1, side2, 27);
+//std::cout << "localPath: " << localPath << std::endl;
   if (a_container.getDataType() == opendlv::logic::perception::Surface::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
@@ -90,12 +123,11 @@ ArrayXXf Track::findSafeLocalPath(ArrayXXf sidePoints1, ArrayXXf sidePoints2, in
   ArrayXXf newSidePoints1 = Track::placeEquidistantPoints(sidePoints1,nMidPoints);
   ArrayXXf newSidePoints2 = Track::placeEquidistantPoints(sidePoints2,nMidPoints);
 
-  ArrayXXf midX = (newSidePoints1.col(1)+newSidePoints2.col(1))/2;
-  ArrayXXf midY = (newSidePoints1.col(2)+newSidePoints2.col(2))/2;
-
+  ArrayXXf midX = (newSidePoints1.col(0)+newSidePoints2.col(0))/2;
+  ArrayXXf midY = (newSidePoints1.col(1)+newSidePoints2.col(1))/2;
   ArrayXXf localPath(nMidPoints,2);
-  localPath.col(1) = midX;
-  localPath.col(2) = midY;
+  localPath.col(0) = midX;
+  localPath.col(1) = midY;
   return localPath;
 
 //  std::cout << "One side:  " << sidePoints1 << std::endl;
@@ -117,7 +149,7 @@ ArrayXXf Track::placeEquidistantPoints(ArrayXXf sidePoints, int nEqPoints)
     pathLength = pathLength + segLength(i);
   }
   // Calculate equal subdistances
-  int eqDistance = pathLength/(nEqPoints-1);
+  float eqDistance = pathLength/(nEqPoints-1);
 
   // The latest point that you placed
   ArrayXXf latestPointCoords = sidePoints.row(0);
@@ -164,8 +196,8 @@ ArrayXXf Track::placeEquidistantPoints(ArrayXXf sidePoints, int nEqPoints)
     // In every case, save the point you just placed and check how much of that segment is left.
     newSidePoints.row(i) = latestPointCoords;
     remainderOfSeg = ((sidePoints.row(latestConeIndex+1)-latestPointCoords).matrix()).norm();
-  } // End of for
 
+  } // End of for
   // The last point should be at the same place as the last cone.
   newSidePoints.row(nEqPoints-1) = sidePoints.row(nCones-1);
 
