@@ -77,6 +77,7 @@ void Track::nextContainer(odcore::data::Container &a_container)
 //std::cout << "Side2: " << side2 << std::endl;
 //ArrayXXf localPath = Track::findSafeLocalPath(side1, side2, 27);
 //std::cout << "localPath: " << localPath << std::endl;
+std::cout << "HALLOJ" << std::endl;
   if (a_container.getDataType() == opendlv::logic::perception::Surface::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
@@ -118,16 +119,23 @@ void Track::tearDown()
 {
 }
 
-ArrayXXf Track::findSafeLocalPath(ArrayXXf sidePoints1, ArrayXXf sidePoints2, int nMidPoints)
+ArrayXXf Track::findSafeLocalPath(ArrayXXf sidePoints1, ArrayXXf sidePoints2, float distanceBetweenPoints)
 {
-  ArrayXXf newSidePoints1 = Track::placeEquidistantPoints(sidePoints1,nMidPoints);
-  ArrayXXf newSidePoints2 = Track::placeEquidistantPoints(sidePoints2,nMidPoints);
+  const int nMidPoints = 30; // There might be an alternative to "hard-coding" this.
+  ArrayXXf newSidePoints1 = Track::placeEquidistantPoints(sidePoints1,true,nMidPoints,-1);
+  ArrayXXf newSidePoints2 = Track::placeEquidistantPoints(sidePoints2,true,nMidPoints,-1);
 
   ArrayXXf midX = (newSidePoints1.col(0)+newSidePoints2.col(0))/2;
   ArrayXXf midY = (newSidePoints1.col(1)+newSidePoints2.col(1))/2;
-  ArrayXXf localPath(nMidPoints,2);
-  localPath.col(0) = midX;
-  localPath.col(1) = midY;
+  ArrayXXf tmpLocalPath(nMidPoints,2);
+  tmpLocalPath.col(0) = midX;
+  tmpLocalPath.col(1) = midY;
+
+  ArrayXXf firstPoint = Track::traceBackToClosestPoint(tmpLocalPath.row(0), tmpLocalPath.row(1));
+  ArrayXXf localPath(nMidPoints+1,2);
+  localPath.row(0) = firstPoint;
+  localPath.block(1,0,nMidPoints,2) = tmpLocalPath;
+  localPath = Track::placeEquidistantPoints(localPath,false,-1,distanceBetweenPoints);
   return localPath;
 
 //  std::cout << "One side:  " << sidePoints1 << std::endl;
@@ -136,8 +144,12 @@ ArrayXXf Track::findSafeLocalPath(ArrayXXf sidePoints1, ArrayXXf sidePoints2, in
 //  return localPath;
 }
 
-ArrayXXf Track::placeEquidistantPoints(ArrayXXf sidePoints, int nEqPoints)
+ArrayXXf Track::placeEquidistantPoints(ArrayXXf sidePoints, bool nEqPointsIsKnown, int nEqPoints, float eqDistance)
 {
+// Places linearly equidistant points along a sequence of points.
+// If nEqPoints is known it will not use the input value for eqDistance, and instead calculate a suitable value.
+// If nEqPoints is not known it will not use the input value for nEqPoints, and instead calculate a suitable value.
+
   int nCones = sidePoints.rows();
 
   // Full path length, and save lengths of individual segments
@@ -148,8 +160,17 @@ ArrayXXf Track::placeEquidistantPoints(ArrayXXf sidePoints, int nEqPoints)
     segLength(i) = ((sidePoints.row(i+1)-sidePoints.row(i)).matrix()).norm();
     pathLength = pathLength + segLength(i);
   }
-  // Calculate equal subdistances
-  float eqDistance = pathLength/(nEqPoints-1);
+
+  if(nEqPointsIsKnown)
+  {
+    // Calculate equal subdistances
+    eqDistance = pathLength/(nEqPoints-1);
+  }
+  else
+  {
+    //Calculate how many points will fit
+    nEqPoints = std::ceil(pathLength/eqDistance)+1;
+  }
 
   // The latest point that you placed
   ArrayXXf latestPointCoords = sidePoints.row(0);
