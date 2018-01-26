@@ -75,9 +75,8 @@ void Track::nextContainer(odcore::data::Container &a_container)
 //// Actual test
 //std::cout << "Side1: " << side1 << std::endl;
 //std::cout << "Side2: " << side2 << std::endl;
-//ArrayXXf localPath = Track::findSafeLocalPath(side1, side2, 27);
+//ArrayXXf localPath = Track::findSafeLocalPath(side1, side2, 0.5);
 //std::cout << "localPath: " << localPath << std::endl;
-std::cout << "HALLOJ" << std::endl;
   if (a_container.getDataType() == opendlv::logic::perception::Surface::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
@@ -236,7 +235,7 @@ ArrayXXf Track::traceBackToClosestPoint(ArrayXXf p1, ArrayXXf p2)
    ArrayXXf v = p1-p2;	// The line to trace
    ArrayXXf n(1,2);	// The normal vector
    n(0,0) = -v(0,1); n(0,1) = v(0,0);
-   int d = (p1(0,0)*v(0,1)-v(0,0)*p1(0,1))/(n(0,0)*v(0,1)-v(0,0)*n(0,1)); // Shortest distance between [0,0] and the vector
+   float d = (p1(0,0)*v(0,1)-v(0,0)*p1(0,1))/(n(0,0)*v(0,1)-v(0,0)*n(0,1)); // Shortest distance between [0,0] and the vector
    return n*d;		// Follow the normal vector for that distance
 }
 
