@@ -38,6 +38,10 @@ class Brakes : public odcore::base::module::DataTriggeredConferenceClientModule 
   Brakes &operator=(Brakes const &) = delete;
   virtual ~Brakes();
   virtual void nextContainer(odcore::data::Container &);
+ 
+ public:
+  float m_totalmass
+  
 
  private:
   void setUp();

@@ -32,6 +32,7 @@ namespace action {
 
 Brakes::Brakes(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-brakes")
+
 {
 }
 
@@ -39,26 +40,20 @@ Brakes::~Brakes()
 {
 }
 
+m_totalmass(200.0)
 
 
 void Brakes::nextContainer(odcore::data::Container &a_container)
 {
-  if (a_container.getDataType() == opendlv::logic::cognition::GroundSpeedLimit::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
+  if (a_container.getDataType() == opendlv::logic::cognition::GroundDecelerationRequest::ID()) {
+     auto brakeforce = m_totalmass*a_container.getData<opendlv::logic::cognition::GroundDecelerationRequest>();
   }
-  if (a_container.getDataType() == opendlv::logic::action::PreviewPoint::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
-  }
-  if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
-    opendlv::proxy::GroundAccelerationRequest o1;
-    odcore::data::Container c1(o1);
+
+    opendlv::proxy::GroundAccelerationRequest ;
+    c1 = Container(brakeforce);
     getConference().send(c1);
 
-    opendlv::proxy::GroundDecelerationRequest o2;
-    odcore::data::Container c2(o2);
-    getConference().send(c2);
   }
 }
 
