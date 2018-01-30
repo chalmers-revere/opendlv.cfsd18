@@ -40,7 +40,7 @@ class Brakes : public odcore::base::module::DataTriggeredConferenceClientModule 
   virtual void nextContainer(odcore::data::Container &);
  
  public:
-  float m_totalmass
+  float m_totalmass;
   
 
  private:
