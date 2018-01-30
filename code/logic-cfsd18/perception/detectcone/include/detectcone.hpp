@@ -55,19 +55,14 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   bool ExtractSharedImage(odcore::data::image::SharedImage *);
   void saveImg(double currentTime);
   void featureBased();
-  void rectify();
-  cv::Mat blockMatching(cv::Mat, cv::Mat);
+  void rectify(cv::Mat img, cv::Mat& disp, cv::Mat& rectified);
+  void blockMatching(cv::Mat& disp, cv::Mat imgL, cv::Mat imgR);
 
   //run cnn starts
-  void convert_image(const std::string &imagefilename,
-                   double minv,
-                   double maxv,
-                   int w,
-                   int h,
-                   tiny_dnn::vec_t &data);
+  void convertImage(cv::Mat img, int w, int h, tiny_dnn::vec_t& data);
 
   //double rescale(double x);
-  void sliding_window(const std::string &dictionary, const std::string &src_filename);
+  void slidingWindow(const std::string &dictionary, const std::string &src_filename);
   //run cnn ends
 
   cv::Mat m_img;

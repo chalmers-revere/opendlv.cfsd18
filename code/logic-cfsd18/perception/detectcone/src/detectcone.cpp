@@ -49,7 +49,7 @@ DetectCone::~DetectCone()
 void DetectCone::setUp()
 {
   //rectify();
-  sliding_window("sliding_window", "0.png");
+  slidingWindow("sliding_window", "0.png");
   /*
   tiny_dnn::vec_t data;
   std::string img_path;
@@ -57,7 +57,7 @@ void DetectCone::setUp()
       img_path = "data/yellow/" + std::to_string(a) + ".png";
       convert_image(img_path, 0, 1, 25, 25, data);
    }*/
-  
+
 }
 
 void DetectCone::tearDown()
@@ -78,7 +78,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
           << std::endl;
       return;
     }
-    
+
     // saveImg(currentTime);
   }
 
@@ -95,7 +95,7 @@ bool DetectCone::ExtractSharedImage(
     const uint32_t nrChannels = a_sharedImage->getBytesPerPixel();
     const uint32_t imgWidth = a_sharedImage->getWidth();
     const uint32_t imgHeight = a_sharedImage->getHeight();
-    IplImage* myIplImage = 
+    IplImage* myIplImage =
         cvCreateImage(cvSize(imgWidth,imgHeight), IPL_DEPTH_8U, nrChannels);
     cv::Mat bufferImage = cv::Mat(myIplImage);
     {
@@ -129,29 +129,39 @@ void DetectCone::featureBased() {
   cv::waitKey(0);
 }
 
-void DetectCone::rectify(){
-  cv::Mat mtxLeft = (cv::Mat_<double>(3, 3) << 
-    350.6847, 0, 332.4661, 
-    0, 350.0606, 163.7461, 
+void DetectCone::blockMatching(cv::Mat& disp, cv::Mat imgL, cv::Mat imgR){
+  cv::Mat grayL, grayR;
+
+  cv::cvtColor(imgL, grayL, CV_BGR2GRAY);
+  cv::cvtColor(imgR, grayR, CV_BGR2GRAY);
+
+  cv::StereoBM sbm;
+  sbm.state->SADWindowSize = 17;
+  sbm.state->numberOfDisparities = 32;
+
+  sbm(grayL, grayR, disp);
+  cv::normalize(disp, disp, 0, 255, CV_MINMAX, CV_8U);
+}
+
+void DetectCone::rectify(cv::Mat img, cv::Mat& disp, cv::Mat& rectified){
+  cv::Mat mtxLeft = (cv::Mat_<double>(3, 3) <<
+    350.6847, 0, 332.4661,
+    0, 350.0606, 163.7461,
     0, 0, 1);
   cv::Mat distLeft = (cv::Mat_<double>(5, 1) << -0.1674, 0.0158, 0.0057, 0, 0);
-  cv::Mat mtxRight = (cv::Mat_<double>(3, 3) << 
+  cv::Mat mtxRight = (cv::Mat_<double>(3, 3) <<
     351.9498, 0, 329.4456,
     0, 351.0426, 179.0179,
     0, 0, 1);
   cv::Mat distRight = (cv::Mat_<double>(5, 1) << -0.1700, 0.0185, 0.0048, 0, 0);
-  cv::Mat R = (cv::Mat_<double>(3, 3) << 
+  cv::Mat R = (cv::Mat_<double>(3, 3) <<
     0.9997, 0.0015, 0.0215,
     -0.0015, 1, -0.00008,
     -0.0215, 0.00004, 0.9997);
   //cv::transpose(R, R);
   cv::Mat T = (cv::Mat_<double>(3, 1) << -119.1807, 0.1532, 1.1225);
-  //double F = 350;
-  //double d = 120;
-  //double factor = F * d;
 
   cv::Size stdSize = cv::Size(640, 360);
-  cv::Mat img = cv::imread("1.png");
   int width = img.cols;
   int height = img.rows;
   cv::Mat imgL(img, cv::Rect(0, 0, width/2, height));
@@ -161,10 +171,10 @@ void DetectCone::rectify(){
   cv::resize(imgR, imgR, stdSize);
 
   //std::cout << imgR.size() <<std::endl;
-  
+
   cv::Mat R1, R2, P1, P2, Q;
   cv::Rect validRoI[2];
-  cv::stereoRectify(mtxLeft, distLeft, mtxRight, distRight, stdSize, R, T, R1, R2, P1, P2, Q, 
+  cv::stereoRectify(mtxLeft, distLeft, mtxRight, distRight, stdSize, R, T, R1, R2, P1, P2, Q,
     cv::CALIB_ZERO_DISPARITY, 0.0, stdSize, &validRoI[0], &validRoI[1]);
 
   cv::Mat rmap[2][2];
@@ -176,56 +186,28 @@ void DetectCone::rectify(){
   //cv::imwrite("2_left.png", imgL);
   //cv::imwrite("2_right.png", imgR);
 
-  cv::Mat rectify, disp, result;
-  rectify = imgL + imgR;
-  disp = blockMatching(imgL, imgR);
-
-  cv::namedWindow("disp", cv::WINDOW_NORMAL);
-  cv::imshow("disp", disp);
-  cv::waitKey(0);
-  cv::destroyAllWindows();
-}
-
-cv::Mat DetectCone::blockMatching(cv::Mat imgL, cv::Mat imgR){
-  cv::Mat grayL, grayR, disp;
-
-  cv::cvtColor(imgL, grayL, CV_BGR2GRAY);
-  cv::cvtColor(imgR, grayR, CV_BGR2GRAY);
-
-  cv::StereoBM sbm;
-  sbm.state->SADWindowSize = 17;
-  sbm.state->numberOfDisparities = 32;
-  
-  sbm(grayL, grayR, disp);
-  cv::normalize(disp, disp, 0, 255, CV_MINMAX, CV_8U);
-  return disp;
+  blockMatching(disp, imgL, imgR);
+  rectified = imgL;
 }
 
 //run cnn starts
-void DetectCone::convert_image(const std::string &imagefilename,
-                   double minv,
-                   double maxv,
-                   int w,
-                   int h,
-                   tiny_dnn::vec_t &data) {
-  tiny_dnn::image<> img(imagefilename, tiny_dnn::image_type::rgb);
-  tiny_dnn::image<> resized = tiny_dnn::resize_image(img, w, h);
-  data.resize(resized.width() * resized.height() * resized.depth());
-  for (size_t c = 0; c < resized.depth(); ++c) {
-    for (size_t y = 0; y < resized.height(); ++y) {
-      for (size_t x = 0; x < resized.width(); ++x) {
-        data[c * resized.width() * resized.height() + y * resized.width() + x] =
-          (maxv - minv) * (resized[y * resized.width() + x + c]) / 255.0 + minv;
+void DetectCone::convertImage(cv::Mat img, int w, int h, tiny_dnn::vec_t& data){
+  cv::Mat resized;
+  cv::resize(img, resized, cv::Size(w, h));
+  data.resize(w * h * 3);
+  for (int c = 0; c < 3; ++c) {
+    for (int y = 0; y < h; ++y) {
+      for (int x = 0; x < w; ++x) {
+       data[c * w * h + y * w + x] =
+         resized.at<cv::Vec3b>(y, x)[c] / 255.0;
       }
     }
   }
 }
 
-// double DetectCone::rescale(double x) {
-//   return 100.0 * (x + 1) / 2;
-// }
+void DetectCone::slidingWindow(const std::string &dictionary, const std::string &img_path) {
+  int PATCH_SIZE = 32;
 
-void DetectCone::sliding_window(const std::string &dictionary, const std::string &src_filename) {
   using conv    = tiny_dnn::convolutional_layer;
   using pool    = tiny_dnn::max_pooling_layer;
   using fc      = tiny_dnn::fully_connected_layer;
@@ -238,7 +220,7 @@ void DetectCone::sliding_window(const std::string &dictionary, const std::string
   tiny_dnn::core::backend_t backend_type = tiny_dnn::core::default_engine();
   tiny_dnn::network<tiny_dnn::sequential> nn;
 
-  nn << conv(32, 32, 5, 3, n_fmaps, tiny_dnn::padding::same, true, 1, 1,
+  nn << conv(PATCH_SIZE, PATCH_SIZE, 5, 3, n_fmaps, tiny_dnn::padding::same, true, 1, 1,
              backend_type)                      // C1
      << pool(32, 32, n_fmaps, 2, backend_type)  // P2
      << relu()                                  // activation
@@ -259,27 +241,65 @@ void DetectCone::sliding_window(const std::string &dictionary, const std::string
   ifs >> nn;
 
   // convert imagefile to vec_t
+  cv::Mat img = cv::imread(img_path);
+  cv::Mat disp, rectified;
+  rectify(img, disp, rectified);
+
+  // manual roi
+  // (453, 237,	0.96875,	"orange");
+  // (585, 211,	0.625,	"orange");
+  // (343, 185,	0.25,	"yellow");
+  // (521, 198,	0.375,	"yellow");
+  // (634,	202,	0.375,	"yellow");
+  // (625,	191,	0.34375,	"blue");
+  // (396,	183,	0.34375,	"blue");
+
+  int x = 453;
+  int y = 237;
+  float_t ratio = 0.96875;
+  std::string label = "orange";
+  cv::Rect roi;
+  int length = ratio * PATCH_SIZE;
+  int radius = (length-1)/2;
+  roi.x = x - radius;
+  roi.y = y - radius;
+  roi.width = length;
+  roi.height = length;
+  auto patch_img = rectified(roi);
   tiny_dnn::vec_t data;
-  convert_image(src_filename, 0, 1.0, 32, 32, data);
+  convertImage(patch_img, PATCH_SIZE, PATCH_SIZE, data);
+
+  float_t resize_rate = 640.0/1280;
+  float_t F = 350 / resize_rate;
+  float_t d = 120;
+  float_t factor = F * d;
+  float_t depth = factor/disp.at<uchar>(y,x);
+
+  // cv::circle(rectified, cv::Point (x,y), 3, cv::Scalar (0,0,0), CV_FILLED);
+  // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
+  // cv::namedWindow("disp", cv::WINDOW_NORMAL);
+  // cv::imshow("disp", disp);
+  // cv::waitKey(0);
+  // cv::destroyAllWindows();
 
   // recognize
   auto prob = nn.predict(data);
   float_t threshold = 0.5;
   std::cout << prob[0] << " " << prob[1] << " " << prob[2] << " " << prob[3] << std::endl;
-  int max_index = 1;
-  float_t max_prob = prob[1];
-  for (int i=2; i<4; i++){
-    if (prob[i] > max_prob){
-      max_index = i;
-      max_prob = prob[i];
+  int maxIndex = 1;
+  float_t maxProb = prob[1];
+  for(int i=2;i<4;i++){
+    if(prob[i]>prob[maxIndex]){
+      maxIndex = i;
+      maxProb = prob[i];
     }
   }
+
   std::string labels[] = {"Yellow", "Blue", "Orange"};
-  if (max_prob < threshold)
+  if (maxProb < threshold)
     std::cout << "No cone detected" << std::endl;
   else
-    std::cout << labels[max_index-1] << " cone detected" << std::endl;
-    
+    std::cout << "Find one " << labels[maxIndex-1] << " cone: " << x << ", " << y << ", " << depth << " mm" << std::endl;
 }
 //run cnn ends
 
