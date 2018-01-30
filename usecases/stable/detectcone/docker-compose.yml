@@ -58,3 +58,23 @@ services:
     #         - odsupercomponent
     #         - logic-cfsd18-perception-detectcone
     #     command: "/opt/opendlv.core/bin/opendlv-core-system-proxy-camera --cid=${CID}  --id=1 --freq=20"
+
+    # # microservice for cfsd18-sensation-attention
+    # cfsd18-sensation-attention:
+    #     image: ${IMAGE}
+    #     network_mode: "host"
+    #     depends_on:
+    #         - odsupercomponent
+    #     command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-sensation-attention --cid=${CID} --verbose=1 --id=1"
+    # #proxy-velodyne16
+    # velodyne16:
+    #     image: ${IMAGE}
+    #     network_mode: "host"
+    #     volumes:
+    #     - .:/opt/opendlv.data
+    #     ipc: host
+    #     user: odv
+    #     working_dir: "/opt/opendlv.data"
+    #     depends_on:
+    #         - odsupercomponent
+    #     command: "/opt/opendlv.core/bin/opendlv-core-system-proxy-velodyne16 --cid=${CID}"
