@@ -31,7 +31,8 @@ namespace cfsd18 {
 namespace action {
 
 Vehiclecontrol::Vehiclecontrol(int32_t const &a_argc, char **a_argv) :
-  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-vehiclecontrol")
+  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-vehiclecontrol"),
+  m_accelerationRequest()
 {
 }
 
@@ -43,22 +44,11 @@ Vehiclecontrol::~Vehiclecontrol()
 
 void Vehiclecontrol::nextContainer(odcore::data::Container &a_container)
 {
-  if (a_container.getDataType() == opendlv::logic::cognition::GroundSpeedLimit::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
-  }
-  if (a_container.getDataType() == opendlv::logic::action::PreviewPoint::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
-  }
-  if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
-    opendlv::proxy::GroundAccelerationRequest o1;
-    odcore::data::Container c1(o1);
-    getConference().send(c1);
+  if (a_container.getDataType() == opendlv::proxy::GroundAccelerationRequest::ID()) {
+    auto accelerationRequest = a_container.getData<opendlv::proxy::GroundAccelerationRequest>();
 
-    opendlv::proxy::GroundDecelerationRequest o2;
-    odcore::data::Container c2(o2);
-    getConference().send(c2);
+    m_accelerationRequest = accelerationRequest.getGroundAcceleration();
   }
 }
 
