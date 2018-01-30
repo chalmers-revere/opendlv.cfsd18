@@ -40,15 +40,16 @@ include_directories(SYSTEM ${OPENDAVINCI_INCLUDE_DIRS})
 include_directories(SYSTEM ${ODVDOPENDLVSTANDARDMESSAGESET_INCLUDE_DIRS})
 include_directories(SYSTEM ${ODVDCFSD18_INCLUDE_DIRS})
 
-set(LIBRARIES 
+set(LIBRARIES
   ${OPENDAVINCI_LIBRARIES}
-  ${Wt_LIBRARY} ${Wt_HTTP_LIBRARY} ${Wt_EXT_LIBRARY}  
+  ${Wt_LIBRARY} ${Wt_HTTP_LIBRARY} ${Wt_EXT_LIBRARY}
   ${ODVDOPENDLVSTANDARDMESSAGESET_LIBRARIES}
   ${ODVDCFSD18_LIBRARIES})
 
 ### MICROSERVICE BEGIN ###
 add_subdirectory(action/lateral)
-add_subdirectory(action/longitudinal)
+add_subdirectory(action/vehiclecontrol)
+add_subdirectory(action/brakes)
 add_subdirectory(cognition/acceleration)
 add_subdirectory(cognition/brake)
 add_subdirectory(cognition/limitlateral)
