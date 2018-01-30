@@ -17,8 +17,8 @@
  * USA.
  */
 
-#ifndef OPENDLV_LOGIC_CFSD18_ACTION_LONGITUDINAL_HPP
-#define OPENDLV_LOGIC_CFSD18_ACTION_LONGITUDINAL_HPP
+#ifndef OPENDLV_LOGIC_CFSD18_ACTION_VEHICLECONTROl_HPP
+#define OPENDLV_LOGIC_CFSD18_ACTION_VEHICLECONTROl_HPP
 
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
@@ -31,12 +31,12 @@ namespace logic {
 namespace cfsd18 {
 namespace action {
 
-class Longitudinal : public odcore::base::module::DataTriggeredConferenceClientModule {
+class Vehiclecontrol : public odcore::base::module::DataTriggeredConferenceClientModule {
  public:
-  Longitudinal(int32_t const &, char **);
-  Longitudinal(Longitudinal const &) = delete;
-  Longitudinal &operator=(Longitudinal const &) = delete;
-  virtual ~Longitudinal();
+  Vehiclecontrol(int32_t const &, char **);
+  Vehiclecontrol(Vehiclecontrol const &) = delete;
+  Vehiclecontrol &operator=(Vehiclecontrol const &) = delete;
+  virtual ~Vehiclecontrol();
   virtual void nextContainer(odcore::data::Container &);
 
  private:

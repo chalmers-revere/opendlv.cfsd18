@@ -16,9 +16,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "longitudinal.hpp"
+#include "vehiclecontrol.hpp"
 
 int32_t main(int32_t a_argc, char **a_argv) {
-  opendlv::logic::cfsd18::action::Longitudinal app(a_argc, a_argv);
+  opendlv::logic::cfsd18::action::Vehiclecontrol app(a_argc, a_argv);
   return app.runModule();
 }
