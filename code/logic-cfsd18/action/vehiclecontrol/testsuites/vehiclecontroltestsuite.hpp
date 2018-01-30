@@ -16,12 +16,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef OPENDLV_LOGIC_CFSD18_ACTION_LONGITUDINAL_TESTSUITE_HPP
-#define OPENDLV_LOGIC_CFSD18_ACTION_LONGITUDINAL_TESTSUITE_HPP
+#ifndef OPENDLV_LOGIC_CFSD18_ACTION_VECHILECONTROL_TESTSUITE_HPP
+#define OPENDLV_LOGIC_CFSD18_ACTION_VECHILECONTROL_TESTSUITE_HPP
 
 #include "cxxtest/TestSuite.h"
 
-#include "../include/longitudinal.hpp"
+#include "../include/vehiclecontrol.hpp"
 
 class LongitudinalTest : public CxxTest::TestSuite {
   public:
