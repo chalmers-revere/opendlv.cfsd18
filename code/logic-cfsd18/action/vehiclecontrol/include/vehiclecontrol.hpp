@@ -42,6 +42,12 @@ class Vehiclecontrol : public odcore::base::module::DataTriggeredConferenceClien
  private:
   void setUp();
   void tearDown();
+  float calcTorque(double);
+  void sendContainer();
+
+ private:
+   float m_steeringAngle;
+   float m_torque;
 };
 
 }

@@ -32,7 +32,8 @@ namespace action {
 
 Vehiclecontrol::Vehiclecontrol(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-vehiclecontrol"),
-  m_accelerationRequest()
+  m_torque(),
+  m_steeringAngle()
 {
 }
 
@@ -47,8 +48,21 @@ void Vehiclecontrol::nextContainer(odcore::data::Container &a_container)
 
   if (a_container.getDataType() == opendlv::proxy::GroundAccelerationRequest::ID()) {
     auto accelerationRequest = a_container.getData<opendlv::proxy::GroundAccelerationRequest>();
+    double acceleration = accelerationRequest.getGroundAcceleration();
 
-    m_accelerationRequest = accelerationRequest.getGroundAcceleration();
+    m_torque = calcTorque(accelerationRequest);
+
+    sendContainer();
+  }
+
+  if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
+    float Kp = 2;
+    auto steeringRequest = a_container.getData<opendlv::proxy::GroundSteeringRequest>();
+    double steering = steeringRequest.getGroundSteering();
+
+    m_steeringAngle = static_cast<float>(steering)*Kp;
+
+    sendContainer();
   }
 }
 
@@ -65,6 +79,23 @@ void Vehiclecontrol::setUp()
 
 void Vehiclecontrol::tearDown()
 {
+}
+
+float Vehiclecontrol::calcTorque(double a_arg)
+{
+  float mass = 200;
+  float wheelRadius = 0.3;
+  float acceleration = static_cast<float>(a_arg) // convert to float
+
+  float torque = a_arg*mass*wheelRadius;
+
+  return torque;
+}
+
+void Vehiclecontrol::sendContainer()
+{
+  opendlv::proxy::ActuationRequest container(m_torque,m_steeringAngle,1);
+  getConference().send(container);
 }
 
 }
