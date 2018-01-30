@@ -16,9 +16,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "longitudinal.hpp"
+#ifndef OPENDLV_LOGIC_CFSD18_ACTION_BRAKES_TESTSUITE_HPP
+#define OPENDLV_LOGIC_CFSD18_ACTION_BRAKES_TESTSUITE_HPP
 
-int32_t main(int32_t a_argc, char **a_argv) {
-  opendlv::logic::cfsd18::action::Longitudinal app(a_argc, a_argv);
-  return app.runModule();
-}
+#include "cxxtest/TestSuite.h"
+
+#include "../include/brakes.hpp"
+
+class BrakesTest : public CxxTest::TestSuite {
+  public:
+    void setUp()
+    {
+    }
+
+    void tearDown()
+    {
+    }
+
+    void testApplication()
+    {
+      TS_ASSERT(true);
+    }
+};
+
+#endif

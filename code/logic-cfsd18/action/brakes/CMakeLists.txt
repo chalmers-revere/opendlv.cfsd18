@@ -16,7 +16,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-project(opendlv-logic-cfsd18-action-longitudinal)
+project(opendlv-logic-cfsd18-action-brakes)
 
 include_directories(include)
 

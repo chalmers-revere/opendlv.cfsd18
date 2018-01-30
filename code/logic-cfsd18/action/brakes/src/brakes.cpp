@@ -23,25 +23,25 @@
 #include <opendavinci/odcore/strings/StringToolbox.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
 
-#include "longitudinal.hpp"
+#include "brakes.hpp"
 
 namespace opendlv {
 namespace logic {
 namespace cfsd18 {
 namespace action {
 
-Longitudinal::Longitudinal(int32_t const &a_argc, char **a_argv) :
-  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-longitudinal")
+Brakes::Brakes(int32_t const &a_argc, char **a_argv) :
+  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-brakes")
 {
 }
 
-Longitudinal::~Longitudinal()
+Brakes::~Brakes()
 {
 }
 
 
 
-void Longitudinal::nextContainer(odcore::data::Container &a_container)
+void Brakes::nextContainer(odcore::data::Container &a_container)
 {
   if (a_container.getDataType() == opendlv::logic::cognition::GroundSpeedLimit::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
@@ -62,18 +62,18 @@ void Longitudinal::nextContainer(odcore::data::Container &a_container)
   }
 }
 
-void Longitudinal::setUp()
+void Brakes::setUp()
 {
   // std::string const exampleConfig = 
   //   getKeyValueConfiguration().getValue<std::string>(
-  //     "logic-cfsd18-action-longitudinal.example-config");
+  //     "logic-cfsd18-action-brakes.example-config");
 
   // if (isVerbose()) {
   //   std::cout << "Example config is " << exampleConfig << std::endl;
   // }
 }
 
-void Longitudinal::tearDown()
+void Brakes::tearDown()
 {
 }
 
