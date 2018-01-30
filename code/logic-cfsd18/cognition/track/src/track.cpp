@@ -43,16 +43,59 @@ Track::~Track()
 
 void Track::nextContainer(odcore::data::Container &a_container)
 {
+
+  std::cout << "JAG LEVER!!!" << std::endl;
+  ArrayXXf localPath(15,2);
+  localPath <<
+  -0.646636, -0.0466392,
+  -0.682606,   0.452065,
+  -0.716798,   0.950891,
+  -0.725,    1.45075,
+  -0.720662,    1.95071,
+  -0.700775,    2.45029,
+  -0.669754,    2.94932,
+  -0.634384,    3.44802,
+  -0.560804,    3.94058,
+  -0.332111,    3.79835,
+  -0.236519,    3.30803,
+  -0.211409,    2.80907,
+  -0.197508,    2.30927,
+  -0.183607,    1.80946,
+  -0.175,        1.5;
+
+  float timeToAimPoint = 1;
+  float currentVelocity = 5;
+  float headingRequest = Track::driverModelSteering(currentVelocity, timeToAimPoint, localPath);
+  float accelerationLimit = 5;
+  float decelerationLimit = -5;
+  float accelerationRequest = Track::driverModelVelocity(currentVelocity, accelerationLimit, decelerationLimit, headingRequest,localPath);
+
+    std::cout << "headingRequest =" << headingRequest << std::endl;
+    std::cout << "accelerationRequest =" << accelerationRequest << std::endl;
+  // Send headingRequest
+  opendlv::logic::action::AimDirection o1;
+  o1.setAzimuthAngle(headingRequest);
+  odcore::data::Container c1(o1);
+  getConference().send(c1);
+
+
+std::cout << "a_container.getDataType() =" << a_container.getDataType() << std::endl;
+std::cout << "opendlv::logic::action::AimDirection::ID() =" << opendlv::logic::action::AimDirection::ID() << std::endl;
+  if (a_container.getDataType() == 8) {
+    auto HEADING = a_container.getData<opendlv::logic::action::AimDirection>();
+    std::cout << "HEADING =" << HEADING << std::endl;
+  }
+
   if (a_container.getDataType() == opendlv::logic::perception::Surface::ID()) {
-     auto surface = a_container.getData<opendlv::logic::perception::Surface>();
+     //auto surface = a_container.getData<opendlv::logic::perception::Surface>();
 
-     std::string type = surface.getType();
-
+     //std::string type = surface.getType();
+     /*
     opendlv::logic::action::AimPoint o1;
-    o1.setDistance(4.5);
+    //o1.setDistance(4.5);
     odcore::data::Container c1(o1);
     getConference().send(c1);
-
+    */
     opendlv::logic::action::PreviewPoint o2;
     odcore::data::Container c2(o2);
     getConference().send(c2);
@@ -100,25 +143,22 @@ float Track::driverModelSteering(float currentVelocity, float timeToAimPoint, Ar
   //Output
   //   HEADINGREQUEST  [1 x 1] Desired heading angle [rad]
 
-  // Calculate distance to aimpoint;
+  // Calculate the distance between vehicle and aimpoint;
   float distanceToAimPoint = currentVelocity*timeToAimPoint;
-  // Initial distance considered(0 or distance between vehicle and first path point)
-  float sumPoints = 0.0f; //norm(localPath(1,:)); // Distance to aimpoint is calculated only on path OR from vehicle
+  //Distance to aimpoint is currently calculated only on path, Not from vehicle
+  float sumPoints = 0.0f;
   // Sum the distance between all path points until passing distanceToAimPoint
   // or reaching end of path
   int k=0;
-  while (distanceToAimPoint >= sumPoints && k < localPath.rows())
-  {
+  while (distanceToAimPoint >= sumPoints && k < localPath.rows()) {
     sumPoints += (localPath.row(k+1)-localPath.row(k)).matrix().norm();
     k++;
   }
 
-    ArrayXXf aimPoint(1,2); //REMAKE AS VECTOR
-  if (sumPoints >= distanceToAimPoint) // The path is longer than distanceToAimpoint
-  {
+    ArrayXXf aimPoint(1,2); //REMAKE AS VECTOR?
+  if (sumPoints >= distanceToAimPoint) { // it means that the path is longer than distanceToAimpoint
     float distanceP1P2, overshoot, distanceP1AimPoint, percentage;
-    if (k > 0) // The aimpoint will be placed after the first path element
-    {
+    if (k > 0) {// then the aimpoint will be placed after the first path element
       // Distance between last two considered path elements P1 P2 where P2 is the overshoot element.
       distanceP1P2 = (localPath.row(k+1)-localPath.row(k)).matrix().norm();
       // Difference between distance to aimpoint and summed points.
@@ -129,8 +169,8 @@ float Track::driverModelSteering(float currentVelocity, float timeToAimPoint, Ar
       percentage = distanceP1AimPoint/distanceP1P2;
       aimPoint = (localPath.row(k+1)-localPath.row(k))*percentage + localPath.row(k);
     }
-    else // not needed if sumPoints is initialized as zero, (and distanceToAimpoint>0)
-    {
+    else {// not needed if sumPoints is initialized as zero, (and distanceToAimpoint>0)
+
       distanceP1P2 = localPath.row(0).matrix().norm(); // Distance is equal to the distance to the first point;
       overshoot = sumPoints - distanceToAimPoint;
       distanceP1AimPoint = distanceP1P2 - overshoot;
@@ -138,19 +178,18 @@ float Track::driverModelSteering(float currentVelocity, float timeToAimPoint, Ar
       aimPoint = localPath.row(0)*percentage;
     }
   }
-  else // If the path is too short, place aimpoint at last path point
-  {
+  // If the path is too short, place aimpoint at the last path element
+  else {
     aimPoint = localPath.row(localPath.rows()-1);
   }
   // Angle to aimpoint
   float headingRequest;
   headingRequest = atan2(aimPoint(1),aimPoint(0));
-
+  std::cout << "headingRequest =" << headingRequest << std::endl;
   return headingRequest;
 }
 
-float Track::driverModelVelocity(float currentVelocity, float accelerationLimit, float decelerationLimit, float headingRequest, ArrayXXf localPath)
-{
+float Track::driverModelVelocity(float currentVelocity, float accelerationLimit, float decelerationLimit, float headingRequest, ArrayXXf localPath){
   //driverModelVelocity calculates the desired acceleration of the CFSD18
   //vehicle.
   //
@@ -169,86 +208,93 @@ float Track::driverModelVelocity(float currentVelocity, float accelerationLimit,
   //
   //Output
   //   ACCELERATIONREQUEST         [1 x 1] Desired acceleration
-  ////
+
   // Segmentize the path and calculate radius of segments
   // - First radius is calculated at 2nd path point
   // - Last radius is calculated at 2nd to last path point
   // Note! 3 points in a row gives infinate radius.
 
   ArrayXXf curveRadii(localPath.rows()-2,1);
-  ArrayXXf velocityCandidate(localPath.rows()-2,1);
-  for (int k = 0; k < localPath.rows()-2; k++)
-  {
+  ArrayXXf speedProfile(localPath.rows()-2,1);
+  for (int k = 0; k < localPath.rows()-2; k++) {
     // Choose three points and make a triangle with sides
     // A(p1p2),B(p2p3),C(p1p3)
     float A = (localPath.row(k+1)-localPath.row(k)).matrix().norm();
     float B = (localPath.row(k+2)-localPath.row(k+1)).matrix().norm();
     float C = (localPath.row(k+2)-localPath.row(k)).matrix().norm();
-    // Calculate triangle area
-    float S = (A+B+C)/2; // Heron's formula
-    float triangleArea = sqrtf(S*(S-A)*(S-B)*(S-C));
 
-    float tol = 0.01;
-    // Infinate radius check - Check if needed in C++! (not needed in MatLab that can handle inf)
-    if (triangleArea < tol)
-    {
-      curveRadii(k) = 10000; // Large value
+    // sort side lengths as A >= B && B >= C
+    if (A < B) {
+        std::swap(A, B);
     }
-    else
-    {
+    if (A < C) {
+        std::swap(A, C);
+    }
+    if (B < C) {
+        std::swap(B, C);
+    }
+    std::cout << "A =" << A << std::endl;
+    std::cout << "B =" << B << std::endl;
+    std::cout << "C =" << C << std::endl;
+    if (C-(A-B) < 0) {
+      std::cout << "WARNING! The data are not side-lengths of a real triangle" << std::endl;
+      curveRadii(k) = 10000;
+    }
+    else {
+      // https://people.eecs.berkeley.edu/~wkahan/Triangle.pdf
+      // Calculate triangle area
+      std::cout << "uttryck =" << (A+(B+C))*(C-(A-B))*(C+(A-B))*(A+(B-C))<< std::endl;
+      float triangleArea = 0.25f*sqrtf((A+(B+C))*(C-(A-B))*(C+(A-B))*(A+(B-C)));
+      std::cout << "triangleArea =" << triangleArea << std::endl;
       // Calculate the radius of the circle that matches the points
       curveRadii(k) = (A*B*C)/(4*triangleArea);
     }
-    // Set velocity candidate based on expected lateral acceleration
-    //(remember to add safe zone)
-    velocityCandidate(k) = std::min(sqrtf(lateralAccelerationLimit*curveRadii(k)),velocityLimit);
+    // Set velocity candidate based on expected lateral acceleration limit
+    speedProfile(k) = std::min(sqrtf(lateralAccelerationLimit*curveRadii(k)),velocityLimit);
   }
-
+  std::cout << "curveRadii =" << curveRadii << std::endl;
+  std::cout << "speedProfile before BT =" << speedProfile << std::endl;
   // Back propagate the whole path and lower velocities if deceleration cannot
   // be achieved.
-  for (int k = velocityCandidate.rows(); k > 1 ; k-=1)
-  {
+  for (int k = speedProfile.rows()-1; k > 0 ; k-=1) {
+    std::cout << "k =" << k << std::endl;
     // Distance between considered path points
     float pointDistance = (localPath.row(k+1)-localPath.row(k)).matrix().norm();
+    std::cout << "pointDistance =" << pointDistance << std::endl;
+    std::cout << "speedProfile(k) =" << speedProfile(k) << std::endl;
     // Time between points if using averaged velocity
-    float timeBetweenPoints = pointDistance/((velocityCandidate(k)+velocityCandidate(k-1))/2); //Using the highest velocity is safer?
+    float timeBetweenPoints = pointDistance/((speedProfile(k)+speedProfile(k-1))/2); //Using the highest velocity is safer?
+    std::cout << "timeBetweenPoints =" << timeBetweenPoints  << std::endl;
     // Requiered acceleration to achieve velocity of following point from previous point
-    float requieredAcceleration = (velocityCandidate(k)-velocityCandidate(k-1))/timeBetweenPoints;
+    float requieredAcceleration = (speedProfile(k)-speedProfile(k-1))/timeBetweenPoints;
     // If braking is needed
-    if (requieredAcceleration < 0)
-    {
-      // If acceleration can't be achieved by braking
-      if (requieredAcceleration < decelerationLimit)
-      {
+    if (requieredAcceleration < 0.0f) {
+      // If acceleration can't be achieved by braking...
+      if (requieredAcceleration < decelerationLimit) {
         // Set acceleration to maxBrakingAcceleration
         float modifiedDeceleration = decelerationLimit;
         // Calculate new velocity
-        velocityCandidate(k-1) = sqrtf(powf(velocityCandidate(k),2)-2*modifiedDeceleration*pointDistance); // time based on average(v2-v1)/2
+        speedProfile(k-1) = sqrtf(powf(speedProfile(k),2)-2.0f*modifiedDeceleration*pointDistance); // time based on average(v2-v1)/2
       }
     }
   }
-
+  std::cout << "speedProfile after BT =" << speedProfile << std::endl;
   // Choose velocity to achieve
-  //int velocityAimpoint = 1; //On which path point to base acceleration, min 1
   // Limit it dependent on the heading request (heading error)
-  float desiredVelocity = velocityCandidate(0)/(1 + headingErrorDependency*abs(headingRequest));
-
+  float desiredVelocity = speedProfile(0)/(1.0f + headingErrorDependency*abs(headingRequest));
   // Calculate time to desired velocity
   float timeToVelocity = (localPath.row(1)).matrix().norm()/((currentVelocity+desiredVelocity)/2);
-
   // Transform into acceleration
   float accelerationRequest = (desiredVelocity-currentVelocity)/timeToVelocity;
-
   // Limit acceleration request for positive acceleration
-  if (accelerationRequest > 0 && accelerationRequest > accelerationLimit)
-  {
+  if (accelerationRequest > 0.0f && accelerationRequest > accelerationLimit) {
     accelerationRequest = accelerationLimit;
   }
   // Limit acceleration request for negative acceleration
-  if (accelerationRequest < 0 && accelerationRequest < decelerationLimit)
-  {
+  if (accelerationRequest < 0.0f && accelerationRequest < decelerationLimit) {
     accelerationRequest = decelerationLimit;
   }
+
   return accelerationRequest;
 }
 
