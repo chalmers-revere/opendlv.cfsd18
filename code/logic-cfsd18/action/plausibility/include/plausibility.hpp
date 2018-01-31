@@ -17,8 +17,8 @@
  * USA.
  */
 
-#ifndef OPENDLV_LOGIC_CFSD18_ACTION_STEERING_HPP
-#define OPENDLV_LOGIC_CFSD18_ACTION_STEERING_HPP
+#ifndef OPENDLV_LOGIC_CFSD18_ACTION_PLAUSIBILITY_HPP
+#define OPENDLV_LOGIC_CFSD18_ACTION_PLAUSIBILITY_HPP
 
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
@@ -30,12 +30,12 @@ namespace logic {
 namespace cfsd18 {
 namespace action {
 
-class Steering : public odcore::base::module::DataTriggeredConferenceClientModule {
+class Plausibility : public odcore::base::module::DataTriggeredConferenceClientModule {
  public:
-  Steering(int32_t const &, char **);
-  Steering(Steering const &) = delete;
-  Steering &operator=(Steering const &) = delete;
-  virtual ~Steering();
+  Plausibility(int32_t const &, char **);
+  Plausibility(Plausibility const &) = delete;
+  Plausibility &operator=(Plausibility const &) = delete;
+  virtual ~Plausibility();
   virtual void nextContainer(odcore::data::Container &);
 
  private:

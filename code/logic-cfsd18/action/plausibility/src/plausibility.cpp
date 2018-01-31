@@ -23,51 +23,50 @@
 #include <opendavinci/odcore/strings/StringToolbox.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
 
-#include "steering.hpp"
+#include "plausibility.hpp"
 
 namespace opendlv {
 namespace logic {
 namespace cfsd18 {
 namespace action {
 
-using namespace std;
-using namespace odcore::base;
-
-Steering::Steering(int32_t const &a_argc, char **a_argv) :
-  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-steering")
+Plausibility::Plausibility(int32_t const &a_argc, char **a_argv) :
+  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-plausibility")
 {
 }
 
-Steering::~Steering()
+Plausibility::~Plausibility()
 {
 }
 
 
 
-void Steering::nextContainer(odcore::data::Container &a_container)
+void Plausibility::nextContainer(odcore::data::Container &a_container)
 {
   if (a_container.getDataType() == opendlv::logic::cognition::GroundSteeringLimit::ID()) {
-    auto steering = a_container.getData<opendlv::logic::cognition::GroundSteeringLimit>();
-    double steering_req = steering.getSteeringLimit();
- 
-    opendlv::proxy::GroundSteeringRequest gsr(steering_req);
-    odcore::data::Container c1(gsr);
+    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
+  }
+  if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
+    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
+
+    opendlv::proxy::GroundSteeringRequest o1;
+    odcore::data::Container c1(o1);
     getConference().send(c1);
   }
 }
 
-void Steering::setUp()
+void Plausibility::setUp()
 {
   // std::string const exampleConfig = 
   //   getKeyValueConfiguration().getValue<std::string>(
-  //     "logic-cfsd18-action-steering.example-config");
+  //     "logic-cfsd18-action-plausibility.example-config");
 
   // if (isVerbose()) {
   //   std::cout << "Example config is " << exampleConfig << std::endl;
   // }
 }
 
-void Steering::tearDown()
+void Plausibility::tearDown()
 {
 }
 
