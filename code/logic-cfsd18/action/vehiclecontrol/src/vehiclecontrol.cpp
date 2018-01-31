@@ -29,11 +29,13 @@
 //#include "odvdvehicle/generated/opendlv/proxy/ActuationRequest.h"
 
 #include "vehiclecontrol.hpp"
+#include "odvdvehicle/generated/opendlv/proxy/ActuationRequest.h"
 
 namespace opendlv {
 namespace logic {
 namespace cfsd18 {
 namespace action {
+
 
 Vehiclecontrol::Vehiclecontrol(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-vehiclecontrol"),
@@ -98,7 +100,7 @@ float Vehiclecontrol::calcTorque(double a_arg)
 
 void Vehiclecontrol::sendContainer()
 {
-  opendlv::proxy::ActuationRequest ar;
+  /*opendlv::proxy::ActuationRequest ar;
 
   ar.setAcceleartion(m_torque);
   ar.setSteering(m_steeringAngle);
@@ -106,6 +108,7 @@ void Vehiclecontrol::sendContainer()
 
   odcore::data::Container c(ar);
   getConference().send(c);
+  */
 }
 
 }
