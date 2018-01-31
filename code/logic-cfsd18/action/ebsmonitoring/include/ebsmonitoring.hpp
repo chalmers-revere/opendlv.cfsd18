@@ -17,8 +17,8 @@
  * USA.
  */
 
-#ifndef OPENDLV_LOGIC_CFSD18_ACTION_LATERAL_HPP
-#define OPENDLV_LOGIC_CFSD18_ACTION_LATERAL_HPP
+#ifndef OPENDLV_LOGIC_CFSD18_ACTION_EBSMONITORING_HPP
+#define OPENDLV_LOGIC_CFSD18_ACTION_EBSMONITORING_HPP
 
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
@@ -31,12 +31,12 @@ namespace logic {
 namespace cfsd18 {
 namespace action {
 
-class Lateral : public odcore::base::module::DataTriggeredConferenceClientModule {
+class Ebsmonitoring : public odcore::base::module::DataTriggeredConferenceClientModule {
  public:
-  Lateral(int32_t const &, char **);
-  Lateral(Lateral const &) = delete;
-  Lateral &operator=(Lateral const &) = delete;
-  virtual ~Lateral();
+  Ebsmonitoring(int32_t const &, char **);
+  Ebsmonitoring(Ebsmonitoring const &) = delete;
+  Ebsmonitoring &operator=(Ebsmonitoring const &) = delete;
+  virtual ~Ebsmonitoring();
   virtual void nextContainer(odcore::data::Container &);
 
  private:

@@ -16,14 +16,14 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-project(opendlv-logic-cfsd18-action-lateral)
+project(opendlv-logic-cfsd18-action-ebsmonitoring)
 
 include_directories(include)
 
 file(GLOB_RECURSE SOURCEFILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 add_library(${PROJECT_NAME}-static STATIC ${SOURCEFILES})
 add_executable(${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/app/${PROJECT_NAME}.cpp")
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}-static ${LIBRARIES}) 
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}-static ${LIBRARIES})
 
 include(RunTests)
 
