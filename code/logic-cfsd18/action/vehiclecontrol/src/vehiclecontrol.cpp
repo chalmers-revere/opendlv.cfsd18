@@ -22,6 +22,11 @@
 #include <opendavinci/odcore/data/TimeStamp.h>
 #include <opendavinci/odcore/strings/StringToolbox.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
+#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
+//#include "odvdopendlvdata/GeneratedHeaders_ODVDOpenDLVData.h"
+
+
+//#include "odvdvehicle/generated/opendlv/proxy/ActuationRequest.h"
 
 #include "vehiclecontrol.hpp"
 
@@ -50,7 +55,7 @@ void Vehiclecontrol::nextContainer(odcore::data::Container &a_container)
     auto accelerationRequest = a_container.getData<opendlv::proxy::GroundAccelerationRequest>();
     double acceleration = accelerationRequest.getGroundAcceleration();
 
-    m_torque = calcTorque(accelerationRequest);
+    m_torque = calcTorque(acceleration);
 
     sendContainer();
   }
@@ -85,17 +90,22 @@ float Vehiclecontrol::calcTorque(double a_arg)
 {
   float mass = 200;
   float wheelRadius = 0.3;
-  float acceleration = static_cast<float>(a_arg) // convert to float
-
-  float torque = a_arg*mass*wheelRadius;
+  float acceleration = static_cast<float>(a_arg); // convert to float
+  float torque = acceleration*mass*wheelRadius;
 
   return torque;
 }
 
 void Vehiclecontrol::sendContainer()
 {
-  opendlv::proxy::ActuationRequest container(m_torque,m_steeringAngle,1);
-  getConference().send(container);
+  opendlv::proxy::ActuationRequest ar;
+
+  ar.setAcceleartion(m_torque);
+  ar.setSteering(m_steeringAngle);
+  ar.setIsValid(true);
+
+  odcore::data::Container c(ar);
+  getConference().send(c);
 }
 
 }

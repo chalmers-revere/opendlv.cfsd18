@@ -46,8 +46,9 @@ class Vehiclecontrol : public odcore::base::module::DataTriggeredConferenceClien
   void sendContainer();
 
  private:
-   float m_steeringAngle;
    float m_torque;
+   float m_steeringAngle;
+
 };
 
 }
