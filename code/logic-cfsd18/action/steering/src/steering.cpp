@@ -46,13 +46,25 @@ Steering::~Steering()
 
 void Steering::nextContainer(odcore::data::Container &a_container)
 {
-  if (a_container.getDataType() == opendlv::logic::cognition::GroundSteeringLimit::ID()) {
-    auto steering = a_container.getData<opendlv::logic::cognition::GroundSteeringLimit>();
-    double steering_req = steering.getSteeringLimit();
- 
-    opendlv::proxy::GroundSteeringRequest gsr(steering_req);
-    odcore::data::Container c1(gsr);
+  if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
+    auto steering = a_container.getData<opendlv::proxy::GroundSteeringRequest>();
+    double pwm= 3.5 * steering.getGroundSteering();
+    pwmrequest = (uint32_t) pwm;
+    uint16_t pinid = 1;
+
+    opendlv::proxy::PwmRequest pr(pinid,pwmrequest);
+    odcore::data::Container c1(pr);
     getConference().send(c1);
+
+    opendlv::proxy::ToggleRequest::ToggleState state;
+     if (pwmrequest > 0) {
+        state = opendlv::proxy::ToggleRequest::On;
+      } else {
+        state = opendlv::proxy::ToggleRequest::Off;
+      }
+     opendlv::proxy::ToggleRequest request(pinid, state);     
+     odcore::data::Container c2(request);
+     getConference().send(c2);
   }
 }
 
