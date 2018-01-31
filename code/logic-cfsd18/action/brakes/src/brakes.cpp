@@ -23,6 +23,7 @@
 #include <opendavinci/odcore/strings/StringToolbox.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
 
+
 #include "brakes.hpp"
 
 namespace opendlv {
@@ -30,9 +31,11 @@ namespace logic {
 namespace cfsd18 {
 namespace action {
 
+using namespace std;
+using namespace odcore::base;
+
 Brakes::Brakes(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-brakes")
-
 {
 }
 
@@ -40,18 +43,18 @@ Brakes::~Brakes()
 {
 }
 
-m_totalmass(200.0)
+
 
 
 void Brakes::nextContainer(odcore::data::Container &a_container)
 {
-  if (a_container.getDataType() == opendlv::logic::cognition::GroundDecelerationRequest::ID()) {
-     auto brakeforce = m_totalmass*a_container.getData<opendlv::logic::cognition::GroundDecelerationRequest>();
-  }
-
-
-    opendlv::proxy::GroundAccelerationRequest ;
-    c1 = Container(brakeforce);
+  if (a_container.getDataType() == opendlv::logic::cognition::GroundSpeedLimit::ID()) {
+     auto acc = 200 * getKeyValueConfiguration().getValue<double>("opendlv.logic.cognition.GroundSpeedLimit");
+     
+  
+    opendlv::proxy::GroundAccelerationRequest gac(acc);
+    odcore::data::Container c1(gac);
+    //Container c1(gac);
     getConference().send(c1);
 
   }

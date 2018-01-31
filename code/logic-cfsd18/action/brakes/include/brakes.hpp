@@ -22,8 +22,7 @@
 
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
-
-//#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
+#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 #include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 
 namespace opendlv {
@@ -38,14 +37,14 @@ class Brakes : public odcore::base::module::DataTriggeredConferenceClientModule 
   Brakes &operator=(Brakes const &) = delete;
   virtual ~Brakes();
   virtual void nextContainer(odcore::data::Container &);
- 
- public:
-  float m_totalmass;
+
+
   
 
  private:
   void setUp();
   void tearDown();
+
 };
 
 }
