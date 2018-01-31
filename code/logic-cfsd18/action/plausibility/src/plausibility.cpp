@@ -30,6 +30,9 @@ namespace logic {
 namespace cfsd18 {
 namespace action {
 
+using namespace std;
+using namespace odcore:base;
+
 Plausibility::Plausibility(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-plausibility")
 {
@@ -44,13 +47,11 @@ Plausibility::~Plausibility()
 void Plausibility::nextContainer(odcore::data::Container &a_container)
 {
   if (a_container.getDataType() == opendlv::logic::cognition::GroundSteeringLimit::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
-  }
-  if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
-
-    opendlv::proxy::GroundSteeringRequest o1;
-    odcore::data::Container c1(o1);
+     auto plausibility = a_container.getData<opendlv::logic::cognition::GroundSteeringLimit>();
+     double plausibility_req = plausibility.getSteeringLimit();
+ 
+    opendlv::proxy::GroundSpeedReading gsr(plausibility_req) ;
+    odcore::data::Container c1(gsr);
     getConference().send(c1);
   }
 }
