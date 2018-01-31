@@ -31,7 +31,7 @@ namespace cfsd18 {
 namespace action {
 
 using namespace std;
-using namespace odcore:base;
+using namespace odcore::base;
 
 Plausibility::Plausibility(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-plausibility")
