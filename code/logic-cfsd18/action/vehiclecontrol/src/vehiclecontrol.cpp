@@ -100,7 +100,7 @@ float Vehiclecontrol::calcTorque(double a_arg)
 
 void Vehiclecontrol::sendContainer()
 {
-  opendlv::proxy::ActuationRequest ar;
+  /*opendlv::proxy::ActuationRequest ar;
 
   ar.setAcceleration(m_torque);
   ar.setSteering(m_steeringAngle);
@@ -108,7 +108,7 @@ void Vehiclecontrol::sendContainer()
 
   odcore::data::Container c(ar);
   getConference().send(c);
-
+*/
 }
 
 }

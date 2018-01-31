@@ -16,14 +16,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef OPENDLV_LOGIC_CFSD18_ACTION_LATERAL_TESTSUITE_HPP
-#define OPENDLV_LOGIC_CFSD18_ACTION_LATERAL_TESTSUITE_HPP
+#ifndef OPENDLV_LOGIC_CFSD18_ACTION_EBSMONITORING_TESTSUITE_HPP
+#define OPENDLV_LOGIC_CFSD18_ACTION_EBSMONITORING_TESTSUITE_HPP
 
 #include "cxxtest/TestSuite.h"
 
-#include "../include/lateral.hpp"
+#include "../include/ebsmonitoring.hpp"
 
-class LateralTest : public CxxTest::TestSuite {
+class EbsmonitoringTest : public CxxTest::TestSuite {
   public:
     void setUp()
     {

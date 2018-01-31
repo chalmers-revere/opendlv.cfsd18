@@ -23,25 +23,25 @@
 #include <opendavinci/odcore/strings/StringToolbox.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
 
-#include "lateral.hpp"
+#include "ebsmonitoring.hpp"
 
 namespace opendlv {
 namespace logic {
 namespace cfsd18 {
 namespace action {
 
-Lateral::Lateral(int32_t const &a_argc, char **a_argv) :
-  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-lateral")
+Ebsmonitoring::Ebsmonitoring(int32_t const &a_argc, char **a_argv) :
+  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-ebsmonitoring")
 {
 }
 
-Lateral::~Lateral()
+Ebsmonitoring::~Ebsmonitoring()
 {
 }
 
 
 
-void Lateral::nextContainer(odcore::data::Container &a_container)
+void Ebsmonitoring::nextContainer(odcore::data::Container &a_container)
 {
   if (a_container.getDataType() == opendlv::logic::cognition::GroundSteeringLimit::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
@@ -55,18 +55,18 @@ void Lateral::nextContainer(odcore::data::Container &a_container)
   }
 }
 
-void Lateral::setUp()
+void Ebsmonitoring::setUp()
 {
-  // std::string const exampleConfig = 
+  // std::string const exampleConfig =
   //   getKeyValueConfiguration().getValue<std::string>(
-  //     "logic-cfsd18-action-lateral.example-config");
+  //     "logic-cfsd18-action-ebsmonitoring.example-config");
 
   // if (isVerbose()) {
   //   std::cout << "Example config is " << exampleConfig << std::endl;
   // }
 }
 
-void Lateral::tearDown()
+void Ebsmonitoring::tearDown()
 {
 }
 

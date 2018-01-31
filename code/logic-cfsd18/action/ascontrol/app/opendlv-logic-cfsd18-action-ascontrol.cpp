@@ -19,6 +19,6 @@
 #include "ascontrol.hpp"
 
 int32_t main(int32_t a_argc, char **a_argv) {
-  opendlv::logic::cfsd18::action::ascontrol app(a_argc, a_argv);
+  opendlv::logic::cfsd18::action::Ascontrol app(a_argc, a_argv);
   return app.runModule();
 }
