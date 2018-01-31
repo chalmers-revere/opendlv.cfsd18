@@ -51,6 +51,7 @@ set(LIBRARIES
 
 ### MICROSERVICE BEGIN ###
 add_subdirectory(action/lateral)
+add_subdirectory(action/motion)
 add_subdirectory(action/ebsmonitoring)
 add_subdirectory(action/ascontrol)
 add_subdirectory(action/brakes)

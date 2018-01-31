@@ -24,7 +24,7 @@
 #include <opendavinci/odcore/wrapper/Eigen.h>
 #include <odvdvehicle/GeneratedHeaders_ODVDVehicle.h>
 
-#include "vehiclecontrol.hpp"
+#include "motion.hpp"
 
 namespace opendlv {
 namespace logic {
@@ -32,20 +32,20 @@ namespace cfsd18 {
 namespace action {
 
 
-Vehiclecontrol::Vehiclecontrol(int32_t const &a_argc, char **a_argv) :
-  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-vehiclecontrol"),
+Motion::Motion(int32_t const &a_argc, char **a_argv) :
+  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-motion"),
   m_torque(),
   m_steeringAngle()
 {
 }
 
-Vehiclecontrol::~Vehiclecontrol()
+Motion::~Motion()
 {
 }
 
 
 
-void Vehiclecontrol::nextContainer(odcore::data::Container &a_container)
+void Motion::nextContainer(odcore::data::Container &a_container)
 {
 
   if (a_container.getDataType() == opendlv::proxy::GroundAccelerationRequest::ID()) {
@@ -68,22 +68,22 @@ void Vehiclecontrol::nextContainer(odcore::data::Container &a_container)
   }
 }
 
-void Vehiclecontrol::setUp()
+void Motion::setUp()
 {
   // std::string const exampleConfig =
   //   getKeyValueConfiguration().getValue<std::string>(
-  //     "logic-cfsd18-action-vehiclecontrol.example-config");
+  //     "logic-cfsd18-action-motion.example-config");
 
   // if (isVerbose()) {
   //   std::cout << "Example config is " << exampleConfig << std::endl;
   // }
 }
 
-void Vehiclecontrol::tearDown()
+void Motion::tearDown()
 {
 }
 
-float Vehiclecontrol::calcTorque(double a_arg)
+float Motion::calcTorque(double a_arg)
 {
   float mass = 200;
   float wheelRadius = 0.3;
@@ -93,7 +93,7 @@ float Vehiclecontrol::calcTorque(double a_arg)
   return torque;
 }
 
-void Vehiclecontrol::sendContainer()
+void Motion::sendContainer()
 {
   /*opendlv::proxy::ActuationRequest ar;
 

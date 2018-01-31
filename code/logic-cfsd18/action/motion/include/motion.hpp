@@ -17,8 +17,8 @@
  * USA.
  */
 
-#ifndef OPENDLV_LOGIC_CFSD18_ACTION_VEHICLECONTROl_HPP
-#define OPENDLV_LOGIC_CFSD18_ACTION_VEHICLECONTROl_HPP
+#ifndef OPENDLV_LOGIC_CFSD18_ACTION_MOTION_HPP
+#define OPENDLV_LOGIC_CFSD18_ACTION_MOTION_HPP
 
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
@@ -30,12 +30,12 @@ namespace logic {
 namespace cfsd18 {
 namespace action {
 
-class Vehiclecontrol : public odcore::base::module::DataTriggeredConferenceClientModule {
+class Motion : public odcore::base::module::DataTriggeredConferenceClientModule {
  public:
-  Vehiclecontrol(int32_t const &, char **);
-  Vehiclecontrol(Vehiclecontrol const &) = delete;
-  Vehiclecontrol &operator=(Vehiclecontrol const &) = delete;
-  virtual ~Vehiclecontrol();
+  Motion(int32_t const &, char **);
+  Motion(Motion const &) = delete;
+  Motion &operator=(Motion const &) = delete;
+  virtual ~Motion();
   virtual void nextContainer(odcore::data::Container &);
 
  private:

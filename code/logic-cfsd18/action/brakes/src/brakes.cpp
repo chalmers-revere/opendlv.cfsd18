@@ -51,7 +51,7 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
 {
   if (a_container.getDataType() == opendlv::proxy::GroundDecelerationRequest::ID()) {
 
-     auto deceleration = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
+     /*auto deceleration = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
      double pwmrequest = 3.5 * deceleration.getGroundDeceleration();
      uint32_t pwmrequestt = static_cast<uint32_t>(pwmrequest);
      uint16_t pinid = 1;
@@ -68,7 +68,7 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
       }
       opendlv::proxy::ToggleRequest request(pinid, state);     
       odcore::data::Container c2(request);
-      getConference().send(c2);
+      getConference().send(c2);*/
 
 
   }

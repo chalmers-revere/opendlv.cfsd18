@@ -16,27 +16,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef OPENDLV_LOGIC_CFSD18_ACTION_VEHICLECONTROL_TESTSUITE_HPP
-#define OPENDLV_LOGIC_CFSD18_ACTION_VEHICLECONTROL_TESTSUITE_HPP
+#include "motion.hpp"
 
-#include "cxxtest/TestSuite.h"
-
-#include "../include/vehiclecontrol.hpp"
-
-class VehiclecontrolTest : public CxxTest::TestSuite {
-  public:
-    void setUp()
-    {
-    }
-
-    void tearDown()
-    {
-    }
-
-    void testApplication()
-    {
-      TS_ASSERT(true);
-    }
-};
-
-#endif
+int32_t main(int32_t a_argc, char **a_argv) {
+  opendlv::logic::cfsd18::action::Motion app(a_argc, a_argv);
+  return app.runModule();
+}
