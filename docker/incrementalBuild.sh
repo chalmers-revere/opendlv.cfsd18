@@ -27,6 +27,8 @@ useradd $BUILD_AS -g $BUILD_AS
 cat <<EOF > /opt/opendlv.cfsd18.build/build.sh
 #!/bin/bash
 cd /opt/opendlv.cfsd18.build
+export PATH=/usr/lib/ccache:$PATH
+export CCACHE_DIR=/opt/ccache
 
 ### NAMESPACE BEGIN ###
 echo "[Docker builder] Incremental build of opendlv.cfsd18 namespace logic-cfsd18."
