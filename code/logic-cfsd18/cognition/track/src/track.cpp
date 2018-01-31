@@ -40,69 +40,44 @@ Track::~Track()
 }
 
 
-
 void Track::nextContainer(odcore::data::Container &a_container)
 {
 
-  std::cout << "JAG LEVER!!!" << std::endl;
-  ArrayXXf localPath(15,2);
-  localPath <<
-  -0.646636, -0.0466392,
-  -0.682606,   0.452065,
-  -0.716798,   0.950891,
-  -0.725,    1.45075,
-  -0.720662,    1.95071,
-  -0.700775,    2.45029,
-  -0.669754,    2.94932,
-  -0.634384,    3.44802,
-  -0.560804,    3.94058,
-  -0.332111,    3.79835,
-  -0.236519,    3.30803,
-  -0.211409,    2.80907,
-  -0.197508,    2.30927,
-  -0.183607,    1.80946,
-  -0.175,        1.5;
-
-  float timeToAimPoint = 1;
-  float currentVelocity = 5;
-  float headingRequest = Track::driverModelSteering(currentVelocity, timeToAimPoint, localPath);
-  float accelerationLimit = 5;
-  float decelerationLimit = -5;
-  float accelerationRequest = Track::driverModelVelocity(currentVelocity, accelerationLimit, decelerationLimit, headingRequest,localPath);
-
-    std::cout << "headingRequest =" << headingRequest << std::endl;
-    std::cout << "accelerationRequest =" << accelerationRequest << std::endl;
-  // Send headingRequest
-  opendlv::logic::action::AimDirection o1;
-  o1.setAzimuthAngle(headingRequest);
-  odcore::data::Container c1(o1);
-  getConference().send(c1);
-
-
-std::cout << "a_container.getDataType() =" << a_container.getDataType() << std::endl;
-std::cout << "opendlv::logic::action::AimDirection::ID() =" << opendlv::logic::action::AimDirection::ID() << std::endl;
-  if (a_container.getDataType() == 8) {
-    auto HEADING = a_container.getData<opendlv::logic::action::AimDirection>();
-    std::cout << "HEADING =" << HEADING << std::endl;
-  }
-
   if (a_container.getDataType() == opendlv::logic::perception::Surface::ID()) {
-     //auto surface = a_container.getData<opendlv::logic::perception::Surface>();
+    auto localPath = a_container.getData<opendlv::logic::perception::Surface>();
+    std::string type = surface.getType();
+    std::cout << "Message " << a_container.getDataType() << " of type " << type <<" recieved" << std::endl;
+    std::cout << "localPath set to " << localPath << std::endl;
+    /*float timeToAimPoint = 1;
+    float currentVelocity = 5;
+    float accelerationLimit = 5;
+    float decelerationLimit = -5;
+    float headingRequest = Track::driverModelSteering(currentVelocity, timeToAimPoint, localPath);
+    float accelerationRequest = Track::driverModelVelocity(currentVelocity, accelerationLimit, decelerationLimit, headingRequest,localPath);
+    */
+    float headingRequest = 1.2;
+    float accelerationRequest = 3.4;
 
-     //std::string type = surface.getType();
-     /*
     opendlv::logic::action::AimPoint o1;
-    //o1.setDistance(4.5);
+    o1.setAzimuthAngle(headingRequest);
     odcore::data::Container c1(o1);
     getConference().send(c1);
-    */
-    opendlv::logic::action::PreviewPoint o2;
-    odcore::data::Container c2(o2);
-    getConference().send(c2);
+    std::cout << "headingRequest = " << headingRequest << "sent" << std::endl;
+    if (accelerationRequest >= 0.0f) {
+      opendlv::proxy::GroundAccelerationRequest o2;
+      o2.setGroundAcceleration(accelerationRequest);
+      odcore::data::Container c2(o2);
+      getConference().send(c2);
+      std::cout << "GroundAccelerationRequest = " << accelerationRequest << "sent" << std::endl;
+    }
+    else {
+      opendlv::proxy::GroundDecelerationRequest o3;
+      o3.setGroundDeceleration(accelerationRequest);
+      odcore::data::Container c3(o3);
+      getConference().send(c3);
+      std::cout << "GroundDecelerationRequest = " << accelerationRequest << "sent" << std::endl;
+    }
 
-    opendlv::logic::cognition::GroundSpeedLimit o3;
-    odcore::data::Container c3(o3);
-    getConference().send(c3);
   }
   if (a_container.getDataType() == opendlv::system::SignalStatusMessage::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
@@ -113,6 +88,48 @@ std::cout << "opendlv::logic::action::AimDirection::ID() =" << opendlv::logic::a
   if (a_container.getDataType() == opendlv::system::NetworkStatusMessage::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
   }
+
+  /*
+    std::cout << "JAG LEVER!!!" << std::endl;
+    ArrayXXf localPath(15,2);
+    localPath <<
+    -0.646636, -0.0466392,
+    -0.682606,   0.452065,
+    -0.716798,   0.950891,
+    -0.725,    1.45075,
+    -0.720662,    1.95071,
+    -0.700775,    2.45029,
+    -0.669754,    2.94932,
+    -0.634384,    3.44802,
+    -0.560804,    3.94058,
+    -0.332111,    3.79835,
+    -0.236519,    3.30803,
+    -0.211409,    2.80907,
+    -0.197508,    2.30927,
+    -0.183607,    1.80946,
+    -0.175,        1.5;
+
+    float timeToAimPoint = 1;
+    float currentVelocity = 5;
+    float headingRequest = Track::driverModelSteering(currentVelocity, timeToAimPoint, localPath);
+    float accelerationLimit = 5;
+    float decelerationLimit = -5;
+    float accelerationRequest = Track::driverModelVelocity(currentVelocity, accelerationLimit, decelerationLimit, headingRequest,localPath);
+
+      std::cout << "headingRequest =" << headingRequest << std::endl;
+      std::cout << "accelerationRequest =" << accelerationRequest << std::endl;
+    // Send headingRequest
+
+
+
+  std::cout << "a_container.getDataType() =" << a_container.getDataType() << std::endl;
+  std::cout << "opendlv::logic::action::AimDirection::ID() =" << opendlv::logic::action::AimDirection::ID() << std::endl;
+    if (a_container.getDataType() == 8) {
+      auto HEADING = a_container.getData<opendlv::logic::action::AimDirection>();
+      std::cout << "HEADING =" << HEADING << std::endl;
+    }
+    */
+
 }
 
 void Track::setUp()
