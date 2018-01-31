@@ -61,7 +61,7 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
      getConference().send(c1);
 
       opendlv::proxy::ToggleRequest::ToggleState state;
-      if (pwmrequest < 0) {
+      if (pwm < 0) {
         state = opendlv::proxy::ToggleRequest::On;
       } else {
         state = opendlv::proxy::ToggleRequest::Off;
