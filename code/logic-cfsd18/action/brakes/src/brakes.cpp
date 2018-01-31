@@ -18,6 +18,7 @@
 */
 
 #include <iostream>
+#include <cstdlib>
 
 #include <opendavinci/odcore/data/TimeStamp.h>
 #include <opendavinci/odcore/strings/StringToolbox.h>
@@ -48,14 +49,14 @@ Brakes::~Brakes()
 
 void Brakes::nextContainer(odcore::data::Container &a_container)
 {
-  if (a_container.getDataType() == opendlv::logic::cognition::GroundSpeedLimit::ID()) {
-     //auto acc = 200 * getKeyValueConfiguration().getValue<double>("opendlv.logic.cognition.GroundSpeedLimit");
-     auto acc = a_container.getData<opendlv::logic::cognition::GroundSpeedLimit>();
-     double acc_req = acc.getSpeedLimit();
+  if (a_container.getDataType() == opendlv::proxy::GroundDecelerationRequest::ID()) {
+     auto deceleration = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
+     double pwmrequest = 3.5 * deceleration.getGroundDeceleration();
+     uint32_t pwmrequestt = static_cast<uint32_t>(pwmrequest);
+     uint16_t pinid = 1;
 
-     opendlv::proxy::GroundAccelerationRequest gac(acc_req);
-     odcore::data::Container c1(gac);
-     //Container c1(gac);
+     opendlv::proxy::PwmRequest pr(pinid,pwmrequestt);
+     odcore::data::Container c1(pr);
      getConference().send(c1);
 
   }
