@@ -50,6 +50,7 @@ set(LIBRARIES
 add_subdirectory(action/lateral)
 add_subdirectory(action/brakes)
 add_subdirectory(action/steering)
+add_subdirectory(action/vehiclecontrol)
 add_subdirectory(cognition/acceleration)
 add_subdirectory(cognition/brake)
 add_subdirectory(cognition/limitlateral)
