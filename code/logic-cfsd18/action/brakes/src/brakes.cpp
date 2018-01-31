@@ -49,13 +49,14 @@ Brakes::~Brakes()
 void Brakes::nextContainer(odcore::data::Container &a_container)
 {
   if (a_container.getDataType() == opendlv::logic::cognition::GroundSpeedLimit::ID()) {
-     auto acc = 200 * getKeyValueConfiguration().getValue<double>("opendlv.logic.cognition.GroundSpeedLimit");
-     
-  
-    opendlv::proxy::GroundAccelerationRequest gac(acc);
-    odcore::data::Container c1(gac);
-    //Container c1(gac);
-    getConference().send(c1);
+     //auto acc = 200 * getKeyValueConfiguration().getValue<double>("opendlv.logic.cognition.GroundSpeedLimit");
+     auto acc = a_container.getData<opendlv::logic::cognition::GroundSpeedLimit>();
+     double acc_req = acc.getSpeedLimit();
+
+     opendlv::proxy::GroundAccelerationRequest gac(acc_req);
+     odcore::data::Container c1(gac);
+     //Container c1(gac);
+     getConference().send(c1);
 
   }
 }
