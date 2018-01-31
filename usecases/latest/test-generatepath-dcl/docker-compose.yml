@@ -35,4 +35,10 @@ services:
             - odsupercomponent
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectconelane --cid=${CID} --verbose=1 --id=1"
 
-
+    # microservice for ...
+    logic-cfsd18-cognition-track:
+        image: ${IMAGE}
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-cognition-track --cid=${CID} --verbose=1 --id=1"

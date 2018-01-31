@@ -44,9 +44,10 @@ void Track::nextContainer(odcore::data::Container &a_container)
 {
 
   if (a_container.getDataType() == opendlv::logic::perception::Surface::ID()) {
-    auto localPath = a_container.getData<opendlv::logic::perception::Surface>();
-    std::string type = surface.getType();
-    std::cout << "Message " << a_container.getDataType() << " of type " << type <<" recieved" << std::endl;
+    auto surface = a_container.getData<opendlv::logic::perception::Surface>();
+    auto localPath = surface.getSurfaceId();
+    //std::string type = Surface.getType();
+    std::cout << "Message " << a_container.getDataType() <<" recieved" << std::endl;
     std::cout << "localPath set to " << localPath << std::endl;
     /*float timeToAimPoint = 1;
     float currentVelocity = 5;
