@@ -57,20 +57,10 @@ void Steering::nextContainer(odcore::data::Container &a_container)
     opendlv::proxy::PwmRequest pr(pinid,pwmrequest);
     odcore::data::Container c1(pr);
     getConference().send(c1);
-// selecting toggle state for on or off state for the steering actuator
-    opendlv::proxy::ToggleRequest::ToggleState state;
-     if (pwm > 0) {
-        state = opendlv::proxy::ToggleRequest::On;
-      } else {
-        state = opendlv::proxy::ToggleRequest::Off;
-      }
-     opendlv::proxy::ToggleRequest request(pinid, state);     
-     odcore::data::Container c2(request);
-     getConference().send(c2);
 
 // For the gpio module, we need to send three containers. One for left steering , second for right steering and thrid for current measurement pin
     
-     if (state == opendlv::proxy::ToggleRequest::On){
+     if (pwm > 0){
 
      opendlv::proxy::ToggleRequest::ToggleState leftbit;
      if (bit > 0) {
@@ -79,8 +69,8 @@ void Steering::nextContainer(odcore::data::Container &a_container)
         leftbit = opendlv::proxy::ToggleRequest::Off;
       }
      opendlv::proxy::ToggleRequest requestleft(pinid, leftbit);     
-     odcore::data::Container c3(requestleft);
-     getConference().send(c3);
+     odcore::data::Container c2(requestleft);
+     getConference().send(c2);
 
      opendlv::proxy::ToggleRequest::ToggleState rightbit;
      if (bit > 0) {
@@ -89,10 +79,21 @@ void Steering::nextContainer(odcore::data::Container &a_container)
         rightbit = opendlv::proxy::ToggleRequest::On;
       }
      opendlv::proxy::ToggleRequest requestright(pinid, rightbit);     
-     odcore::data::Container c4(requestright);
+     odcore::data::Container c3(requestright);
+     getConference().send(c3);
+
+     opendlv::proxy::ToggleRequest::ToggleState selectbit;
+     if (leftbit == opendlv::proxy::ToggleRequest::On) {
+        selectbit = opendlv::proxy::ToggleRequest::On;
+      } else {
+        selectbit = opendlv::proxy::ToggleRequest::Off;
+      }
+     opendlv::proxy::ToggleRequest requestselect(pinid, selectbit);     
+     odcore::data::Container c4(requestselect);
      getConference().send(c4);
 
 
+    }
   }
 }
 
