@@ -22,6 +22,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake.Modules" ${CMAKE_
 set(CMAKE_MODULE_PATH "${CMAKE_INSTALL_PREFIX}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
 set(CMAKE_MODULE_PATH "${OPENDAVINCI_DIR}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
 set(CMAKE_MODULE_PATH "${ODVDOPENDLVSTANDARDMESSAGESET_DIR}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${ODVDVEHICLE_DIR}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
 set(CMAKE_MODULE_PATH "${ODVDCFSD18_DIR}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
 
 include(CompileFlags)
@@ -39,15 +40,20 @@ include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 include_directories(SYSTEM ${OPENDAVINCI_INCLUDE_DIRS})
 include_directories(SYSTEM ${ODVDOPENDLVSTANDARDMESSAGESET_INCLUDE_DIRS})
 include_directories(SYSTEM ${ODVDCFSD18_INCLUDE_DIRS})
+include_directories(SYSTEM ${ODVDVEHICLE_INCLUDE_DIRS})
 
 set(LIBRARIES
   ${OPENDAVINCI_LIBRARIES}
   ${Wt_LIBRARY} ${Wt_HTTP_LIBRARY} ${Wt_EXT_LIBRARY}
   ${ODVDOPENDLVSTANDARDMESSAGESET_LIBRARIES}
-  ${ODVDCFSD18_LIBRARIES})
+  ${ODVDCFSD18_LIBRARIES}
+  ${ODVDVEHICLE_LIBRARIES})
 
 ### MICROSERVICE BEGIN ###
 add_subdirectory(action/lateral)
+add_subdirectory(action/vehiclecontrol)
+add_subdirectory(action/ebsmonitoring)
+add_subdirectory(action/ascontrol)
 add_subdirectory(action/brakes)
 add_subdirectory(action/steering)
 add_subdirectory(action/vehiclecontrol)

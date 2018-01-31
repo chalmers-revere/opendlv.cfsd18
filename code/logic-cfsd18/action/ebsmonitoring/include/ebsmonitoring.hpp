@@ -17,12 +17,13 @@
  * USA.
  */
 
-#ifndef OPENDLV_LOGIC_CFSD18_ACTION_VEHICLECONTROl_HPP
-#define OPENDLV_LOGIC_CFSD18_ACTION_VEHICLECONTROl_HPP
+#ifndef OPENDLV_LOGIC_CFSD18_ACTION_EBSMONITORING_HPP
+#define OPENDLV_LOGIC_CFSD18_ACTION_EBSMONITORING_HPP
 
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
-#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
+
+//#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 #include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 
 namespace opendlv {
@@ -30,24 +31,17 @@ namespace logic {
 namespace cfsd18 {
 namespace action {
 
-class Vehiclecontrol : public odcore::base::module::DataTriggeredConferenceClientModule {
+class Ebsmonitoring : public odcore::base::module::DataTriggeredConferenceClientModule {
  public:
-  Vehiclecontrol(int32_t const &, char **);
-  Vehiclecontrol(Vehiclecontrol const &) = delete;
-  Vehiclecontrol &operator=(Vehiclecontrol const &) = delete;
-  virtual ~Vehiclecontrol();
+  Ebsmonitoring(int32_t const &, char **);
+  Ebsmonitoring(Ebsmonitoring const &) = delete;
+  Ebsmonitoring &operator=(Ebsmonitoring const &) = delete;
+  virtual ~Ebsmonitoring();
   virtual void nextContainer(odcore::data::Container &);
 
  private:
   void setUp();
   void tearDown();
-  float calcTorque(double);
-  void sendContainer();
-
- private:
-   float m_torque;
-   float m_steeringAngle;
-
 };
 
 }

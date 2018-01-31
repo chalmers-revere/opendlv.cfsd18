@@ -22,14 +22,9 @@
 #include <opendavinci/odcore/data/TimeStamp.h>
 #include <opendavinci/odcore/strings/StringToolbox.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
-#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
-//#include "odvdopendlvdata/GeneratedHeaders_ODVDOpenDLVData.h"
-
-
-//#include "odvdvehicle/generated/opendlv/proxy/ActuationRequest.h"
+#include <odvdvehicle/GeneratedHeaders_ODVDVehicle.h>
 
 #include "vehiclecontrol.hpp"
-#include "odvdvehicle/generated/opendlv/proxy/ActuationRequest.h"
 
 namespace opendlv {
 namespace logic {
@@ -102,13 +97,13 @@ void Vehiclecontrol::sendContainer()
 {
   /*opendlv::proxy::ActuationRequest ar;
 
-  ar.setAcceleartion(m_torque);
+  ar.setAcceleration(m_torque);
   ar.setSteering(m_steeringAngle);
   ar.setIsValid(true);
 
   odcore::data::Container c(ar);
   getConference().send(c);
-  */
+*/
 }
 
 }
