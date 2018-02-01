@@ -26,7 +26,6 @@ namespace perception {
 
 DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-perception-detectcone")
-, m_img()
 , m_lastLidarData()
 , m_lastCameraData()
 , m_pointMatched()
@@ -37,6 +36,7 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_lastTimeStamp()
 , m_coneCollector()
 , m_coneCollected()
+, m_img()
 {
   m_diffVec = 0;
   m_pointMatched = Eigen::MatrixXd::Zero(4,1);
@@ -58,7 +58,7 @@ void DetectCone::setUp()
   m_timeDiffMilliseconds = kv.getValue<double>("logic-cfsd18-perception-detectcone.timeDiffMilliseconds");
   std::cout << "setup OK " << std::endl;
 
-  slidingWindow("sliding_window", "0.png");
+  slidingWindow("sliding_window", "test.png");
 }
 
 void DetectCone::tearDown()
@@ -195,7 +195,7 @@ void DetectCone::blockMatching(cv::Mat& disp, cv::Mat imgL, cv::Mat imgR){
   cv::normalize(disp, disp, 0, 255, CV_MINMAX, CV_8U);
 }
 
-void DetectCone::rectify(cv::Mat img, cv::Mat& disp, cv::Mat& rectified){
+void DetectCone::reconstruction(cv::Mat img, cv::Mat& Q, cv::Mat& disp, cv::Mat& rectified, cv::Mat& XYZ){
   cv::Mat mtxLeft = (cv::Mat_<double>(3, 3) <<
     350.6847, 0, 332.4661,
     0, 350.0606, 163.7461,
@@ -224,7 +224,7 @@ void DetectCone::rectify(cv::Mat img, cv::Mat& disp, cv::Mat& rectified){
 
   //std::cout << imgR.size() <<std::endl;
 
-  cv::Mat R1, R2, P1, P2, Q;
+  cv::Mat R1, R2, P1, P2;
   cv::Rect validRoI[2];
   cv::stereoRectify(mtxLeft, distLeft, mtxRight, distRight, stdSize, R, T, R1, R2, P1, P2, Q,
     cv::CALIB_ZERO_DISPARITY, 0.0, stdSize, &validRoI[0], &validRoI[1]);
@@ -240,6 +240,22 @@ void DetectCone::rectify(cv::Mat img, cv::Mat& disp, cv::Mat& rectified){
 
   blockMatching(disp, imgL, imgR);
   rectified = imgL;
+
+  cv::reprojectImageTo3D(disp, XYZ, Q);
+}
+
+void DetectCone::xyz2xy(cv::Mat Q, cv::Vec3f xyz, cv::Vec2f& xy){
+  double X = xyz[0];
+  double Y = xyz[1];
+  double Z = xyz[2];
+  double Cx = -Q.at<double>(0,3);
+  double Cy = -Q.at<double>(1,3);
+  double f = Q.at<double>(2,3);
+  double a = Q.at<double>(3,2);
+  double b = Q.at<double>(3,3);
+  double d = (f - Z * b ) / ( Z * a);
+  xy[0] = X * ( d * a + b ) + Cx;
+  xy[1] = Y * ( d * a + b ) + Cy;
 }
 
 //run cnn starts
@@ -294,8 +310,9 @@ void DetectCone::slidingWindow(const std::string &dictionary, const std::string 
 
   // convert imagefile to vec_t
   cv::Mat img = cv::imread(img_path);
-  cv::Mat disp, rectified;
-  rectify(img, disp, rectified);
+  std::cout << img.size() << std::endl;
+  cv::Mat Q, disp, rectified, XYZ;
+  reconstruction(img, Q, disp, rectified, XYZ);
 
   // manual roi
   // (453, 237,	0.96875,	"orange");
@@ -306,8 +323,8 @@ void DetectCone::slidingWindow(const std::string &dictionary, const std::string 
   // (625,	191,	0.34375,	"blue");
   // (396,	183,	0.34375,	"blue");
 
-  int x = 453;
-  int y = 237;
+  int x = 180;
+  int y = 300;
   float_t ratio = 0.96875;
   std::string label = "orange";
   cv::Rect roi;
@@ -327,10 +344,17 @@ void DetectCone::slidingWindow(const std::string &dictionary, const std::string 
   float_t factor = F * d;
   float_t depth = factor/disp.at<uchar>(y,x);
 
+  cv::Vec3f point3D = XYZ.at<cv::Vec3f>(y,x);
+  std::cout << point3D << std::endl;
+
+  cv::Vec2f point2D;
+  xyz2xy(Q, point3D, point2D);
+  std::cout << point2D << std::endl;
+
   // cv::circle(rectified, cv::Point (x,y), 3, cv::Scalar (0,0,0), CV_FILLED);
   // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
   // cv::namedWindow("disp", cv::WINDOW_NORMAL);
-  // cv::imshow("disp", disp);
+  // cv::imshow("disp", rectified);
   // cv::waitKey(0);
   // cv::destroyAllWindows();
 

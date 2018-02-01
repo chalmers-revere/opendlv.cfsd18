@@ -62,8 +62,9 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   bool ExtractSharedImage(odcore::data::image::SharedImage *);
   void saveImg(double currentTime);
   void featureBased();
-  void rectify(cv::Mat, cv::Mat&, cv::Mat&);
+  void reconstruction(cv::Mat, cv::Mat&, cv::Mat&, cv::Mat&, cv::Mat&);
   void blockMatching(cv::Mat&, cv::Mat, cv::Mat);
+  void xyz2xy(cv::Mat, cv::Vec3f, cv::Vec2f&);
   void convertImage(cv::Mat, int, int, tiny_dnn::vec_t&);
   void slidingWindow(const std::string&, const std::string&);
 
@@ -74,7 +75,6 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   void SendCollectedCones(Eigen::MatrixXd);
   void SendMatchedContainer(Eigen::MatrixXd);
 
-  cv::Mat m_img;
   Eigen::MatrixXd m_lastLidarData;
   Eigen::MatrixXd m_lastCameraData;
   Eigen::MatrixXd m_pointMatched;
@@ -85,6 +85,9 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   odcore::data::TimeStamp m_lastTimeStamp;
   Eigen::MatrixXd m_coneCollector;
   int m_coneCollected;
+
+  cv::Mat m_img;
+
   const double DEG2RAD = 0.017453292522222; // PI/180.0
   const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD;
 };
