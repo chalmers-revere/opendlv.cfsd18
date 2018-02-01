@@ -42,11 +42,14 @@ class Motion : public odcore::base::module::DataTriggeredConferenceClientModule 
   void setUp();
   void tearDown();
   float calcTorque(double);
-  void sendContainer();
+  void sendActuationContainer();
+  void sendBrakeContainer();
 
  private:
    float m_torque;
    float m_steeringAngle;
+   bool m_brakeEnabled;
+   double m_deceleration;
 
 };
 

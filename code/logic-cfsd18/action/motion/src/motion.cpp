@@ -35,7 +35,9 @@ namespace action {
 Motion::Motion(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-motion"),
   m_torque(),
-  m_steeringAngle()
+  m_steeringAngle(),
+  m_brakeEnabled(),
+  m_deceleration()
 {
 }
 
@@ -54,7 +56,36 @@ void Motion::nextContainer(odcore::data::Container &a_container)
 
     m_torque = calcTorque(acceleration);
 
-    sendContainer();
+    if (m_brakeEnabled)
+    {
+      m_brakeEnabled = false;
+      sendBrakeContainer();
+    }
+
+    sendActuationContainer();
+  }
+
+  if (a_container.getDataType() == opendlv::proxy::GroundDecelerationRequest::ID()) {
+    auto decelerationRequest = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
+    m_deceleration = decelerationRequest.getGroundDeceleration();
+
+    m_torque = calcTorque(m_deceleration);
+
+    
+
+
+    if (m_deceleration < 0)
+    {
+      m_brakeEnabled = true;
+    }
+    else
+    {
+      m_brakeEnabled = false;
+    }
+
+    sendActuationContainer();
+    sendBrakeContainer();
+
   }
 
   if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
@@ -64,7 +95,7 @@ void Motion::nextContainer(odcore::data::Container &a_container)
 
     m_steeringAngle = static_cast<float>(steering)*Kp;
 
-    sendContainer();
+    sendActuationContainer();
   }
 }
 
@@ -93,17 +124,20 @@ float Motion::calcTorque(double a_arg)
   return torque;
 }
 
-void Motion::sendContainer()
+void Motion::sendActuationContainer()
 {
-  /*opendlv::proxy::ActuationRequest ar;
-
-  ar.setAcceleration(m_torque);
-  ar.setSteering(m_steeringAngle);
-  ar.setIsValid(true);
+  /*opendlv::proxy::ActuationRequest ar(m_torque,m_steeringAngle,true);
 
   odcore::data::Container c(ar);
-  getConference().send(c);
-*/
+  getConference().send(c);*/
+}
+
+void Motion::sendBrakeContainer()
+{
+ /* opendlv::proxy::rhino::BrakeRequest brakeRequest(m_brakeEnbaled,m_deceleration);
+  odcore::data::Container c(brakeRequest);
+
+  getConference.send(c);*/
 }
 
 }
