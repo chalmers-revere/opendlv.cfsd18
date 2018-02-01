@@ -67,6 +67,8 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   void xyz2xy(cv::Mat, cv::Vec3f, cv::Vec2f&);
   void convertImage(cv::Mat, int, int, tiny_dnn::vec_t&);
   void slidingWindow(const std::string&, const std::string&);
+  void backwardDetection(cv::Mat, cv::Vec3f, cv::Mat, tiny_dnn::network<tiny_dnn::sequential>);
+  void forwardDetection(cv::Mat, cv::Mat, tiny_dnn::network<tiny_dnn::sequential>);
 
   void matchPoints(Eigen::MatrixXd, Eigen::MatrixXd);
   void findMatch(Eigen::MatrixXd, Eigen::MatrixXd);
@@ -87,6 +89,7 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   int m_coneCollected;
 
   cv::Mat m_img;
+  int m_PATCH_SIZE;
 
   const double DEG2RAD = 0.017453292522222; // PI/180.0
   const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD;

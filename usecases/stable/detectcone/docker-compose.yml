@@ -17,7 +17,7 @@ services:
             - DISPLAY=$DISPLAY
         volumes:
             - /tmp/.X11-unix:/tmp/.X11-unix
-            - /home/weiming/project/opendlv.cfsd18/usecases/stable/detectcone/:/opt/tmp/
+            - /media/weiming/047AE1C87AE1B7181/ubuntu-project/opendlv.cfsd18/usecases/stable/detectcone/:/opt/tmp/
         user: odv
         ipc: host
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectcone --cid=${CID} --id=1"
