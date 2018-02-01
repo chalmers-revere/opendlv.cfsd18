@@ -20,7 +20,7 @@
 #ifndef OPENDLV_LOGIC_CFSD18_ACTION_EBSMONITORING_HPP
 #define OPENDLV_LOGIC_CFSD18_ACTION_EBSMONITORING_HPP
 
-#include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
+#include <opendavinci/odcore/base/module/TimeTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
 
 //#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
@@ -31,7 +31,7 @@ namespace logic {
 namespace cfsd18 {
 namespace action {
 
-class Ebsmonitoring : public odcore::base::module::DataTriggeredConferenceClientModule {
+class Ebsmonitoring : public odcore::base::module::TimeTriggeredConferenceClientModule {
  public:
   Ebsmonitoring(int32_t const &, char **);
   Ebsmonitoring(Ebsmonitoring const &) = delete;
@@ -40,8 +40,14 @@ class Ebsmonitoring : public odcore::base::module::DataTriggeredConferenceClient
   virtual void nextContainer(odcore::data::Container &);
 
  private:
+  odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode body();
   void setUp();
   void tearDown();
+
+ private:
+  int m_analogPin;
+  bool m_heartBeat;
+  float m_analogReading;
 };
 
 }

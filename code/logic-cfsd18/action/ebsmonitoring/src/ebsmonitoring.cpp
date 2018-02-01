@@ -31,28 +31,43 @@ namespace cfsd18 {
 namespace action {
 
 Ebsmonitoring::Ebsmonitoring(int32_t const &a_argc, char **a_argv) :
-  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-ebsmonitoring")
+  TimeTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-ebsmonitoring"),
+  m_analogPin(),
+  m_heartBeat(),
+  m_analogReading()
 {
+  m_analogPin = 1;
+  m_heartBeat = true;
 }
 
 Ebsmonitoring::~Ebsmonitoring()
 {
 }
 
-
-
 void Ebsmonitoring::nextContainer(odcore::data::Container &a_container)
-{
-  if (a_container.getDataType() == opendlv::logic::cognition::GroundSteeringLimit::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
-  }
-  if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
+{/*
+  if ((false) && a_container.getDataType() == opendlv::proxy::AnalogReading::ID()) { 
+    auto analogReading = a_container.getData<opendlv::proxy::AnalogReading>();
+    m_analogReading = analogReading.getVoltage();
+  }*/
+  std::cout << a_container;
+}
 
-    opendlv::proxy::GroundSteeringRequest o1;
-    odcore::data::Container c1(o1);
-    getConference().send(c1);
+odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ebsmonitoring::body()
+{
+  while (getModuleStateAndWaitForRemainingTimeInTimeslice() ==
+      odcore::data::dmcp::ModuleStateMessage::RUNNING) {
+
+//      Eigen::AngleAxisd deltaRollAngle(deltaRoll, Eigen::Vector3d::UnitX());
+
   }
+
+  m_heartBeat = !m_heartBeat;
+  /*opendlv::proxy::ToggleRequest c;
+  c.setToggleState = m_State;
+  getConference().send(c);*/
+
+  return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
 }
 
 void Ebsmonitoring::setUp()
