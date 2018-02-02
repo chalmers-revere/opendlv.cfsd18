@@ -62,6 +62,8 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
   getConference().send(output);
 
 
+// Comment this out until PwmRequest has been added in our project
+/*
   opendlv::proxy::PwmRequest LED_R;
   opendlv::proxy::PwmRequest LED_G;
   opendlv::proxy::PwmRequest LED_B;
@@ -91,7 +93,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
   getConference().send(red);
   getConference().send(green);
   getConference().send(blue);
-
+*/
 
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
 }
