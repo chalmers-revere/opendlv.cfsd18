@@ -20,7 +20,7 @@
 #ifndef OPENDLV_LOGIC_CFSD18_ACTION_ASCONTROL_HPP
 #define OPENDLV_LOGIC_CFSD18_ACTION_ASCONTROL_HPP
 
-#include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
+#include <opendavinci/odcore/base/module/TimeTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
 
 //#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
@@ -31,7 +31,7 @@ namespace logic {
 namespace cfsd18 {
 namespace action {
 
-class Ascontrol : public odcore::base::module::DataTriggeredConferenceClientModule {
+class Ascontrol : public odcore::base::module::TimeTriggeredConferenceClientModule {
  public:
   Ascontrol(int32_t const &, char **);
   Ascontrol(Ascontrol const &) = delete;
@@ -40,6 +40,7 @@ class Ascontrol : public odcore::base::module::DataTriggeredConferenceClientModu
   virtual void nextContainer(odcore::data::Container &);
 
  private:
+  odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode body();
   void setUp();
   void tearDown();
 };

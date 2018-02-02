@@ -31,7 +31,7 @@ namespace cfsd18 {
 namespace action {
 
 Ascontrol::Ascontrol(int32_t const &a_argc, char **a_argv) :
-  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-ascontrol")
+  TimeTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-ascontrol")
 {
 }
 
@@ -39,20 +39,61 @@ Ascontrol::~Ascontrol()
 {
 }
 
-
-
 void Ascontrol::nextContainer(odcore::data::Container &a_container)
 {
-  if (a_container.getDataType() == opendlv::logic::cognition::GroundSteeringLimit::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
-  }
-  if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
+  
+  if (a_container.getDataType() == opendlv::system::SignalStatusMessage::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
-    opendlv::proxy::GroundSteeringRequest o1;
-    odcore::data::Container c1(o1);
-    getConference().send(c1);
+
+
   }
+}
+
+odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
+{
+  while (getModuleStateAndWaitForRemainingTimeInTimeslice() ==
+      odcore::data::dmcp::ModuleStateMessage::RUNNING) {
+  }
+
+  opendlv::system::SystemOperationState ASstatusMessage(1,"OKAY");
+  odcore::data::Container output(ASstatusMessage);
+
+  getConference().send(output);
+
+
+  opendlv::proxy::PwmRequest LED_R;
+  opendlv::proxy::PwmRequest LED_G;
+  opendlv::proxy::PwmRequest LED_B;
+
+  if (true) // Add logic to decide which colour to send
+  {
+    int32_t R = 50; // Assign the percentage of each colour (0-100)
+    int32_t G = 50; // These values should be set in a config file
+    int32_t B = 50;
+    int32_t tot = fmax(B,fmax(R,G));
+  }
+
+  LED_R.setDutyCycleNs(R/tot*100);  // The fractions are normalized to make brightness more consistent 
+  LED_G.setDutyCycleNs(G/tot*100);
+  LED_B.setDutyCycleNs(B/tot*100);
+
+  LED_R.setPin(m_RedPin);
+  LED_G.setPin(m_GreenPin);
+  LED_B.setPin(m_BluePin);
+
+  odcore::data::Container red(LED_R);
+  odcore::data::Container green(LED_G);
+  odcore::data::Container blue(LED_B);
+
+  // It will be necessary to add some if statement controlling the frequency of the light to match rules
+
+  getConference().send(red);
+  getConference().send(green);
+  getConference().send(blue);
+
+
+  return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
 }
 
 void Ascontrol::setUp()
