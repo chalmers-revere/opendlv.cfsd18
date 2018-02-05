@@ -40,7 +40,7 @@ services:
         network_mode: "host"
         depends_on:
             - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-ascontrol --cid=${CID} --verbose=1 --id=1"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-brakes --cid=${CID} --verbose=1 --id=1"
 
     # microservice for ebsmonitoring
     cfsd-motion:
@@ -65,5 +65,3 @@ services:
         depends_on:
             - odsupercomponent
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-steering --cid=${CID} --verbose=1 --id=1"
-
-
