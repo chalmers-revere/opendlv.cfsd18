@@ -41,7 +41,7 @@ Ascontrol::~Ascontrol()
 
 void Ascontrol::nextContainer(odcore::data::Container &a_container)
 {
-  
+
   if (a_container.getDataType() == opendlv::system::SignalStatusMessage::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
@@ -60,7 +60,10 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
   odcore::data::Container output(ASstatusMessage);
 
   getConference().send(output);
-
+  opendlv::proxy::GroundDecelerationRequest test;
+  odcore::data::Container outTest(test);
+  getConference().send(outTest);
+  std::cout << "I sent a container" << std::endl;
 
 // Comment this out until PwmRequest has been added in our project
 /*
@@ -76,7 +79,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
     int32_t tot = fmax(B,fmax(R,G));
   }
 
-  LED_R.setDutyCycleNs(R/tot*100);  // The fractions are normalized to make brightness more consistent 
+  LED_R.setDutyCycleNs(R/tot*100);  // The fractions are normalized to make brightness more consistent
   LED_G.setDutyCycleNs(G/tot*100);
   LED_B.setDutyCycleNs(B/tot*100);
 

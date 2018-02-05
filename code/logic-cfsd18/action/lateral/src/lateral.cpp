@@ -46,10 +46,10 @@ void Lateral::nextContainer(odcore::data::Container &a_container)
   if (a_container.getDataType() == opendlv::logic::cognition::GroundSteeringLimit::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
   }
-  if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
+  if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
-    opendlv::proxy::GroundSteeringRequest o1;
+    auto steeringAngle = a_container.getData<opendlv::proxy::GroundSteeringRequest::ID>();
     odcore::data::Container c1(o1);
     getConference().send(c1);
   }
@@ -57,7 +57,7 @@ void Lateral::nextContainer(odcore::data::Container &a_container)
 
 void Lateral::setUp()
 {
-  // std::string const exampleConfig = 
+  // std::string const exampleConfig =
   //   getKeyValueConfiguration().getValue<std::string>(
   //     "logic-cfsd18-action-lateral.example-config");
 

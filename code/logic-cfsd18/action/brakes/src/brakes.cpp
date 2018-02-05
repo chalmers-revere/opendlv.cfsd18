@@ -50,7 +50,7 @@ Brakes::~Brakes()
 void Brakes::nextContainer(odcore::data::Container &a_container)
 {
   if (a_container.getDataType() == opendlv::proxy::GroundDecelerationRequest::ID()) {
-
+    std::cout << "I received a container" << '\n';
      /*auto deceleration = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
      double pwmrequest = 3.5 * deceleration.getGroundDeceleration();
      uint32_t pwmrequestt = static_cast<uint32_t>(pwmrequest);
@@ -67,7 +67,7 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
       } else {
         state = opendlv::proxy::ToggleRequest::Off;
       }
-      opendlv::proxy::ToggleRequest request(pinid, state);     
+      opendlv::proxy::ToggleRequest request(pinid, state);
       odcore::data::Container c2(request);
       getConference().send(c2);*/
 
@@ -77,7 +77,7 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
 
 void Brakes::setUp()
 {
-  // std::string const exampleConfig = 
+  // std::string const exampleConfig =
   //   getKeyValueConfiguration().getValue<std::string>(
   //     "logic-cfsd18-action-brakes.example-config");
 
