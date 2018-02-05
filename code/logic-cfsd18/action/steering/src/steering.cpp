@@ -46,13 +46,54 @@ Steering::~Steering()
 
 void Steering::nextContainer(odcore::data::Container &a_container)
 {
-  if (a_container.getDataType() == opendlv::logic::cognition::GroundSteeringLimit::ID()) {
-    auto steering = a_container.getData<opendlv::logic::cognition::GroundSteeringLimit>();
-    double steering_req = steering.getSteeringLimit();
- 
-    opendlv::proxy::GroundSteeringRequest gsr(steering_req);
-    odcore::data::Container c1(gsr);
+// checking for the message id and calcualting pwm request and checking left or right steering
+  if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
+    auto steering = a_container.getData<opendlv::proxy::GroundSteeringRequest>();
+    double pwm= 3.5 * steering.getGroundSteering();
+    uint32_t pwmrequest = static_cast<uint32_t>(pwm);
+    uint16_t pinid = 1;
+    const int bit = 1;
+// sending pwm request 
+    opendlv::proxy::PwmRequest pr(pinid,pwmrequest);
+    odcore::data::Container c1(pr);
     getConference().send(c1);
+
+// For the gpio module, we need to send three containers. One for left steering , second for right steering and thrid for current measurement pin
+    
+     if (pwm > 0){
+
+     opendlv::proxy::ToggleRequest::ToggleState leftbit;
+     if (bit > 0) {
+        leftbit = opendlv::proxy::ToggleRequest::On;
+      } else {
+        leftbit = opendlv::proxy::ToggleRequest::Off;
+      }
+     opendlv::proxy::ToggleRequest requestleft(pinid, leftbit);     
+     odcore::data::Container c2(requestleft);
+     getConference().send(c2);
+
+     opendlv::proxy::ToggleRequest::ToggleState rightbit;
+     if (bit > 0) {
+        rightbit = opendlv::proxy::ToggleRequest::Off;
+      } else {
+        rightbit = opendlv::proxy::ToggleRequest::On;
+      }
+     opendlv::proxy::ToggleRequest requestright(pinid, rightbit);     
+     odcore::data::Container c3(requestright);
+     getConference().send(c3);
+
+     opendlv::proxy::ToggleRequest::ToggleState selectbit;
+     if (leftbit == opendlv::proxy::ToggleRequest::On) {
+        selectbit = opendlv::proxy::ToggleRequest::On;
+      } else {
+        selectbit = opendlv::proxy::ToggleRequest::Off;
+      }
+     opendlv::proxy::ToggleRequest requestselect(pinid, selectbit);     
+     odcore::data::Container c4(requestselect);
+     getConference().send(c4);
+
+
+    }
   }
 }
 
