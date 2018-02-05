@@ -1,0 +1,69 @@
+# docker-compose.yml - Composition of micro-services to run OpenDLV software.
+# Copyright (C) 2016 Christian Berger
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version  of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Date: 2016-10-13
+
+version: '2'
+
+services:
+    odsupercomponent:
+        image: ${IMAGE}
+        network_mode: "host"
+        volumes:
+        - .:/opt/opendlv.data
+        command: "/opt/od4/bin/odsupercomponent --cid=${CID} --verbose=1 --configuration=/opt/opendlv.data/configuration"
+
+    # microservice for ascontrol
+    cfsd-ascontrol:
+        image: ${IMAGE}
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-ascontrol --cid=${CID} --verbose=1 --id=1"
+
+    # microservice for brakes
+    cfsd-ascontrol:
+        image: ${IMAGE}
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-ascontrol --cid=${CID} --verbose=1 --id=1"
+
+    # microservice for ebsmonitoring
+    cfsd-motion:
+        image: ${IMAGE}
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-ebsmonitoring --cid=${CID} --verbose=1 --id=1"
+
+    # microservice for motion
+    cfsd-motion:
+        image: ${IMAGE}
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-motion --cid=${CID} --verbose=1 --id=1"
+
+    # microservice for steering
+    cfsd-steering:
+        image: ${IMAGE}
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-steering --cid=${CID} --verbose=1 --id=1"
+
+
