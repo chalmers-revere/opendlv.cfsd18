@@ -47,8 +47,7 @@ void Track::nextContainer(odcore::data::Container &a_container)
     auto surface = a_container.getData<opendlv::logic::perception::Surface>();
     auto localPath = surface.getSurfaceId();
     //std::string type = Surface.getType();
-    std::cout << "Message " << a_container.getDataType() <<" recieved" << std::endl;
-    std::cout << "localPath set to " << localPath << std::endl;
+    std::cout << "[cognition] TRACK.CPP IS RECIEVING SURFACE " << localPath << std::endl;
     /*float timeToAimPoint = 1;
     float currentVelocity = 5;
     float accelerationLimit = 5;
@@ -56,29 +55,34 @@ void Track::nextContainer(odcore::data::Container &a_container)
     float headingRequest = Track::driverModelSteering(currentVelocity, timeToAimPoint, localPath);
     float accelerationRequest = Track::driverModelVelocity(currentVelocity, accelerationLimit, decelerationLimit, headingRequest,localPath);
     */
+    float accelerationRequest;
+    if (localPath > 12345){
+      accelerationRequest = 3.4;
+    }
+    else {
+      accelerationRequest = -2.0;
+    }
     float headingRequest = 1.2;
-    float accelerationRequest = 3.4;
 
     opendlv::logic::action::AimPoint o1;
     o1.setAzimuthAngle(headingRequest);
     odcore::data::Container c1(o1);
     getConference().send(c1);
-    std::cout << "headingRequest = " << headingRequest << "sent" << std::endl;
+    std::cout << "[cognition] TRACK.CPP IS SENDING headingRequest = " << headingRequest << std::endl;
     if (accelerationRequest >= 0.0f) {
       opendlv::proxy::GroundAccelerationRequest o2;
       o2.setGroundAcceleration(accelerationRequest);
       odcore::data::Container c2(o2);
       getConference().send(c2);
-      std::cout << "GroundAccelerationRequest = " << accelerationRequest << "sent" << std::endl;
+      std::cout << "[cognition] TRACK.CPP IS SENDING GroundAccelerationRequest = " << accelerationRequest << std::endl;
     }
     else {
       opendlv::proxy::GroundDecelerationRequest o3;
       o3.setGroundDeceleration(accelerationRequest);
       odcore::data::Container c3(o3);
       getConference().send(c3);
-      std::cout << "GroundDecelerationRequest = " << accelerationRequest << "sent" << std::endl;
+      std::cout << "[cognition] TRACK.CPP IS SENDING GroundDecelerationRequest = " << accelerationRequest << std::endl;
     }
-
   }
   if (a_container.getDataType() == opendlv::system::SignalStatusMessage::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
