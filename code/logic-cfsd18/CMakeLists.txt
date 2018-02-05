@@ -46,20 +46,11 @@ set(LIBRARIES
   ${OPENDAVINCI_LIBRARIES}
   ${Wt_LIBRARY} ${Wt_HTTP_LIBRARY} ${Wt_EXT_LIBRARY}  
   ${ODVDOPENDLVSTANDARDMESSAGESET_LIBRARIES}
-  ${ODVDCFSD18_LIBRARIES})
+  ${ODVDCFSD18_LIBRARIES}
+  ${OPENCV_LIBRARIES})
 
 ### MICROSERVICE BEGIN ###
-add_subdirectory(action/lateral)
-add_subdirectory(action/longitudinal)
-add_subdirectory(cognition/acceleration)
-add_subdirectory(cognition/brake)
-add_subdirectory(cognition/limitlateral)
-add_subdirectory(cognition/skidpad)
-add_subdirectory(cognition/track)
 add_subdirectory(perception/detectcone)
-add_subdirectory(perception/detectconelane)
-add_subdirectory(sensation/attention)
-add_subdirectory(sensation/slam)
 ### MICROSERVICE END ###
 
 set(CHANGELOG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../ChangeLog")

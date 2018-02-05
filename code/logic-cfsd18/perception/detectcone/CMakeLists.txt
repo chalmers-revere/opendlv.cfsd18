@@ -20,6 +20,8 @@ project(opendlv-logic-cfsd18-perception-detectcone)
 
 include_directories(include)
 
+include_directories(SYSTEM ${TINYDNN_INCLUDE_DIR})
+
 file(GLOB_RECURSE SOURCEFILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 add_library(${PROJECT_NAME}-static STATIC ${SOURCEFILES})
 add_executable(${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/app/${PROJECT_NAME}.cpp")
