@@ -33,6 +33,7 @@ namespace action {
 Ascontrol::Ascontrol(int32_t const &a_argc, char **a_argv) :
   TimeTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-ascontrol")
 {
+  std::std::cout << getName() << ": I'm setting up" << '\n';
 }
 
 Ascontrol::~Ascontrol()
@@ -52,6 +53,7 @@ void Ascontrol::nextContainer(odcore::data::Container &a_container)
 
 odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
 {
+    std::cout << "[" << getName() << "]: I sent a container" << std::endl;
   while (getModuleStateAndWaitForRemainingTimeInTimeslice() ==
       odcore::data::dmcp::ModuleStateMessage::RUNNING) {
   }
@@ -110,6 +112,7 @@ void Ascontrol::setUp()
   // if (isVerbose()) {
   //   std::cout << "Example config is " << exampleConfig << std::endl;
   // }
+  std::cout << "[" << getName() << "]: I'm setting up!" << std:endl;
 }
 
 void Ascontrol::tearDown()

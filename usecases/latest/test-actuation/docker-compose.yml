@@ -35,33 +35,32 @@ services:
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-ascontrol --cid=${CID} --verbose=1 --id=1 --freq=2"
 
     # microservice for brakes
-    cfsd-brakes:
-        image: ${IMAGE}
-        network_mode: "host"
-        depends_on:
-            - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-brakes --cid=${CID} --verbose=1 --id=1"
+#    cfsd-brakes:
+#        image: ${IMAGE}
+#        network_mode: "host"
+#        depends_on:
+#            - odsupercomponent
+#        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-brakes --cid=${CID} --verbose=1 --id=1"
 
     # microservice for ebsmonitoring
-    cfsd-ebsmonitoring:
-        image: ${IMAGE}
-        network_mode: "host"
-        depends_on:
-            - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-ebsmonitoring --cid=${CID} --verbose=1 --id=1"
+#    cfsd-ebsmonitoring:
+#        image: ${IMAGE}
+#        network_mode: "host"
+#        depends_on:
+#            - odsupercomponent
+#        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-ebsmonitoring --cid=${CID} --verbose=1 --id=1"
 
     # microservice for motion
-    cfsd-motion:
-        image: ${IMAGE}
-        network_mode: "host"
-        depends_on:
-            - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-motion --cid=${CID} --verbose=1 --id=1"
+#    cfsd-motion:
+#        image: ${IMAGE}
+#        network_mode: "host"
+#        depends_on:
+#            - odsupercomponent
+#        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-motion --cid=${CID} --verbose=1 --id=1"
 
     # microservice for steering
-    cfsd-steering:
-        image: ${IMAGE}
-        network_mode: "host"
-        depends_on:
-            - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-steering --cid=${CID} --verbose=1 --id=1"
+#        image: ${IMAGE}
+#        network_mode: "host"
+#        depends_on:
+#            - odsupercomponent
+#        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-steering --cid=${CID} --verbose=1 --id=1"
