@@ -33,7 +33,7 @@ namespace action {
 Ascontrol::Ascontrol(int32_t const &a_argc, char **a_argv) :
   TimeTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-ascontrol")
 {
-  std::cout << getName() << ": I'm setting up" << '\n';
+  std::cout << getName() << ": I'm setting up v2" << '\n';
 }
 
 Ascontrol::~Ascontrol()
@@ -42,7 +42,6 @@ Ascontrol::~Ascontrol()
 
 void Ascontrol::nextContainer(odcore::data::Container &a_container)
 {
-  std::cout << "[" << getName() << "]: I'm in next container v2" << '\n';
   if (a_container.getDataType() == opendlv::system::SignalStatusMessage::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
@@ -56,16 +55,17 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
     std::cout << "[" << getName() << "]: I sent a container" << std::endl;
   while (getModuleStateAndWaitForRemainingTimeInTimeslice() ==
       odcore::data::dmcp::ModuleStateMessage::RUNNING) {
+
+          opendlv::system::SystemOperationState ASstatusMessage(1,"OKAY");
+          odcore::data::Container output(ASstatusMessage);
+
+          getConference().send(output);
+          opendlv::proxy::GroundDecelerationRequest test;
+          odcore::data::Container outTest(test);
+          getConference().send(outTest);
+          std::cout << "I sent a container" << std::endl;
   }
 
-  opendlv::system::SystemOperationState ASstatusMessage(1,"OKAY");
-  odcore::data::Container output(ASstatusMessage);
-
-  getConference().send(output);
-  opendlv::proxy::GroundDecelerationRequest test;
-  odcore::data::Container outTest(test);
-  getConference().send(outTest);
-  std::cout << "I sent a container" << std::endl;
 
 // Comment this out until PwmRequest has been added in our project
 /*
