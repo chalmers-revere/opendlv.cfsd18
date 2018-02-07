@@ -33,7 +33,7 @@ namespace action {
 Ascontrol::Ascontrol(int32_t const &a_argc, char **a_argv) :
   TimeTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-ascontrol")
 {
-  std::std::cout << getName() << ": I'm setting up" << '\n';
+  std::cout << getName() << ": I'm setting up" << '\n';
 }
 
 Ascontrol::~Ascontrol()
@@ -42,7 +42,7 @@ Ascontrol::~Ascontrol()
 
 void Ascontrol::nextContainer(odcore::data::Container &a_container)
 {
-
+  std::cout << "[" << getName() << "]: I'm in next container v2" << '\n';
   if (a_container.getDataType() == opendlv::system::SignalStatusMessage::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
@@ -112,7 +112,7 @@ void Ascontrol::setUp()
   // if (isVerbose()) {
   //   std::cout << "Example config is " << exampleConfig << std::endl;
   // }
-  std::cout << "[" << getName() << "]: I'm setting up!" << std:endl;
+  std::cout << "[" << getName() << "]: I'm setting up!" << std::endl;
 }
 
 void Ascontrol::tearDown()
