@@ -68,10 +68,11 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
 
 
 // Comment this out until PwmRequest has been added in our project
-/*
-  opendlv::proxy::PwmRequest LED_R;
-  opendlv::proxy::PwmRequest LED_G;
+
+  opendlv::proxy::PulseWidthModulationRequest LED_R;
+/*  opendlv::proxy::PwmRequest LED_G;
   opendlv::proxy::PwmRequest LED_B;
+
 
   if (true) // Add logic to decide which colour to send
   {
