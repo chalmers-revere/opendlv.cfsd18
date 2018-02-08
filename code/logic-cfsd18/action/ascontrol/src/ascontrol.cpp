@@ -68,10 +68,10 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
   std::cout << "I sent a container" << std::endl;
 
 // Comment this out until PwmRequest has been added in our project
-/*
-  opendlv::proxy::PwmRequest LED_R;
-  opendlv::proxy::PwmRequest LED_G;
-  opendlv::proxy::PwmRequest LED_B;
+
+  opendlv::proxy::PulseWidthModulationRequest LED_R;
+  opendlv::proxy::PulseWidthModulationRequest LED_G;
+  opendlv::proxy::PulseWidthModulationRequest LED_B;
 
   if (true) // Add logic to decide which colour to send
   {
@@ -84,11 +84,11 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
   LED_R.setDutyCycleNs(R/tot*100);  // The fractions are normalized to make brightness more consistent
   LED_G.setDutyCycleNs(G/tot*100);
   LED_B.setDutyCycleNs(B/tot*100);
-
+/*
   LED_R.setPin(m_RedPin);
   LED_G.setPin(m_GreenPin);
   LED_B.setPin(m_BluePin);
-
+*/
   odcore::data::Container red(LED_R);
   odcore::data::Container green(LED_G);
   odcore::data::Container blue(LED_B);
@@ -98,7 +98,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
   getConference().send(red);
   getConference().send(green);
   getConference().send(blue);
-*/
+
 
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
 }
