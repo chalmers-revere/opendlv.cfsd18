@@ -564,8 +564,9 @@ void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
   std::cout << lidarCones << std::endl;
   m_finalPointCloud = lidarCones;
   cv::Vec3f point3D;
+  double xShift = 0;//1872mm
   for (int i = 0; i < m_finalPointCloud.cols(); i++){
-    point3D << -m_finalPointCloud(1,i), m_finalPointCloud(2,i), m_finalPointCloud(0,i);
+    point3D << -m_finalPointCloud(1,i), -m_finalPointCloud(2,i), xShift+m_finalPointCloud(0,i);
     m_finalPointCloud(3,i) = backwardDetection(m_img, point3D);
   }
 
