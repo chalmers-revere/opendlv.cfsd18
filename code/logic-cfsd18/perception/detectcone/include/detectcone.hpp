@@ -65,9 +65,10 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   void reconstruction(cv::Mat, cv::Mat &, cv::Mat &, cv::Mat &, cv::Mat &);
   void blockMatching(cv::Mat &, cv::Mat, cv::Mat);
   void xyz2xy(cv::Mat, cv::Vec3f, cv::Vec2f &);
+  float_t depth2resizeRate(double, double);
   void convertImage(cv::Mat, int, int, tiny_dnn::vec_t &);
   void loadCNN(const std::string &, tiny_dnn::network<tiny_dnn::sequential> &);
-  void testSlidingWindow(const std::string &);
+  // void testSlidingWindow(const std::string &);
   int backwardDetection(cv::Mat, cv::Vec3f);
   int forwardDetection(cv::Mat);
 
