@@ -49,8 +49,9 @@ Brakes::~Brakes()
 
 void Brakes::nextContainer(odcore::data::Container &a_container)
 {
+      std::cout << "[" << getName() << "] I received a container." << '\n';
   if (a_container.getDataType() == opendlv::proxy::GroundDecelerationRequest::ID()) {
-    std::cout << "I received a container" << '\n';
+    std::cout << "[" << getName() << "] It is a deceleration request." << '\n';
      /*auto deceleration = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
      double pwmrequest = 3.5 * deceleration.getGroundDeceleration();
      uint32_t pwmrequestt = static_cast<uint32_t>(pwmrequest);
