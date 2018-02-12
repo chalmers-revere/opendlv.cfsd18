@@ -24,7 +24,7 @@ IMAGE_PATH=$(REPOSITORY)/$(IMAGE)
 
 BASE_IMAGE=opendlv-lynx-on-opendlv-on-opendlv-core-on-opendavinci-on-base
 BASE_IMAGE_PATH=$(REPOSITORY)/$(BASE_IMAGE)
-BASE_IMAGE_VERSION=v0.0.2
+BASE_IMAGE_VERSION=v0.0.3
 
 DEV_SUFFIX=-dev
 
