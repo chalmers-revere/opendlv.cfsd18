@@ -92,6 +92,7 @@ proxy-velodyne16.calibration = VLP-16.xml
 logic-cfsd18-sensation-attention.startAngle = 22500.0
 logic-cfsd18-sensation-attention.endAngle = 31500.0
 logic-cfsd18-sensation-attention.yBoundary = 3.0 #[m]
+logic-cfsd18-sensation-attention.xBoundary = 1.5 #[m]
 logic-cfsd18-sensation-attention.groundLayerZ = -0.24  #[m]
 logic-cfsd18-sensation-attention.coneHeight = 0.24 #[m]
 logic-cfsd18-sensation-attention.connectDistanceThreshold = 0.5  #[m]
