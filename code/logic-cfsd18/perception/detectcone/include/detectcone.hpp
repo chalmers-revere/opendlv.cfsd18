@@ -30,6 +30,7 @@
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
 #include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
+#include "odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h"
 #include "opendavinci/GeneratedHeaders_OpenDaVINCI.h"
 #include "opendavinci/odcore/wrapper/SharedMemoryFactory.h"
 #include "opendavinci/odcore/wrapper/SharedMemory.h"
@@ -59,6 +60,7 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   void setUp();
   void tearDown();
 
+	bool CheckContainer(uint32_t objectId, odcore::data::TimeStamp timestamp);
   bool ExtractSharedImage(odcore::data::image::SharedImage *);
   void saveImg(double currentTime);
   void featureBased();
@@ -88,7 +90,7 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   int64_t m_timeDiffMilliseconds;
   odcore::data::TimeStamp m_lastTimeStamp;
   Eigen::MatrixXd m_coneCollector;
-  int m_coneCollected;
+  uint32_t m_lastObjectId;
 
   cv::Mat m_img;
   const std::string m_dictionary;

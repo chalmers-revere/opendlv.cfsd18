@@ -35,7 +35,7 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_timeDiffMilliseconds()
 , m_lastTimeStamp()
 , m_coneCollector()
-, m_coneCollected()
+, m_lastObjectId()
 , m_img()
 , m_dictionary("slidingWindow")
 , m_patchSize(32)
@@ -45,7 +45,7 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
   m_lastCameraData = Eigen::MatrixXd::Zero(4,1);
   m_lastLidarData = Eigen::MatrixXd::Zero(4,1);
   m_coneCollector = Eigen::MatrixXd::Zero(4,10);
-  m_coneCollected = 0;
+  m_lastObjectId = 0;
 }
 
 DetectCone::~DetectCone()
@@ -97,21 +97,39 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
     }
   }
   //Marcus
-  if (a_container.getDataType() == opendlv::logic::sensation::Point::ID()) {
+  if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID()) {
     //Retrive data and timestamp
     odcore::data::TimeStamp timeStamp = a_container.getReceivedTimeStamp();
-    auto point = a_container.getData<opendlv::logic::sensation::Point>();
+    auto coneDirection = a_container.getData<opendlv::logic::perception::ObjectDirection>();
+		uint32_t objectId = coneDirection.getObjectId();
 
     //Check last timestamp if they are from same message
     std::cout << "Message Recieved " << std::endl;
-    if (((timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds()) < m_timeDiffMilliseconds*1000)){
+    if (CheckContainer(objectId,timeStamp)){
       std::cout << "Test 2 " << std::endl;
-      m_coneCollector.col(m_coneCollected+1) << point.getAzimuthAngle(),
-                                              point.getZenithAngle(),
-                                              point.getDistance(),
-                                              0;
+      m_coneCollector(objectId,0) = coneDirection.getAzimuthAngle();
+			m_coneCollector(objectId,1) = coneDirection.getZenithAngle();
+    }
+  }
+	if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID()){
+		odcore::data::TimeStamp timeStamp = a_container.getReceivedTimeStamp();
+    auto coneDistance = a_container.getData<opendlv::logic::perception::ObjectDistance>();
+		uint32_t objectId = coneDistance.getObjectId();
 
-      m_coneCollected++;
+    //Check last timestamp if they are from same message
+    std::cout << "Message Recieved " << std::endl;
+    if (CheckContainer(objectId,timeStamp)){
+      m_coneCollector(objectId,2) = coneDistance.getDistance();
+			m_coneCollector(objectId,3) = 0;
+    }
+  }
+  //Marcus
+}
+
+bool DetectCone::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp){
+		if (((timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds()) < m_timeDiffMilliseconds*1000)){
+      std::cout << "Test 2 " << std::endl;
+      m_lastObjectId = (m_lastObjectId<objectId)?(objectId):(m_lastObjectId);
       m_lastTimeStamp = timeStamp;
       std::cout << "FoundCone: " << std::endl;
       std::cout << m_coneCollector << std::endl;
@@ -121,21 +139,16 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
       //All object candidates collected, to sensor fusion
       std::cout << "Extracted Cones " << std::endl;
       Eigen::MatrixXd extractedCones;
-      extractedCones = m_coneCollector.leftCols(m_coneCollected);
+      extractedCones = m_coneCollector.leftCols(m_lastObjectId);
       std::cout << extractedCones << std::endl;
       SendCollectedCones(extractedCones);
 
       //Initialize for next collection
       m_lastTimeStamp = timeStamp;
-      m_coneCollected = 0;
+      m_lastObjectId = 0;
       m_coneCollector = Eigen::MatrixXd::Zero(4,10);
-      m_coneCollector.col(0) << point.getAzimuthAngle(),
-                                point.getZenithAngle(),
-                                point.getDistance(),
-                                0;
     }
-  }
-  //Marcus
+		return true;
 }
 
 bool DetectCone::ExtractSharedImage(

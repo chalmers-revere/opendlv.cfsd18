@@ -51,6 +51,7 @@ set(LIBRARIES
 
 ### MICROSERVICE BEGIN ###
 add_subdirectory(perception/detectcone)
+add_subdirectory(sensation/attention)
 ### MICROSERVICE END ###
 
 set(CHANGELOG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../ChangeLog")

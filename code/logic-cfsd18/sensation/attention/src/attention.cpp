@@ -182,8 +182,7 @@ void Attention::nextContainer(odcore::data::Container &a_container)
 
       }
     }
-  }
-  odcore::data::TimeStamp TimeBeforeAlgorithm;
+	odcore::data::TimeStamp TimeBeforeAlgorithm;
   SavePointCloud();
   ConeDetection();
 
@@ -191,6 +190,7 @@ void Attention::nextContainer(odcore::data::Container &a_container)
   double timeForProcessingOneScan = static_cast<double>(TimeAfterAlgorithm.toMicroseconds()-TimeBeforeAlgorithm.toMicroseconds())/1000000.0;
   m_algorithmTime = timeForProcessingOneScan;
   std::cout << "Time for processing one scan of data is: " << timeForProcessingOneScan << "s" << std::endl;
+  }
   }
 }
 
@@ -391,7 +391,7 @@ void Attention::SavePointCloud(){
 }
 
 void Attention::ConeDetection(){
-  m_generatedTestPointCloud = GenerateTestPointCloud();
+  //m_generatedTestPointCloud = GenerateTestPointCloud();
 
   Eigen::MatrixXd pointCloudConeROI = ExtractConeROI(m_xBoundary, m_yBoundary, m_groundLayerZ, m_coneHeight);
 
@@ -595,9 +595,27 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
     conePositionZ = conePositionZ / numberOfPointsOnCone;
     conePoints.row(i) << conePositionX,conePositionY,conePositionZ;
 
-    opendlv::logic::sensation::Point conePoint = Cartesian2Spherical(conePositionX,conePositionY,conePositionZ);
-    odcore::data::Container c1(conePoint);
-    getConference().send(c1);
+		opendlv::logic::sensation::Point conePoint = Cartesian2Spherical(conePositionX,conePositionY,conePositionZ);
+
+    //ObjectID
+    /*opendlv::logic::perception::Object coneID;
+    coneID.setObjectID(i);
+    odcore::data::Container c1(coneID);
+    getConference().send(c1);*/
+
+    //ConeDirection
+    opendlv::logic::perception::ObjectDirection coneDirection;
+    coneDirection.setObjectId(i);
+    coneDirection.setAzimuthAngle(conePoint.getAzimuthAngle());
+    coneDirection.setZenithAngle(conePoint.getZenithAngle());
+    odcore::data::Container c2(coneDirection);
+    getConference().send(c2);
+
+    opendlv::logic::perception::ObjectDistance coneDistance;
+    coneDistance.setObjectId(i);
+    coneDistance.setDistance(conePoint.getDistance());
+    odcore::data::Container c3(coneDistance);
+    getConference().send(c3);
     //std::cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << std::endl;
   }
 
