@@ -62,18 +62,20 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   bool ExtractSharedImage(odcore::data::image::SharedImage *);
   void saveImg(double currentTime);
   void featureBased();
-  void reconstruction(cv::Mat, cv::Mat&, cv::Mat&, cv::Mat&, cv::Mat&);
-  void blockMatching(cv::Mat&, cv::Mat, cv::Mat);
-  void xyz2xy(cv::Mat, cv::Vec3f, cv::Vec2f&);
-  void convertImage(cv::Mat, int, int, tiny_dnn::vec_t&);
-  void slidingWindow(const std::string&, const std::string&);
-  void backwardDetection(cv::Mat, cv::Vec3f, cv::Mat, tiny_dnn::network<tiny_dnn::sequential>);
-  void forwardDetection(cv::Mat, cv::Mat, tiny_dnn::network<tiny_dnn::sequential>);
+  void reconstruction(cv::Mat, cv::Mat &, cv::Mat &, cv::Mat &, cv::Mat &);
+  void blockMatching(cv::Mat &, cv::Mat, cv::Mat);
+  void xyz2xy(cv::Mat, cv::Vec3f, cv::Vec2f &);
+  float_t depth2resizeRate(double, double);
+  void convertImage(cv::Mat, int, int, tiny_dnn::vec_t &);
+  void loadCNN(const std::string &, tiny_dnn::network<tiny_dnn::sequential> &);
+  // void testSlidingWindow(const std::string &);
+  int backwardDetection(cv::Mat, cv::Vec3f);
+  int forwardDetection(cv::Mat);
 
-  void matchPoints(Eigen::MatrixXd, Eigen::MatrixXd);
-  void findMatch(Eigen::MatrixXd, Eigen::MatrixXd);
-  Eigen::MatrixXd Spherical2Cartesian(double, double, double);
-  opendlv::logic::sensation::Point Cartesian2Spherical(double, double, double);
+  // void matchPoints(Eigen::MatrixXd, Eigen::MatrixXd);
+  // void findMatch(Eigen::MatrixXd, Eigen::MatrixXd);
+  void Spherical2Cartesian(double, double, double, Eigen::MatrixXd &);
+  void Cartesian2Spherical(double, double, double, opendlv::logic::sensation::Point &);
   void SendCollectedCones(Eigen::MatrixXd);
   void SendMatchedContainer(Eigen::MatrixXd);
 
@@ -89,7 +91,8 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   int m_coneCollected;
 
   cv::Mat m_img;
-  int m_PATCH_SIZE;
+  const std::string m_dictionary;
+  int m_patchSize;
 
   const double DEG2RAD = 0.017453292522222; // PI/180.0
   const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD;
