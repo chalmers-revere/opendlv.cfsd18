@@ -101,21 +101,21 @@ Attention::Attention(int32_t const &a_argc, char **a_argv) :
   uint8_t currentSensorID = m_12_startingSensorID_32 + 1;
   m_12_verticalAngles[1] = sensorIDs_32[currentSensorID];
   for (uint8_t counter = 2; counter < 11; counter++) {
-      m_12_verticalAngles[counter] = sensorIDs_32[currentSensorID + 3];    
+      m_12_verticalAngles[counter] = sensorIDs_32[currentSensorID + 3];
   }
   //Derive the 11 vertical angles associated with the second part of CPC for HDL-32E
   m_11_verticalAngles[0] = sensorIDs_32[m_11_startingSensorID_32];
   currentSensorID = m_11_startingSensorID_32 + 1;
   m_11_verticalAngles[1] = sensorIDs_32[currentSensorID];
   for (uint8_t counter = 2; counter < 10; counter++) {
-      m_11_verticalAngles[counter] = sensorIDs_32[currentSensorID + 3];    
+      m_11_verticalAngles[counter] = sensorIDs_32[currentSensorID + 3];
   }
   //Derive the 9 vertical angles associated with the third part of CPC for HDL-32E
   m_9_verticalAngles[0] = sensorIDs_32[m_9_startingSensorID_32];
   currentSensorID = m_9_startingSensorID_32 + 1;
   m_9_verticalAngles[1] = sensorIDs_32[currentSensorID];
   for (uint8_t counter = 2; counter < 8; counter++) {
-      m_9_verticalAngles[counter] = sensorIDs_32[currentSensorID + 3];    
+      m_9_verticalAngles[counter] = sensorIDs_32[currentSensorID + 3];
   }
   //###########################################################################
 }
@@ -150,7 +150,7 @@ void Attention::nextContainer(odcore::data::Container &a_container)
 
     if (!m_SPCReceived) {
       Lock lockCPC(m_cpcMutex);
-      m_cpc = a_container.getData<CompactPointCloud>(); 
+      m_cpc = a_container.getData<CompactPointCloud>();
       const uint8_t numberOfLayers = m_cpc.getEntriesPerAzimuth();  // Get number of layers
 
       if (numberOfLayers == 16) {  // Deal with VLP-16
@@ -178,7 +178,7 @@ void Attention::nextContainer(odcore::data::Container &a_container)
           m_cpcMask_32 = m_cpcMask_32 | 0x01;
           m_9_cpcDistance_32 = m_cpc.getDistances();
         }
-      
+
 
       }
     }
@@ -305,6 +305,7 @@ void Attention::SavePointCloud(){
     Lock lockCPC(m_cpcMutex);
     const double startAzimuth = m_cpc.getStartAzimuth();
     const double endAzimuth = m_cpc.getEndAzimuth();
+    std::cout << "Start Azimut: " << startAzimuth << "End Azimuth: " << endAzimuth << std::endl;
     const uint8_t entriesPerAzimuth = m_cpc.getEntriesPerAzimuth(); // numberOfLayers
     const uint8_t numberOfBitsForIntensity = m_cpc.getNumberOfBitsForIntensity();
     const uint8_t intensityPlacement = m_cpc.getIntensityPlacement();
@@ -314,7 +315,7 @@ void Attention::SavePointCloud(){
     if (numberOfBitsForIntensity > 0) {
       if (intensityPlacement == 0) {
         tmpMask = tmpMask >> numberOfBitsForIntensity; //higher bits for intensity
-      } 
+      }
       else {
         tmpMask = tmpMask << numberOfBitsForIntensity; //lower bits for intensity
       }
@@ -334,7 +335,7 @@ void Attention::SavePointCloud(){
       const uint32_t numberOfAzimuths = numberOfPoints / entriesPerAzimuth;
       const double azimuthIncrement = (endAzimuth - startAzimuth) / numberOfAzimuths;//Calculate the azimuth increment
       stringstream sstr(distances);
-      
+
       m_pointCloud = Eigen::MatrixXd::Zero(numberOfPoints,3);
       m_pointIndex = 0;
       for (uint32_t azimuthIndex = 0; azimuthIndex < numberOfAzimuths; azimuthIndex++) {
@@ -355,12 +356,12 @@ void Attention::SavePointCloud(){
       std::cout << "number of points are:"<< m_pointCloud.rows() << std::endl;
       //m_pointCloud = Eigen::MatrixXd::Zero(1,3); // Empty the point cloud matrix for this scan
       std::cout << "One scan complete! " << std::endl;
-    }  else { //A HDL-32E CPC, one of the three parts of a complete scan  
+    }  else { //A HDL-32E CPC, one of the three parts of a complete scan
       if ((m_cpcMask_32 & 0x04) > 0) {//The first part, 12 layers
         if (numberOfBitsForIntensity == 0) {
           std::cout << "The first part, 12 layers, no Intensity" <<  std::endl;
           SaveCPC32NoIntensity(1, entriesPerAzimuth, startAzimuth, endAzimuth, distanceEncoding);
-        } 
+        }
         else {
           std::cout << "The first part, 12 layers, with Intensity" <<  std::endl;
           //drawCPC32withIntensity(1, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
@@ -370,7 +371,7 @@ void Attention::SavePointCloud(){
         if (numberOfBitsForIntensity == 0) {
           std::cout << "The second part, 11 layers, no Intensity" <<  std::endl;
           SaveCPC32NoIntensity(2, entriesPerAzimuth, startAzimuth, endAzimuth, distanceEncoding);
-        } 
+        }
         else {
           std::cout << "The second part, 11 layers, with Intensity" <<  std::endl;
           //drawCPC32withIntensity(2, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
@@ -380,24 +381,32 @@ void Attention::SavePointCloud(){
         if (numberOfBitsForIntensity == 0) {
           std::cout << "The third part, 9 layers, no Intensity" << std::endl;
           SaveCPC32NoIntensity(3, entriesPerAzimuth, startAzimuth, endAzimuth, distanceEncoding);
-        } 
+        }
         else {
           std::cout << "The third part, 9 layers, with Intensity" << std::endl;
           //drawCPC32withIntensity(3, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
         }
       }
-    } 
+    }
   }
 }
 
 void Attention::ConeDetection(){
   //m_generatedTestPointCloud = GenerateTestPointCloud();
-
+  odcore::data::TimeStamp startTime;
   Eigen::MatrixXd pointCloudConeROI = ExtractConeROI(m_xBoundary, m_yBoundary, m_groundLayerZ, m_coneHeight);
+  odcore::data::TimeStamp processTime;
+  double timeElapsed = abs(static_cast<double>(processTime.toMicroseconds()-startTime.toMicroseconds())/1000000.0);
+  std::cout << "Time elapsed for Extract RoI: " << timeElapsed << std::endl;
+  startTime = processTime;
 
   //std::cout << "RANSAC" << std::endl;
   Eigen::MatrixXd pcRefit = RANSACRemoveGround(pointCloudConeROI);
-  
+  odcore::data::TimeStamp processTime2;
+  timeElapsed = abs(static_cast<double>(processTime2.toMicroseconds()-startTime.toMicroseconds())/1000000.0);
+  std::cout << "Time elapsed for RANSAC: " << timeElapsed << std::endl;
+  startTime = processTime2;
+
   double numOfPointsAfterRANSAC = pcRefit.rows();
   std::cout << "points After RANSAC" << std::endl;
   std::cout << numOfPointsAfterRANSAC << std::endl;
@@ -405,17 +414,24 @@ void Attention::ConeDetection(){
   std::cout << "points before RANSAC" << std::endl;
   double pcRaw = m_pointCloud.rows();
   std::cout << pcRaw << std::endl;*/
-  if (numOfPointsAfterRANSAC <= 10000.0)
+  if (numOfPointsAfterRANSAC <= 1000.0)
   {
     vector<vector<uint32_t>> objectIndexList = NNSegmentation(pcRefit, m_connectDistanceThreshold); //out from ransac pointCloudConeROI to pointCloudFilt
+    odcore::data::TimeStamp processTime3;
+    timeElapsed = abs(static_cast<double>(processTime3.toMicroseconds()-startTime.toMicroseconds())/1000000.0);
+    std::cout << "Time elapsed for NNSegmentation: " << timeElapsed << std::endl;
+    startTime = processTime3;
     vector<vector<uint32_t>> coneIndexList = FindConesFromObjects(pcRefit, objectIndexList, m_minNumOfPointsForCone, m_maxNumOfPointsForCone, m_nearConeRadiusThreshold, m_farConeRadiusThreshold, m_zRangeThreshold);
-    //std::cout << "Number of Object is: " << objectIndexList.size() << std::endl;
+    odcore::data::TimeStamp processTime4;
+    timeElapsed = abs(static_cast<double>(processTime4.toMicroseconds()-startTime.toMicroseconds())/1000000.0);
+    std::cout << "Time elapsed for Cone Detection: " << timeElapsed << std::endl;
+    startTime = processTime4;
     std::cout << "Number of Cones is: " << coneIndexList.size() << std::endl;
     SendingConesPositions(pcRefit, coneIndexList);
-    
+
 
   }
- 
+
 }
 
 vector<vector<uint32_t>> Attention::NNSegmentation(Eigen::MatrixXd &pointCloudConeROI, const double &connectDistanceThreshold){
@@ -446,7 +462,7 @@ vector<vector<uint32_t>> Attention::NNSegmentation(Eigen::MatrixXd &pointCloudCo
         positionOfTmpPointIndexInList = i;
         minDistance = distance;
       }
- 
+
     }
     tmpPointIndex = tmpPointIndexNext;
     //std::cout << "Minimum Distance is " << minDistance << std::endl;
@@ -500,7 +516,7 @@ vector<vector<uint32_t>> Attention::FindConesFromObjects(Eigen::MatrixXd &pointC
     {
       potentialConePointCloud.row(j) << pointCloudConeROI(selectedObjectIndex[j],0),pointCloudConeROI(selectedObjectIndex[j],1),pointCloudConeROI(selectedObjectIndex[j],2);
     }
-    
+
     double coneRadius = CalculateConeRadius(potentialConePointCloud);
     double zRange = GetZRange(potentialConePointCloud);
     bool condition1 = (coneRadius < farConeRadiusThreshold); //Far point cones
@@ -575,7 +591,7 @@ double Attention::CalculateXYDistance(Eigen::MatrixXd &pointCloud, const uint32_
 
 void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector<vector<uint32_t>> &coneIndexList)
 {
-  
+
   uint32_t numberOfCones = coneIndexList.size();
   Eigen::MatrixXd conePoints = Eigen::MatrixXd::Zero(numberOfCones,3);
   for (uint32_t i = 0; i < numberOfCones; i++)
@@ -622,7 +638,7 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
 
   std::cout << "Detected Cones are: " << conePoints << std::endl;
 
-  
+
 }
 
 opendlv::logic::sensation::Point Attention::Cartesian2Spherical(double &x, double &y, double &z)
@@ -656,7 +672,7 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
   Eigen::MatrixXd distance2Plane = Eigen::MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
   Eigen::MatrixXd dotProd = Eigen::MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
   Eigen::MatrixXd indexDot = Eigen::MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
-  
+
   Vector3d planeFromSamples, v0, v1, v2, crossVec1, crossVec2, crossCoefficients;
   double outliersFound, inliersFound, normalBest, normalBestLast;
   normalBestLast = 10000;
@@ -683,7 +699,7 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
     crossCoefficients = crossCoefficients.normalized();
     d = v0.dot(crossCoefficients);
     d = d*-1;
-  
+
     foundPlane << crossCoefficients(0), crossCoefficients(1), crossCoefficients(2), d;
     //Calculate perpendicular distance to found plane
     for(int p = 0; p < pointCloudInRANSAC.rows(); p++){
@@ -695,15 +711,15 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
 
       }
 
-    } 
+    }
 
     if(outliersFound > 0){
       Eigen::MatrixXd indexRange = Eigen::MatrixXd::Zero(outliersFound,1);
       indexRange = indexOutliers.topRows(outliersFound+1);
 
       inliersFound = pointCloudInRANSAC.rows()-outliersFound;
-      if(inliersFound > m_inlierFoundTreshold ){  
-  
+      if(inliersFound > m_inlierFoundTreshold ){
+
         planeBest = foundPlane;
         normalBest = sqrt(pow((planeBest(0,0)-normal(0,0)),2) + pow((planeBest(0,1)-normal(0,1)),2) + pow((planeBest(0,2)-normal(0,2)),2));
 
@@ -714,7 +730,7 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
           indexRangeBest = indexRange;
           pointOnPlane = drawnSamples.row(0);
           planeCounter++;
-        
+
         }
 
       }
@@ -736,7 +752,7 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
 
   for(int p = 0; p < pointCloudInRANSAC.rows(); p++){
 
-    dotProd(p,0) = planeBestBest(0,0)*(pointCloudInRANSAC(p,0)-pointOnPlane(0,0)) + planeBestBest(0,1)*(pointCloudInRANSAC(p,1)-pointOnPlane(0,1)) + planeBestBest(0,2)*(pointCloudInRANSAC(p,2)-pointOnPlane(0,2)); 
+    dotProd(p,0) = planeBestBest(0,0)*(pointCloudInRANSAC(p,0)-pointOnPlane(0,0)) + planeBestBest(0,1)*(pointCloudInRANSAC(p,1)-pointOnPlane(0,1)) + planeBestBest(0,2)*(pointCloudInRANSAC(p,2)-pointOnPlane(0,2));
 
     if(dotProd(p,0) > m_dotThreshold){
 
@@ -750,7 +766,7 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
   Eigen::MatrixXd index2Keep(indexDotter.rows()+indexRangeBest.rows(),1);
 
   index2Keep << indexRangeBest,
-                 indexDotter; 
+                 indexDotter;
   //Remove duplicates
   Eigen::MatrixXd sortedIndex = RemoveDuplicates(index2Keep);
   //Remove found inlier index from
@@ -805,7 +821,7 @@ Eigen::MatrixXd Attention::GenerateTestPointCloud()
 
     double ff = (double)rand() / RAND_MAX;
     double r2 = 5 + ff*(5 - 0);
-    
+
     double fff = (double)rand() / RAND_MAX;
     double r3 =  -0.20 + fff*(-0.15 + 0.20);
 
@@ -818,7 +834,7 @@ Eigen::MatrixXd Attention::GenerateTestPointCloud()
 
       double ff = (double)rand() / RAND_MAX;
       double r2 = 0.15 + ff*(1 - 0.15);
-      
+
       double fff = (double)rand() / RAND_MAX;
       double r3 =  0.15 + fff*(1 - 0.15);
 
@@ -833,7 +849,7 @@ Eigen::MatrixXd Attention::GenerateTestPointCloud()
 
       double ff = (double)rand() / RAND_MAX;
       double r2 = 3 + ff*(3.2 - 3);
-      
+
       double fff = (double)rand() / RAND_MAX;
       double r3 =  -0.15 + fff*(0.1 + 0.15);
 
@@ -848,7 +864,7 @@ Eigen::MatrixXd Attention::GenerateTestPointCloud()
 
       double ff = (double)rand() / RAND_MAX;
       double r2 = 3 + ff*(3.2 - 3);
-      
+
       double fff = (double)rand() / RAND_MAX;
       double r3 =  -0.15 + fff*(0.1 + 0.15);
 
@@ -862,7 +878,7 @@ Eigen::MatrixXd Attention::GenerateTestPointCloud()
 
       double ff = (double)rand() / RAND_MAX;
       double r2 = 4 + ff*(4.2 - 4);
-      
+
       double fff = (double)rand() / RAND_MAX;
       double r3 =  -0.15 + fff*(0.1 + 0.15);
       generatedPointCloud.row(i) << r1,r2,r3;
@@ -875,7 +891,7 @@ Eigen::MatrixXd Attention::GenerateTestPointCloud()
 
       double ff = (double)rand() / RAND_MAX;
       double r2 = 4 + ff*(4.2 - 4);
-      
+
       double fff = (double)rand() / RAND_MAX;
       double r3 =  -0.15 + fff*(0.1 + 0.15);
 
@@ -890,15 +906,15 @@ Eigen::MatrixXd Attention::GenerateTestPointCloud()
 
       double ff = (double)rand() / RAND_MAX;
       double r2 = 0 + ff*(5 - 0);
-      
+
       double fff = (double)rand() / RAND_MAX;
       double r3 =  0.15 + fff*(5 - 0.15);
 
       generatedPointCloud.row(i) << r1,r2,r3;
 
     }
-    
-      
+
+
   }
 
   return generatedPointCloud;

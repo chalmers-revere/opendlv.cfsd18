@@ -66,7 +66,7 @@ odsupercomponent.pulsetimeack.exclude = odcockpit
 ###############################################################################
 
 logic-cfsd18-perception-detectcone.threshold = 1.5 #[m]
-logic-cfsd18-perception-detectcone.timeDiffMilliseconds = 3000 #[ms]
+logic-cfsd18-perception-detectcone.timeDiffMilliseconds = 20 #[ms]
 
 
 ###############################################################################
@@ -91,16 +91,16 @@ proxy-velodyne16.calibration = VLP-16.xml
 # CONFIGURATION FOR ATTENTION
 logic-cfsd18-sensation-attention.startAngle = 22500.0
 logic-cfsd18-sensation-attention.endAngle = 31500.0
-logic-cfsd18-sensation-attention.yBoundary = 3 #[m]
-logic-cfsd18-sensation-attention.xBoundary = 1.5 #[m]
-logic-cfsd18-sensation-attention.groundLayerZ = -0.24  #[m]
-logic-cfsd18-sensation-attention.coneHeight = 0.24 #[m]
-logic-cfsd18-sensation-attention.connectDistanceThreshold = 1  #[m]
+logic-cfsd18-sensation-attention.yBoundary = 5 #[m]
+logic-cfsd18-sensation-attention.xBoundary = 3 #[m]
+logic-cfsd18-sensation-attention.groundLayerZ = -0.17  #[m]
+logic-cfsd18-sensation-attention.coneHeight = 0.4 #[m]
+logic-cfsd18-sensation-attention.connectDistanceThreshold = 0.3  #[m]
 logic-cfsd18-sensation-attention.layerRangeThreshold = 0.06   #[m]
 logic-cfsd18-sensation-attention.minNumOfPointsForCone = 2
 logic-cfsd18-sensation-attention.maxNumOfPointsForCone = 50
 logic-cfsd18-sensation-attention.farConeRadiusThreshold = 0.2
-logic-cfsd18-sensation-attention.nearConeRadiusThreshold = 0.25
+logic-cfsd18-sensation-attention.nearConeRadiusThreshold = 0.2
 logic-cfsd18-sensation-attention.zRangeThreshold = 0.08  #[m]
 
 %RANSAC
@@ -108,14 +108,14 @@ logic-cfsd18-sensation-attention.zRangeThreshold = 0.08  #[m]
 logic-cfsd18-sensation-attention.inlierRangeTreshold = 0.1 #[m]
 logic-cfsd18-sensation-attention.dotThreshold = 0.3
 logic-cfsd18-sensation-attention.inlierFoundTreshold = 200 #Number of inliers
-logic-cfsd18-sensation-attention.numberOfIterations = 50 
+logic-cfsd18-sensation-attention.numberOfIterations = 25 
 ###############################################################################
 ###############################################################################
 odcockpit.directoriesForSharedLibaries = /opt/opendlv.cfsd18
 
 proxy-camera.camera.debug = 1
 proxy-camera.camera.name = ZED
-proxy-camera.camera.id = 0 # Select here the proper ID for OpenCV
+proxy-camera.camera.id = 1 # Select here the proper ID for OpenCV
 proxy-camera.camera.width = 2560 
 proxy-camera.camera.height = 720
 proxy-camera.camera.bpp = 3

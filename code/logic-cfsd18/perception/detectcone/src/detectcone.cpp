@@ -40,6 +40,7 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_dictionary("slidingWindow")
 , m_patchSize(32)
 , m_coneMutex()
+, m_recievedFirstImg(false)
 {
   m_diffVec = 0;
   m_pointMatched = Eigen::MatrixXd::Zero(4,1);
@@ -91,10 +92,13 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
 {
   if (a_container.getDataType() == odcore::data::image::SharedImage::ID()) {
     odcore::data::image::SharedImage sharedImg =
-        a_container.getData<odcore::data::image::SharedImage>();
+    a_container.getData<odcore::data::image::SharedImage>();
     if (!ExtractSharedImage(&sharedImg)) {
       std::cout << "[" << getName() << "] " << "[Unable to extract shared image." << std::endl;
       return;
+    }else if(m_recievedFirstImg){
+
+      m_recievedFirstImg = true;
     }
   }
   //Marcus
@@ -113,7 +117,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
       m_coneCollector(0,objectId) = coneDirection.getAzimuthAngle();
 			m_coneCollector(1,objectId) = coneDirection.getZenithAngle();
     }
-    
+
   }
 	if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID()){
     odcore::base::Lock lockCone(m_coneMutex);
@@ -128,9 +132,9 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
       m_coneCollector(2,objectId) = coneDistance.getDistance();
 			m_coneCollector(3,objectId) = 0;
     }
-    
+
   }
-  
+
   //Marcus
 }
 
@@ -150,7 +154,9 @@ bool DetectCone::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeS
       if(extractedCones.cols() > 1){
       std::cout << "Extracted Cones " << std::endl;
       std::cout << extractedCones << std::endl;
-      SendCollectedCones(extractedCones);
+        if(m_recievedFirstImg){
+          SendCollectedCones(extractedCones);
+        }
       }
       //Initialize for next collection
       m_lastTimeStamp = timeStamp;
