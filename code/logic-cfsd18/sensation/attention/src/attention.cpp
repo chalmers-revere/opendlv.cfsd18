@@ -128,7 +128,7 @@ void Attention::nextContainer(odcore::data::Container &a_container)
 {
   odcore::data::TimeStamp incommingDataTime = a_container.getSampleTimeStamp();
   double timeSinceLastReceive = abs(static_cast<double>(incommingDataTime.toMicroseconds()-m_CPCReceivedLastTime.toMicroseconds())/1000000.0);
-  std::cout << "Time since between 2 incomming messages: " << timeSinceLastReceive << "s" << std::endl;
+  //std::cout << "Time since between 2 incomming messages: " << timeSinceLastReceive << "s" << std::endl;
   if (timeSinceLastReceive>m_algorithmTime)
   {
 
@@ -140,9 +140,9 @@ void Attention::nextContainer(odcore::data::Container &a_container)
     m_CPCReceived = true;
     odcore::data::TimeStamp ts = a_container.getSampleTimeStamp();
 
-    double timeBetween2ProcessedMessage = static_cast<double>(ts.toMicroseconds()-m_CPCReceivedLastTime.toMicroseconds())/1000000.0;
+    //double timeBetween2ProcessedMessage = static_cast<double>(ts.toMicroseconds()-m_CPCReceivedLastTime.toMicroseconds())/1000000.0;
 
-    std::cout << "Time between 2 processed messages is: " << timeBetween2ProcessedMessage << "s" << std::endl;
+    //std::cout << "Time between 2 processed messages is: " << timeBetween2ProcessedMessage << "s" << std::endl;
 
     m_CPCReceivedLastTime = ts;
 
@@ -351,7 +351,7 @@ void Attention::SavePointCloud(){
           }
           azimuth += azimuthIncrement;
       }
-      std::cout << "Angular resolution is: " << azimuthIncrement << std::endl;
+      //std::cout << "Angular resolution is: " << azimuthIncrement << std::endl;
       std::cout << "number of points are:"<< m_pointCloud.rows() << std::endl;
       //m_pointCloud = Eigen::MatrixXd::Zero(1,3); // Empty the point cloud matrix for this scan
       std::cout << "One scan complete! " << std::endl;
@@ -395,7 +395,7 @@ void Attention::ConeDetection(){
 
   Eigen::MatrixXd pointCloudConeROI = ExtractConeROI(m_xBoundary, m_yBoundary, m_groundLayerZ, m_coneHeight);
 
-  std::cout << "RANSAC" << std::endl;
+  //std::cout << "RANSAC" << std::endl;
   Eigen::MatrixXd pcRefit = RANSACRemoveGround(pointCloudConeROI);
   
   double numOfPointsAfterRANSAC = pcRefit.rows();
@@ -405,7 +405,7 @@ void Attention::ConeDetection(){
   std::cout << "points before RANSAC" << std::endl;
   double pcRaw = m_pointCloud.rows();
   std::cout << pcRaw << std::endl;*/
-  if (numOfPointsAfterRANSAC <= 600.0)
+  if (numOfPointsAfterRANSAC <= 10000.0)
   {
     vector<vector<uint32_t>> objectIndexList = NNSegmentation(pcRefit, m_connectDistanceThreshold); //out from ransac pointCloudConeROI to pointCloudFilt
     vector<vector<uint32_t>> coneIndexList = FindConesFromObjects(pcRefit, objectIndexList, m_minNumOfPointsForCone, m_maxNumOfPointsForCone, m_nearConeRadiusThreshold, m_farConeRadiusThreshold, m_zRangeThreshold);
@@ -616,6 +616,7 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
     coneDistance.setDistance(conePoint.getDistance());
     odcore::data::Container c3(coneDistance);
     getConference().send(c3);
+    std::cout << "Cone Sent" << std::endl;
     //std::cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << std::endl;
   }
 
@@ -701,13 +702,12 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
       indexRange = indexOutliers.topRows(outliersFound+1);
 
       inliersFound = pointCloudInRANSAC.rows()-outliersFound;
-      if(inliersFound > m_inlierFoundTreshold){
+      if(inliersFound > m_inlierFoundTreshold ){  
   
         planeBest = foundPlane;
         normalBest = sqrt(pow((planeBest(0,0)-normal(0,0)),2) + pow((planeBest(0,1)-normal(0,1)),2) + pow((planeBest(0,2)-normal(0,2)),2));
 
         if(normalBest < normalBestLast){
-
           normalBestLast = normalBest;
           planeBestBest = planeBest;
           indexRangeBest.resize(indexRange.rows(),indexRange.cols());
@@ -721,7 +721,6 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
     }
     else{
 
-      std::cout << "No plane was found" << std::endl;
       if(planeCounter > 0){
 
         m_lastBestPlane = planeBestBest;

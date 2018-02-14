@@ -35,6 +35,7 @@
 #include "opendavinci/odcore/wrapper/SharedMemoryFactory.h"
 #include "opendavinci/odcore/wrapper/SharedMemory.h"
 #include "opendavinci/generated/odcore/data/CompactPointCloud.h"
+#include <opendavinci/odcore/base/Lock.h>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -76,7 +77,7 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
 
   // void matchPoints(Eigen::MatrixXd, Eigen::MatrixXd);
   // void findMatch(Eigen::MatrixXd, Eigen::MatrixXd);
-  void Spherical2Cartesian(double, double, double, Eigen::MatrixXd &);
+  Eigen::MatrixXd Spherical2Cartesian(double, double, double);
   void Cartesian2Spherical(double, double, double, opendlv::logic::sensation::Point &);
   void SendCollectedCones(Eigen::MatrixXd);
   void SendMatchedContainer(Eigen::MatrixXd);
@@ -95,6 +96,7 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   cv::Mat m_img;
   const std::string m_dictionary;
   int m_patchSize;
+  odcore::base::Mutex m_coneMutex;
 
   const double DEG2RAD = 0.017453292522222; // PI/180.0
   const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD;

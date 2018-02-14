@@ -39,12 +39,13 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_img()
 , m_dictionary("slidingWindow")
 , m_patchSize(32)
+, m_coneMutex()
 {
   m_diffVec = 0;
   m_pointMatched = Eigen::MatrixXd::Zero(4,1);
   m_lastCameraData = Eigen::MatrixXd::Zero(4,1);
   m_lastLidarData = Eigen::MatrixXd::Zero(4,1);
-  m_coneCollector = Eigen::MatrixXd::Zero(4,10);
+  m_coneCollector = Eigen::MatrixXd::Zero(4,20);
   m_lastObjectId = 0;
 }
 
@@ -98,55 +99,63 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
   }
   //Marcus
   if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID()) {
+    odcore::base::Lock lockCone(m_coneMutex);
+    std::cout << "Recieved Direction" << std::endl;
     //Retrive data and timestamp
     odcore::data::TimeStamp timeStamp = a_container.getReceivedTimeStamp();
     auto coneDirection = a_container.getData<opendlv::logic::perception::ObjectDirection>();
 		uint32_t objectId = coneDirection.getObjectId();
 
     //Check last timestamp if they are from same message
-    std::cout << "Message Recieved " << std::endl;
+    //std::cout << "Message Recieved " << std::endl;
     if (CheckContainer(objectId,timeStamp)){
-      std::cout << "Test 2 " << std::endl;
-      m_coneCollector(objectId,0) = coneDirection.getAzimuthAngle();
-			m_coneCollector(objectId,1) = coneDirection.getZenithAngle();
+      //std::cout << "Test 2 " << std::endl;
+      m_coneCollector(0,objectId) = coneDirection.getAzimuthAngle();
+			m_coneCollector(1,objectId) = coneDirection.getZenithAngle();
     }
+    
   }
 	if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID()){
+    odcore::base::Lock lockCone(m_coneMutex);
+    std::cout << "Recieved Distance" << std::endl;
 		odcore::data::TimeStamp timeStamp = a_container.getReceivedTimeStamp();
     auto coneDistance = a_container.getData<opendlv::logic::perception::ObjectDistance>();
 		uint32_t objectId = coneDistance.getObjectId();
 
     //Check last timestamp if they are from same message
-    std::cout << "Message Recieved " << std::endl;
+    //std::cout << "Message Recieved " << std::endl;
     if (CheckContainer(objectId,timeStamp)){
-      m_coneCollector(objectId,2) = coneDistance.getDistance();
-			m_coneCollector(objectId,3) = 0;
+      m_coneCollector(2,objectId) = coneDistance.getDistance();
+			m_coneCollector(3,objectId) = 0;
     }
+    
   }
+  
   //Marcus
 }
 
 bool DetectCone::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp){
 		if (((timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds()) < m_timeDiffMilliseconds*1000)){
-      std::cout << "Test 2 " << std::endl;
+      //std::cout << "Test 2 " << std::endl;
       m_lastObjectId = (m_lastObjectId<objectId)?(objectId):(m_lastObjectId);
       m_lastTimeStamp = timeStamp;
-      std::cout << "FoundCone: " << std::endl;
-      std::cout << m_coneCollector << std::endl;
+      //std::cout << "FoundCone: " << std::endl;
+      //std::cout << m_coneCollector << std::endl;
 
     }
-    else{
+    else {
       //All object candidates collected, to sensor fusion
-      std::cout << "Extracted Cones " << std::endl;
       Eigen::MatrixXd extractedCones;
-      extractedCones = m_coneCollector.leftCols(m_lastObjectId);
+      extractedCones = m_coneCollector.leftCols(m_lastObjectId+1);
+      if(extractedCones.cols() > 1){
+      std::cout << "Extracted Cones " << std::endl;
       std::cout << extractedCones << std::endl;
       SendCollectedCones(extractedCones);
-
+      }
       //Initialize for next collection
       m_lastTimeStamp = timeStamp;
       m_lastObjectId = 0;
-      m_coneCollector = Eigen::MatrixXd::Zero(4,10);
+      m_coneCollector = Eigen::MatrixXd::Zero(4,20);
     }
 		return true;
 }
@@ -552,16 +561,18 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
 //   }
 // }
 
-void DetectCone::Spherical2Cartesian(double azimuth, double zenimuth, double distance, Eigen::MatrixXd &recievedPoint)
+Eigen::MatrixXd DetectCone::Spherical2Cartesian(double azimuth, double zenimuth, double distance)
 {
   //double xyDistance = distance * cos(azimuth * static_cast<double>(DEG2RAD));
   double xData = distance * sin(zenimuth * static_cast<double>(DEG2RAD))*cos(azimuth * static_cast<double>(DEG2RAD));
   double yData = distance * sin(zenimuth * static_cast<double>(DEG2RAD))*sin(azimuth * static_cast<double>(DEG2RAD));
   double zData = distance * cos(zenimuth * static_cast<double>(DEG2RAD));
+  Eigen::MatrixXd recievedPoint = MatrixXd::Zero(4,1);
   recievedPoint << xData,
-                    yData,
-                    zData,
+                   yData,
+                   zData,
                     0;
+  return recievedPoint;
 }
 
 void DetectCone::Cartesian2Spherical(double x, double y, double z, opendlv::logic::sensation::Point &pointInSpherical)
@@ -579,7 +590,7 @@ void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
   //Convert to cartesian
   Eigen::MatrixXd cone;
   for(int p = 0; p < lidarCones.cols(); p++){
-    Spherical2Cartesian(lidarCones(0,p), lidarCones(1,p), lidarCones(2,p), cone);
+    cone = Spherical2Cartesian(lidarCones(0,p), lidarCones(1,p), lidarCones(2,p));
     lidarCones.col(p) = cone;
   }
   std::cout << "lidarCones " << std::endl;
@@ -592,8 +603,8 @@ void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
     m_finalPointCloud(3,i) = backwardDetection(m_img, point3D);
   }
 
-  std::cout << "matched: " << std::endl;
-  std::cout << m_finalPointCloud << std::endl;
+  //std::cout << "matched: " << std::endl;
+  //std::cout << m_finalPointCloud << std::endl;
   SendMatchedContainer(m_finalPointCloud);
 }
 

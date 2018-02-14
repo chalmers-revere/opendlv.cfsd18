@@ -13,12 +13,16 @@ services:
         image: ${IMAGE}
         depends_on:
             - odsupercomponent
+        ipc: host
+        user: odv
         network_mode: host
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectcone --cid=${CID} --id=1"
     # microservice for cfsd18-sensation-attention
     cfsd18-sensation-attention:
         image: ${IMAGE}
         network_mode: "host"
+        ipc: host
+        user: odv
         depends_on:
             - odsupercomponent
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-sensation-attention --cid=${CID} --verbose=1 --id=1"
@@ -34,4 +38,20 @@ services:
         depends_on:
             - odsupercomponent
         command: "/opt/opendlv.core/bin/opendlv-core-system-proxy-velodyne16 --cid=${CID}"
+    proxy1:
+        image: ${IMAGE}
+        network_mode: host
+        depends_on:
+            - odsupercomponent
+        group_add:
+            - video
+        ipc: host
+        user: odv
+        devices:
+            - "/dev/video0:/dev/video0"
+        environment:
+            - DISPLAY=$DISPLAY
+        volumes:
+            - /tmp/.X11-unix:/tmp/.X11-unix
+        command: "/opt/opendlv.core/bin/opendlv-core-system-proxy-camera --cid=${CID}  --id=1 --freq=20"
 
