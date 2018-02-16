@@ -51,11 +51,11 @@ set(LIBRARIES
 
 ### MICROSERVICE BEGIN ###
 add_subdirectory(action/motion)
-add_subdirectory(action/ebsmonitoring)
+#add_subdirectory(action/ebsmonitoring)
 add_subdirectory(action/ascontrol)
-add_subdirectory(action/brakes)
-add_subdirectory(action/steering)
-add_subdirectory(action/plausibility)
+#add_subdirectory(action/brakes)
+#add_subdirectory(action/steering)
+#add_subdirectory(action/plausibility)
 add_subdirectory(cognition/acceleration)
 add_subdirectory(cognition/brake)
 add_subdirectory(cognition/limitlateral)
