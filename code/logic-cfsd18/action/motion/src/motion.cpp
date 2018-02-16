@@ -34,10 +34,10 @@ namespace action {
 
 Motion::Motion(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-motion"),
-  m_torque(),
   m_steeringAngle(),
   m_brakeEnabled(),
-  m_deceleration()
+  m_deceleration(),
+  m_speed()
 {
 }
 
@@ -54,24 +54,21 @@ void Motion::nextContainer(odcore::data::Container &a_container)
     auto accelerationRequest = a_container.getData<opendlv::proxy::GroundAccelerationRequest>();
     double acceleration = accelerationRequest.getGroundAcceleration();
 
-    m_torque = calcTorque(acceleration);
+    calcTorque(acceleration);
 
     if (m_brakeEnabled)
     {
       m_brakeEnabled = false;
-      sendBrakeContainer();
     }
-
-    sendActuationContainer();
   }
 
   if (a_container.getDataType() == opendlv::proxy::GroundDecelerationRequest::ID()) {
     auto decelerationRequest = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
     m_deceleration = decelerationRequest.getGroundDeceleration();
 
-    m_torque = calcTorque(m_deceleration);
-
-    
+    if (m_speed > float(5/3.6)){
+      calcTorque(m_deceleration);
+    } 
 
 
     if (m_deceleration < 0)
@@ -82,20 +79,11 @@ void Motion::nextContainer(odcore::data::Container &a_container)
     {
       m_brakeEnabled = false;
     }
-
-    sendActuationContainer();
-    sendBrakeContainer();
-
   }
 
-  if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
-    float Kp = 2;
-    auto steeringRequest = a_container.getData<opendlv::proxy::GroundSteeringRequest>();
-    double steering = steeringRequest.getGroundSteering();
-
-    m_steeringAngle = static_cast<float>(steering)*Kp;
-
-    sendActuationContainer();
+  if (a_container.getDataType() == opendlv::proxy::GroundSpeedReading::ID()) { // change this to whatever container marcus sends out
+    auto vehicleSpeed = a_container.getData<opendlv::proxy::GroundSpeedReading>();
+    m_speed = vehicleSpeed.getGroundSpeed();
   }
 }
 
@@ -114,31 +102,29 @@ void Motion::tearDown()
 {
 }
 
-float Motion::calcTorque(double a_arg)
+void Motion::calcTorque(double a_arg)
 {
   float mass = 200;
   float wheelRadius = 0.3;
   float acceleration = static_cast<float>(a_arg); // convert to float
   float torque = acceleration*mass*wheelRadius;
 
-  return torque;
+  // Torque distribution
+  float torqueLeft = torque*0.5f;
+  float torqueRight = torque-torqueLeft;
+
+  sendActuationContainer(1,torqueLeft);
+  sendActuationContainer(2,torqueRight);
 }
 
-void Motion::sendActuationContainer()
+void Motion::sendActuationContainer(int32_t a_arg, float torque)
 {
-  /*opendlv::proxy::ActuationRequest ar(m_torque,m_steeringAngle,true);
-
-  odcore::data::Container c(ar);
-  getConference().send(c);*/
+  opendlv::proxy::TorqueRequest tr(torque);
+  odcore::data::Container c(tr);
+  c.setSenderStamp(a_arg);
+  getConference().send(c);
 }
 
-void Motion::sendBrakeContainer()
-{
- /* opendlv::proxy::rhino::BrakeRequest brakeRequest(m_brakeEnbaled,m_deceleration);
-  odcore::data::Container c(brakeRequest);
-
-  getConference.send(c);*/
-}
 
 }
 }

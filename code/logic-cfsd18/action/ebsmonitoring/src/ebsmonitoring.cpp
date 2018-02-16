@@ -44,13 +44,11 @@ Ebsmonitoring::~Ebsmonitoring()
 {
 }
 
-void Ebsmonitoring::nextContainer(odcore::data::Container &a_container)
-{/*
-  if ((false) && a_container.getDataType() == opendlv::proxy::AnalogReading::ID()) { 
-    auto analogReading = a_container.getData<opendlv::proxy::AnalogReading>();
-    m_analogReading = analogReading.getVoltage();
-  }*/
-  std::cout << a_container;
+void Ebsmonitoring::nextContainer(odcore::data::Container &a_container) {
+  if (a_container.getDataType() == opendlv::proxy::VoltageReading::ID()) { 
+    auto analogReading = a_container.getData<opendlv::proxy::VoltageReading>();
+    m_analogReading = analogReading.getTorque();
+  }
 }
 
 odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ebsmonitoring::body()
@@ -59,13 +57,14 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ebsmonitoring::body()
       odcore::data::dmcp::ModuleStateMessage::RUNNING) {
 
 //      Eigen::AngleAxisd deltaRollAngle(deltaRoll, Eigen::Vector3d::UnitX());
-
+      m_heartBeat = !m_heartBeat;
+      opendlv::proxy::SwitchStateRequest state;
+      state.setState(m_heartBeat);
+      odcore::data::Container c(state);
+      c.setSenderStamp(1);    // change this to the identifier of the heartbeat.
+      getConference().send(c);
   }
 
-  m_heartBeat = !m_heartBeat;
-  /*opendlv::proxy::ToggleRequest c;
-  c.setToggleState = m_State;
-  getConference().send(c);*/
 
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
 }

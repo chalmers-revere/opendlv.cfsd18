@@ -49,30 +49,29 @@ Brakes::~Brakes()
 
 void Brakes::nextContainer(odcore::data::Container &a_container)
 {
-      std::cout << "[" << getName() << "] I received a container." << '\n';
+      std::cout << "[" << getName() << "] I received a container." << std::endl;
   if (a_container.getDataType() == opendlv::proxy::GroundDecelerationRequest::ID()) {
-    std::cout << "[" << getName() << "] It is a deceleration request." << '\n';
-     /*auto deceleration = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
-     double pwmrequest = 3.5 * deceleration.getGroundDeceleration();
-     uint32_t pwmrequestt = static_cast<uint32_t>(pwmrequest);
+    std::cout << "[" << getName() << "] It is a deceleration request." << std::endl;
+     auto deceleration = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
+     float pwm = 3.5f * deceleration.getGroundDeceleration();
+     uint32_t pwmrequest = static_cast<uint32_t>(pwmrequest);
 
      uint16_t pinid = 1;
 
-     opendlv::proxy::PwmRequest pr(pinid,pwmrequest);
+     opendlv::proxy::PulseWidthModulationRequest pr(pwmrequest);
      odcore::data::Container c1(pr);
+     c1.setSenderStamp(pinid);
      getConference().send(c1);
 
-      opendlv::proxy::ToggleRequest::ToggleState state;
+      opendlv::proxy::SwitchStateRequest state;
       if (pwm < 0) {
-        state = opendlv::proxy::ToggleRequest::On;
-      } else {
-        state = opendlv::proxy::ToggleRequest::Off;
+        state.setState(1);
+       } else {
+        state.setState(0);
       }
-      opendlv::proxy::ToggleRequest request(pinid, state);
-      odcore::data::Container c2(request);
-      getConference().send(c2);*/
-
-
+      odcore::data::Container c2(state);
+      c2.setSenderStamp(pinid);
+      getConference().send(c2);
   }
 }
 

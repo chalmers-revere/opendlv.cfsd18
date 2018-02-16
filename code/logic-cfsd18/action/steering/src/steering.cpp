@@ -49,7 +49,7 @@ void Steering::nextContainer(odcore::data::Container &a_container)
 // checking for the message id and calcualting pwm request and checking left or right steering
   if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
     auto steering = a_container.getData<opendlv::proxy::GroundSteeringRequest>();
-    float pwm = 3.5 * steering.getGroundSteering();
+    float pwm = 3.5f * steering.getGroundSteering();
     uint32_t pwmrequest = static_cast<uint32_t>(pwm);
     uint16_t pinid = 1;
     const int bit = 1;
@@ -63,8 +63,8 @@ void Steering::nextContainer(odcore::data::Container &a_container)
 
      if (pwm > 0){
 
-     opendlv::proxy::SwitchSateRequest leftbit;
-     opendlv::proxy::SwitchSateRequest rightbit;
+     opendlv::proxy::SwitchStateRequest leftbit;
+     opendlv::proxy::SwitchStateRequest rightbit;
      if (bit > 0) {
         leftbit.setState(1);
         rightbit.setState(0);
@@ -73,15 +73,15 @@ void Steering::nextContainer(odcore::data::Container &a_container)
         rightbit.setState(1);
       }
      odcore::data::Container c2(leftbit);
-     c2.setSenderStamp(1);          % Set some ID for left turn
+     c2.setSenderStamp(1);          // Set some ID for left turn
      getConference().send(c2);
 
 
      odcore::data::Container c3(rightbit);
-     c3.setSenderStamp(2);        % Id for right turn
+     c3.setSenderStamp(2);        // Id for right turn
      getConference().send(c3);
 
-/*
+/*        These are old messages
      opendlv::proxy::ToggleRequest::ToggleState selectbit;
      if (leftbit == opendlv::proxy::ToggleRequest::On) {
         selectbit = opendlv::proxy::ToggleRequest::On;
