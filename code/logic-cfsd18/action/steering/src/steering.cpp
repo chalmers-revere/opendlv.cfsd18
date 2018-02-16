@@ -49,48 +49,48 @@ void Steering::nextContainer(odcore::data::Container &a_container)
 // checking for the message id and calcualting pwm request and checking left or right steering
   if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
     auto steering = a_container.getData<opendlv::proxy::GroundSteeringRequest>();
-    double pwm= 3.5 * steering.getGroundSteering();
+    float pwm = 3.5 * steering.getGroundSteering();
     uint32_t pwmrequest = static_cast<uint32_t>(pwm);
     uint16_t pinid = 1;
     const int bit = 1;
-// sending pwm request 
-    opendlv::proxy::PwmRequest pr(pinid,pwmrequest);
+// sending pwm request
+    opendlv::proxy::PulseWidthModulationRequest pr(pwmrequest);
     odcore::data::Container c1(pr);
+    c1.setSenderStamp(pinid);
     getConference().send(c1);
 
 // For the gpio module, we need to send three containers. One for left steering , second for right steering and thrid for current measurement pin
-    
+
      if (pwm > 0){
 
-     opendlv::proxy::ToggleRequest::ToggleState leftbit;
+     opendlv::proxy::SwitchSateRequest leftbit;
+     opendlv::proxy::SwitchSateRequest rightbit;
      if (bit > 0) {
-        leftbit = opendlv::proxy::ToggleRequest::On;
+        leftbit.setState(1);
+        rightbit.setState(0);
       } else {
-        leftbit = opendlv::proxy::ToggleRequest::Off;
+        leftbit.setState(0);
+        rightbit.setState(1);
       }
-     opendlv::proxy::ToggleRequest requestleft(pinid, leftbit);     
-     odcore::data::Container c2(requestleft);
+     odcore::data::Container c2(leftbit);
+     c2.setSenderStamp(1);          % Set some ID for left turn
      getConference().send(c2);
 
-     opendlv::proxy::ToggleRequest::ToggleState rightbit;
-     if (bit > 0) {
-        rightbit = opendlv::proxy::ToggleRequest::Off;
-      } else {
-        rightbit = opendlv::proxy::ToggleRequest::On;
-      }
-     opendlv::proxy::ToggleRequest requestright(pinid, rightbit);     
-     odcore::data::Container c3(requestright);
+
+     odcore::data::Container c3(rightbit);
+     c3.setSenderStamp(2);        % Id for right turn
      getConference().send(c3);
 
+/*
      opendlv::proxy::ToggleRequest::ToggleState selectbit;
      if (leftbit == opendlv::proxy::ToggleRequest::On) {
         selectbit = opendlv::proxy::ToggleRequest::On;
-      } else {
         selectbit = opendlv::proxy::ToggleRequest::Off;
       }
-     opendlv::proxy::ToggleRequest requestselect(pinid, selectbit);     
+     opendlv::proxy::ToggleRequest requestselect(pinid, selectbit);
      odcore::data::Container c4(requestselect);
      getConference().send(c4);
+*/
 
 
     }
@@ -99,7 +99,7 @@ void Steering::nextContainer(odcore::data::Container &a_container)
 
 void Steering::setUp()
 {
-  // std::string const exampleConfig = 
+  // std::string const exampleConfig =
   //   getKeyValueConfiguration().getValue<std::string>(
   //     "logic-cfsd18-action-steering.example-config");
 
