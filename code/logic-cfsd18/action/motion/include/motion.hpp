@@ -22,6 +22,7 @@
 
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
+#include <opendavinci/odcore/wrapper/Eigen.h>
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 #include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 
@@ -41,7 +42,7 @@ class Motion : public odcore::base::module::DataTriggeredConferenceClientModule 
  private:
   void setUp();
   void tearDown();
-  void calcTorque(double);
+  void calcTorque(float);
   void sendActuationContainer(int32_t, float);
 
  private:
@@ -49,6 +50,9 @@ class Motion : public odcore::base::module::DataTriggeredConferenceClientModule 
    bool m_brakeEnabled;
    double m_deceleration;
    float m_speed;
+   MatrixXd m_vehicleModelParameters;
+   int32_t m_leftMotorID;
+   int32_t m_rightMotorID;
 
 };
 

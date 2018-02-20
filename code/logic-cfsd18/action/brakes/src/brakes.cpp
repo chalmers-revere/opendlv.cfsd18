@@ -36,7 +36,8 @@ using namespace std;
 using namespace odcore::base;
 
 Brakes::Brakes(int32_t const &a_argc, char **a_argv) :
-  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-brakes")
+  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-brakes"),
+  m_pwmId()
 {
 }
 
@@ -60,7 +61,7 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
 
      opendlv::proxy::PulseWidthModulationRequest pr(pwmrequest);
      odcore::data::Container c1(pr);
-     c1.setSenderStamp(pinid);
+     c1.setSenderStamp(m_pwmId);
      getConference().send(c1);
 
       opendlv::proxy::SwitchStateRequest state;
@@ -77,13 +78,9 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
 
 void Brakes::setUp()
 {
-  // std::string const exampleConfig =
-  //   getKeyValueConfiguration().getValue<std::string>(
-  //     "logic-cfsd18-action-brakes.example-config");
+  auto kv = getKeyValueConfiguration();
 
-  // if (isVerbose()) {
-  //   std::cout << "Example config is " << exampleConfig << std::endl;
-  // }
+  m_pwmId = kv.getValue<uint32_t>("logic-action-brakes.sender-stamp.brakeID");
 }
 
 void Brakes::tearDown()

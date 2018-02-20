@@ -39,11 +39,14 @@ class Brakes : public odcore::base::module::DataTriggeredConferenceClientModule 
   virtual void nextContainer(odcore::data::Container &);
 
 
-  
+
 
  private:
   void setUp();
   void tearDown();
+
+ private:
+   uint32_t m_pwmId;
 
 };
 

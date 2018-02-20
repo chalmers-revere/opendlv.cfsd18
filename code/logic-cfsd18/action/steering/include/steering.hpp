@@ -41,6 +41,13 @@ class Steering : public odcore::base::module::DataTriggeredConferenceClientModul
  private:
   void setUp();
   void tearDown();
+  uint32_t calcSteering(float);
+
+ private:
+   uint32_t m_pwmId;
+   int32_t m_stateId1;
+   int32_t m_stateId2;
+   int32_t m_stateId3;
 };
 
 }

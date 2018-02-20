@@ -37,7 +37,10 @@ Motion::Motion(int32_t const &a_argc, char **a_argv) :
   m_steeringAngle(),
   m_brakeEnabled(),
   m_deceleration(),
-  m_speed()
+  m_speed(),
+  m_vehicleModelParameters(),
+  m_leftMotorID(),
+  m_rightMotorID()
 {
 }
 
@@ -52,7 +55,7 @@ void Motion::nextContainer(odcore::data::Container &a_container)
 
   if (a_container.getDataType() == opendlv::proxy::GroundAccelerationRequest::ID()) {
     auto accelerationRequest = a_container.getData<opendlv::proxy::GroundAccelerationRequest>();
-    double acceleration = accelerationRequest.getGroundAcceleration();
+    float acceleration = accelerationRequest.getGroundAcceleration();
 
     calcTorque(acceleration);
 
@@ -68,7 +71,7 @@ void Motion::nextContainer(odcore::data::Container &a_container)
 
     if (m_speed > float(5/3.6)){
       calcTorque(m_deceleration);
-    } 
+    }
 
 
     if (m_deceleration < 0)
@@ -90,31 +93,39 @@ void Motion::nextContainer(odcore::data::Container &a_container)
 void Motion::setUp()
 {
   // std::string const exampleConfig =
-  //   getKeyValueConfiguration().getValue<std::string>(
-  //     "logic-cfsd18-action-motion.example-config");
+  auto kv = getKeyValueConfiguration();
 
-  // if (isVerbose()) {
-  //   std::cout << "Example config is " << exampleConfig << std::endl;
-  // }
+  double const vM = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.m");
+	double const vIz = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.Iz");
+	double const vG = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.g");
+	double const vL = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.l");
+	double const vLf = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.lf");
+	double const vLr = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.lr");
+	double const vMu = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.mu");
+	float const vWr = kv.getValue<float>("logic-sensation-geolocator.vehicle-parameter.wr");
+
+  m_vehicleModelParameters << vM,vIz,vG,vL,vLf,vLr,vMu,vWr;
+
+  m_leftMotorID = kv.getValue<int32_t>("logic-action-motion.sender-stamp.LeftMotor");
+  m_rightMotorID = kv.getValue<int32_t>("logic-action-motion.sender-stamp.LeftMotor");
 }
 
 void Motion::tearDown()
 {
 }
 
-void Motion::calcTorque(double a_arg)
+void Motion::calcTorque(float a_arg)
 {
-  float mass = 200;
-  float wheelRadius = 0.3;
-  float acceleration = static_cast<float>(a_arg); // convert to float
-  float torque = acceleration*mass*wheelRadius;
+  float mass = (float) m_vehicleModelParameters(1);
+  float wheelRadius = m_vehicleModelParameters(8);
+  float torque = a_arg*mass*wheelRadius;
 
   // Torque distribution
   float torqueLeft = torque*0.5f;
   float torqueRight = torque-torqueLeft;
 
-  sendActuationContainer(1,torqueLeft);
-  sendActuationContainer(2,torqueRight);
+  sendActuationContainer(m_leftMotorID,torqueLeft);
+  sendActuationContainer(m_rightMotorID,torqueRight);
 }
 
 void Motion::sendActuationContainer(int32_t a_arg, float torque)

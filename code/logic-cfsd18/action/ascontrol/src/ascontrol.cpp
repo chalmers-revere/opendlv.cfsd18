@@ -31,9 +31,11 @@ namespace cfsd18 {
 namespace action {
 
 Ascontrol::Ascontrol(int32_t const &a_argc, char **a_argv) :
-  TimeTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-ascontrol")
+  TimeTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-ascontrol"),
+  m_pwmIdRed(),
+  m_pwmIdGreen(),
+  m_pwmIdBlue()
 {
-  std::cout << getName() << ": I'm setting up v2" << '\n';
 }
 
 Ascontrol::~Ascontrol()
@@ -70,51 +72,47 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
 // Comment this out until PwmRequest has been added in our project
 
   opendlv::proxy::PulseWidthModulationRequest LED_R;
+  opendlv::proxy::PulseWidthModulationRequest LED_G;
+  opendlv::proxy::PulseWidthModulationRequest LED_B;
 
-/*  opendlv::proxy::PwmRequest LED_G;
-  opendlv::proxy::PwmRequest LED_B;
 
-
-  if (true) // Add logic to decide which colour to send
-  {
+  //if (true) // Add logic to decide which colour to send
+  //{
     int32_t R = 50; // Assign the percentage of each colour (0-100)
     int32_t G = 50; // These values should be set in a config file
     int32_t B = 50;
     int32_t tot = fmax(B,fmax(R,G));
-  }
+  //}
 
   LED_R.setDutyCycleNs(R/tot*100);  // The fractions are normalized to make brightness more consistent
   LED_G.setDutyCycleNs(G/tot*100);
   LED_B.setDutyCycleNs(B/tot*100);
 
-  LED_R.setPin(m_RedPin);
-  LED_G.setPin(m_GreenPin);
-  LED_B.setPin(m_BluePin);
-
   odcore::data::Container red(LED_R);
   odcore::data::Container green(LED_G);
   odcore::data::Container blue(LED_B);
+
+  red.setSenderStamp(m_pwmIdRed);
+  green.setSenderStamp(m_pwmIdGreen);
+  blue.setSenderStamp(m_pwmIdBlue);
 
   // It will be necessary to add some if statement controlling the frequency of the light to match rules
 
   getConference().send(red);
   getConference().send(green);
   getConference().send(blue);
-*/
+
 
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
 }
 
 void Ascontrol::setUp()
 {
-  // std::string const exampleConfig =
-  //   getKeyValueConfiguration().getValue<std::string>(
-  //     "logic-cfsd18-action-ascontrol.example-config");
+  auto kv = getKeyValueConfiguration();
 
-  // if (isVerbose()) {
-  //   std::cout << "Example config is " << exampleConfig << std::endl;
-  // }
-  std::cout << "[" << getName() << "]: I'm setting up!" << std::endl;
+  m_pwmIdRed = kv.getValue<uint32_t>("logic-action.sender-stamp.LedRedID");
+  m_pwmIdGreen = kv.getValue<uint32_t>("logic-action-steering.sender-stamp.LedGreenID");
+  m_pwmIdBlue = kv.getValue<uint32_t>("logic-action-steering.sender-stamp.LedBlueID");
 }
 
 void Ascontrol::tearDown()

@@ -42,6 +42,11 @@ class Ascontrol : public odcore::base::module::TimeTriggeredConferenceClientModu
   odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode body();
   void setUp();
   void tearDown();
+
+ private:
+  uint32_t m_pwmIdRed;
+  uint32_t m_pwmIdGreen;
+  uint32_t m_pwmIdBlue;  
 };
 
 }
