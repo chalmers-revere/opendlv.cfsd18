@@ -27,12 +27,12 @@ services:
         command: "/opt/od4/bin/odsupercomponent --cid=${CID} --verbose=1 --configuration=/opt/opendlv.data/configuration"
 
     # microservice for ascontrol
-    cfsd-ascontrol:
-        image: ${IMAGE}
-        network_mode: "host"
-        depends_on:
-            - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-ascontrol --cid=${CID} --verbose=1 --id=1 --freq=2"
+#    cfsd-ascontrol:
+#        image: ${IMAGE}
+#        network_mode: "host"
+#        depends_on:
+#            - odsupercomponent
+#        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-ascontrol --cid=${CID} --verbose=1 --id=1 --freq=2"
 
     # microservice for brakes
     cfsd-brakes:

@@ -78,9 +78,14 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
 
 void Brakes::setUp()
 {
-  auto kv = getKeyValueConfiguration();
 
-  m_pwmId = kv.getValue<uint32_t>("logic-action-brakes.sender-stamp.brakeID");
+  std::string const exampleConfig =
+   getKeyValueConfiguration().getValue<std::string>(
+     "proxy-lynx-steering.example-config");
+/*  auto kv = getKeyValueConfiguration();
+
+  m_pwmId = kv.getValue<uint32_t>("proxy-lynx-steering.int");
+  */
 }
 
 void Brakes::tearDown()
