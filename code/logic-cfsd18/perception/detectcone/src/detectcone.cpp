@@ -96,7 +96,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
     if (!ExtractSharedImage(&sharedImg)) {
       std::cout << "[" << getName() << "] " << "[Unable to extract shared image." << std::endl;
       return;
-    }else if(m_recievedFirstImg){
+    }else if(!m_recievedFirstImg){
 
       m_recievedFirstImg = true;
     }
@@ -447,6 +447,8 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
 
   int x = point2D[0];
   int y = point2D[1];
+
+  std::cout << "Camera region center: " << x << ", " << y << std::endl;
   float_t ratio = depth2resizeRate(point3D[0], point3D[2]);
   int length = ratio * m_patchSize;
   int radius = (length-1)/2;
@@ -570,9 +572,9 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
 Eigen::MatrixXd DetectCone::Spherical2Cartesian(double azimuth, double zenimuth, double distance)
 {
   //double xyDistance = distance * cos(azimuth * static_cast<double>(DEG2RAD));
-  double xData = distance * sin(zenimuth * static_cast<double>(DEG2RAD))*cos(azimuth * static_cast<double>(DEG2RAD));
-  double yData = distance * sin(zenimuth * static_cast<double>(DEG2RAD))*sin(azimuth * static_cast<double>(DEG2RAD));
-  double zData = distance * cos(zenimuth * static_cast<double>(DEG2RAD));
+  double xData = distance * cos(zenimuth * static_cast<double>(DEG2RAD))*sin(azimuth * static_cast<double>(DEG2RAD));
+  double yData = distance * cos(zenimuth * static_cast<double>(DEG2RAD))*cos(azimuth * static_cast<double>(DEG2RAD));
+  double zData = distance * sin(zenimuth * static_cast<double>(DEG2RAD));
   Eigen::MatrixXd recievedPoint = MatrixXd::Zero(4,1);
   recievedPoint << xData,
                    yData,
@@ -584,11 +586,13 @@ Eigen::MatrixXd DetectCone::Spherical2Cartesian(double azimuth, double zenimuth,
 void DetectCone::Cartesian2Spherical(double x, double y, double z, opendlv::logic::sensation::Point &pointInSpherical)
 {
   double distance = sqrt(x*x+y*y+z*z);
-  double azimuthAngle = atan(y/x)*static_cast<double>(RAD2DEG);
-  double zenithAngle = atan(sqrt(x*x+y*y)/z)*static_cast<double>(RAD2DEG);
+  double azimuthAngle = atan(x/y)*static_cast<double>(RAD2DEG);
+  double zenithAngle = atan(z/sqrt(x*x+y*y))*static_cast<double>(RAD2DEG);
   pointInSpherical.setDistance(distance);
   pointInSpherical.setAzimuthAngle(azimuthAngle);
   pointInSpherical.setZenithAngle(zenithAngle);
+
+
 }
 
 void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)

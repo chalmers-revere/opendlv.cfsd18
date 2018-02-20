@@ -63,8 +63,6 @@ Attention::Attention(int32_t const &a_argc, char **a_argv) :
   , m_recordingYear()
   , m_pointCloud()
   , m_pointIndex(0)
-  , m_startAngle()
-  , m_endAngle()
   , m_xBoundary()
   , m_yBoundary()
   , m_groundLayerZ()
@@ -197,8 +195,8 @@ void Attention::nextContainer(odcore::data::Container &a_container)
 void Attention::setUp()
 {
   auto kv = getKeyValueConfiguration();
-  m_startAngle = kv.getValue<double>("logic-cfsd18-sensation-attention.startAngle");
-  m_endAngle = kv.getValue<double>("logic-cfsd18-sensation-attention.endAngle");
+  //m_startAngle = kv.getValue<double>("logic-cfsd18-sensation-attention.startAngle");
+  //m_endAngle = kv.getValue<double>("logic-cfsd18-sensation-attention.endAngle");
   m_xBoundary = kv.getValue<double>("logic-cfsd18-sensation-attention.xBoundary");
   m_yBoundary = kv.getValue<double>("logic-cfsd18-sensation-attention.yBoundary");
   m_groundLayerZ = kv.getValue<double>("logic-cfsd18-sensation-attention.groundLayerZ");
@@ -305,7 +303,7 @@ void Attention::SavePointCloud(){
     Lock lockCPC(m_cpcMutex);
     const double startAzimuth = m_cpc.getStartAzimuth();
     const double endAzimuth = m_cpc.getEndAzimuth();
-    std::cout << "Start Azimut: " << startAzimuth << "End Azimuth: " << endAzimuth << std::endl;
+    //std::cout << "Start Azimut: " << startAzimuth << "End Azimuth: " << endAzimuth << std::endl;
     const uint8_t entriesPerAzimuth = m_cpc.getEntriesPerAzimuth(); // numberOfLayers
     const uint8_t numberOfBitsForIntensity = m_cpc.getNumberOfBitsForIntensity();
     const uint8_t intensityPlacement = m_cpc.getIntensityPlacement();
@@ -355,7 +353,7 @@ void Attention::SavePointCloud(){
       //std::cout << "Angular resolution is: " << azimuthIncrement << std::endl;
       std::cout << "number of points are:"<< m_pointCloud.rows() << std::endl;
       //m_pointCloud = Eigen::MatrixXd::Zero(1,3); // Empty the point cloud matrix for this scan
-      std::cout << "One scan complete! " << std::endl;
+      //std::cout << "One scan complete! " << std::endl;
     }  else { //A HDL-32E CPC, one of the three parts of a complete scan
       if ((m_cpcMask_32 & 0x04) > 0) {//The first part, 12 layers
         if (numberOfBitsForIntensity == 0) {
@@ -397,7 +395,8 @@ void Attention::ConeDetection(){
   Eigen::MatrixXd pointCloudConeROI = ExtractConeROI(m_xBoundary, m_yBoundary, m_groundLayerZ, m_coneHeight);
   odcore::data::TimeStamp processTime;
   double timeElapsed = abs(static_cast<double>(processTime.toMicroseconds()-startTime.toMicroseconds())/1000000.0);
-  std::cout << "Time elapsed for Extract RoI: " << timeElapsed << std::endl;
+  //std::cout << "Time elapsed for Extract RoI: " << timeElapsed << std::endl;
+  std::cout << "number of points after ROI are:"<< pointCloudConeROI.rows() << std::endl;
   startTime = processTime;
 
   //std::cout << "RANSAC" << std::endl;
@@ -419,12 +418,12 @@ void Attention::ConeDetection(){
     vector<vector<uint32_t>> objectIndexList = NNSegmentation(pcRefit, m_connectDistanceThreshold); //out from ransac pointCloudConeROI to pointCloudFilt
     odcore::data::TimeStamp processTime3;
     timeElapsed = abs(static_cast<double>(processTime3.toMicroseconds()-startTime.toMicroseconds())/1000000.0);
-    std::cout << "Time elapsed for NNSegmentation: " << timeElapsed << std::endl;
+    //std::cout << "Time elapsed for NNSegmentation: " << timeElapsed << std::endl;
     startTime = processTime3;
     vector<vector<uint32_t>> coneIndexList = FindConesFromObjects(pcRefit, objectIndexList, m_minNumOfPointsForCone, m_maxNumOfPointsForCone, m_nearConeRadiusThreshold, m_farConeRadiusThreshold, m_zRangeThreshold);
     odcore::data::TimeStamp processTime4;
     timeElapsed = abs(static_cast<double>(processTime4.toMicroseconds()-startTime.toMicroseconds())/1000000.0);
-    std::cout << "Time elapsed for Cone Detection: " << timeElapsed << std::endl;
+    //std::cout << "Time elapsed for Cone Detection: " << timeElapsed << std::endl;
     startTime = processTime4;
     std::cout << "Number of Cones is: " << coneIndexList.size() << std::endl;
     SendingConesPositions(pcRefit, coneIndexList);
@@ -564,7 +563,7 @@ Eigen::MatrixXd Attention::ExtractConeROI(const double &xBoundary, const double 
   vector<int> pointIndexConeROI;
   for (uint32_t i = 0; i < numberOfPointsCPC; i++)
   {
-    if ((m_pointCloud(i,1) >= -xBoundary) && (m_pointCloud(i,1) <= xBoundary) && (m_pointCloud(i,2) <= yBoundary) && (m_pointCloud(i,2) <= groundLayerZ + coneHeight))
+    if ((m_pointCloud(i,0) >= -xBoundary) && (m_pointCloud(i,0) <= xBoundary) && (m_pointCloud(i,1) <= yBoundary) && (m_pointCloud(i,1) >= 1) && (m_pointCloud(i,2) <= groundLayerZ + coneHeight))
     {
       pointIndexConeROI.push_back(i);
       numberOfPointConeROI ++;
@@ -585,7 +584,7 @@ double Attention::CalculateXYDistance(Eigen::MatrixXd &pointCloud, const uint32_
   double y1 = pointCloud(index1,1);
   double x2 = pointCloud(index2,0);
   double y2 = pointCloud(index2,1);
-  double distance = sqrt(pow((x1-x2),2) + pow((y1-y2),2));
+  double distance = sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
   return distance;
 }
 
@@ -632,7 +631,7 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
     coneDistance.setDistance(conePoint.getDistance());
     odcore::data::Container c3(coneDistance);
     getConference().send(c3);
-    std::cout << "Cone Sent" << std::endl;
+    //std::cout << "Cone Sent" << std::endl;
     //std::cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << std::endl;
   }
 
@@ -644,8 +643,8 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
 opendlv::logic::sensation::Point Attention::Cartesian2Spherical(double &x, double &y, double &z)
 {
   double distance = sqrt(x*x+y*y+z*z);
-  double azimuthAngle = atan(y/x)*static_cast<double>(RAD2DEG);
-  double zenithAngle = atan(sqrt(x*x+y*y)/z)*static_cast<double>(RAD2DEG);
+  double azimuthAngle = atan(x/y)*static_cast<double>(RAD2DEG);
+  double zenithAngle = atan(z/sqrt(x*x+y*y))*static_cast<double>(RAD2DEG);
   logic::sensation::Point pointInSpherical;
   pointInSpherical.setDistance(distance);
   pointInSpherical.setAzimuthAngle(azimuthAngle);
@@ -657,7 +656,7 @@ opendlv::logic::sensation::Point Attention::Cartesian2Spherical(double &x, doubl
 Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC)
 {
 
-  std::cout << "RANSAC Start" << std::endl;
+  //std::cout << "RANSAC Start" << std::endl;
 
   Eigen::MatrixXd foundPlane(1,4), planeBest(1,4), planeBestBest(1,4), normal(1,3), pointOnPlane(1,3), indexRangeBest,indexDotter ,indexOutliers(pointCloudInRANSAC.rows(),1);
   foundPlane << 0,0,0,0;
@@ -721,7 +720,7 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
       if(inliersFound > m_inlierFoundTreshold ){
 
         planeBest = foundPlane;
-        normalBest = sqrt(pow((planeBest(0,0)-normal(0,0)),2) + pow((planeBest(0,1)-normal(0,1)),2) + pow((planeBest(0,2)-normal(0,2)),2));
+        normalBest = sqrt( (planeBest(0,0)-normal(0,0))*(planeBest(0,0)-normal(0,0)) + (planeBest(0,1)-normal(0,1))*(planeBest(0,1)-normal(0,1)) + (planeBest(0,2)-normal(0,2))*(planeBest(0,2)-normal(0,2)));
 
         if(normalBest < normalBestLast){
           normalBestLast = normalBest;
@@ -770,7 +769,7 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
   //Remove duplicates
   Eigen::MatrixXd sortedIndex = RemoveDuplicates(index2Keep);
   //Remove found inlier index from
-  Eigen::MatrixXd pcRefit = Eigen::MatrixXd::Zero(sortedIndex.rows(),3);
+  Eigen::MatrixXd pcRefit = Eigen::MatrixXd::Zero(sortedIndex.rows(),3); //sortedIndex
   for(int i = 0; i < sortedIndex.rows(); i++){
     pcRefit.row(i) = pointCloudInRANSAC.row(sortedIndex(i));
 

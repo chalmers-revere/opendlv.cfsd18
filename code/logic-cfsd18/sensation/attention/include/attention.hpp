@@ -110,8 +110,6 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   MatrixXd m_pointCloud;
   int m_pointIndex;
   // Define constants and thresolds forclustering algorithm
-  double m_startAngle;
-  double m_endAngle;
   double m_xBoundary;
   double m_yBoundary;
   double m_groundLayerZ;
