@@ -7,3 +7,26 @@ proxy-lynx-steering.double = 0.0001
 proxy-lynx-steering.int = 3
 proxy-lynx-steering.boolean = 1
 proxy-lynx-steering.string-seperator = 10,11,22,33
+
+logic-sensation-geolocator.vehicle-parameter.m = 188 #kg
+logic-sensation-geolocator.vehicle-parameter.Iz = 105 #kgm^2
+logic-sensation-geolocator.vehicle-parameter.g = 9.82 #m/s2
+logic-sensation-geolocator.vehicle-parameter.l = 1.53 #m
+logic-sensation-geolocator.vehicle-parameter.lf = 0.765 #m (l*0.5)
+logic-sensation-geolocator.vehicle-parameter.lr = 0.765 #m (l*0.5)
+logic-sensation-geolocator.vehicle-parameter.mu = 0.9
+logic-sensation-geolocator.vehicle-parameter.wr = 0.15
+
+logic-action-motion.sender-stamp.LeftMotor = 101;
+logic-action-motion.sender-stamp.RightMotor = 102;
+
+logic-action-steering.sender-stamp.steeringID = 151;
+logic-action-steering.sender-stamp.steeringIDLeft = 152;
+logic-action-steering.sender-stamp.steeringIDRight = 153;
+logic-action-steering.sender-stamp.steeringIDThird = 154;
+
+logic-action-brakes.sender-stamp.brakeID = 171;
+
+logic-action.sender-stamp.LedRedID = 211;
+logic-action.sender-stamp.LedGreenID = 212;
+logic-action.sender-stamp.LedBlueID = 213;
