@@ -79,8 +79,8 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
 void Brakes::setUp()
 {
   auto kv = getKeyValueConfiguration();
-  int qX = kv.getValue<double>("proxy-lynx-steering.int");
-  std::cout << qX << std::endl;
+  double const vM = kv.getValue<double>("logic-action-brakes.vehicle-parameter.m");
+  std::cout << kv << vM << std::endl;
 }
 
 void Brakes::tearDown()

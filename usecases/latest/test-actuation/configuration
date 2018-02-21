@@ -1,14 +1,97 @@
+# This is the "one-and-only" configuration for OpenDaVINCI.
+# Its format is like:
+#
+# section.key=value
+#
+# If you have several modules of the same type, the following configuration
+# scheme applies:
+#
+# global.key=value # <-- This configuration applies for all modules.
+#
+# section.key=value # <-- This configuration applies for all modules of type "section".
+#
+# section:ID.key=value # <-- This configuration applies for the module "ID" of type "section".
+
+
+###############################################################################
+###############################################################################
+#
+# GLOBAL CONFIGURATION
+#
+
+# The following attributes define the buffer sizes for recording and
+# replaying. You need to adjust these parameters depending on the
+# camera resolution for example (640x480x3 --> 1000000 for memorySegment,
+# 1280x720x3 --> 2800000).
 global.buffer.memorySegmentSize = 2800000 # Size of a memory segment in bytes.
 global.buffer.numberOfMemorySegments = 4  # Number of memory segments.
-global.session.expectedModules = proxy-lynx-steering #optional
 
-proxy-lynx-steering.example-config = coolest configuration ever!
-proxy-lynx-steering.double = 0.0001
-proxy-lynx-steering.int = 3
-proxy-lynx-steering.boolean = 1
-proxy-lynx-steering.string-seperator = 10,11,22,33
+# The following key describes the list of modules expected to participate in this --cid session.
+global.session.expectedModules = copplar-control-example
 
-logic-sensation-geolocator.vehicle-parameter.m = 188 #kg
+
+###############################################################################
+###############################################################################
+#
+# NEXT, THE CONFIGURATION FOR OpenDaVINCI TOOLS FOLLOWS.
+#
+###############################################################################
+###############################################################################
+#
+# CONFIGURATION FOR ODSUPERCOMPONENT
+#
+
+# If the managed level is pulse_shift, all connected modules will be informed
+# about the supercomponent's real time by this increment per module. Thus, the
+# execution times per modules are better aligned with supercomponent and the
+# data exchange is somewhat more predictable.
+odsupercomponent.pulseshift.shift = 10000 # (in microseconds)
+
+# If the managed level is pulse_time_ack, this is the timeout for waiting for
+# an ACK message from a connected client.
+odsupercomponent.pulsetimeack.timeout = 5000 # (in milliseconds)
+
+# If the managed level is pulse_time_ack, the modules are triggered sequentially
+# by sending pulses and waiting for acknowledgment messages. To allow the modules
+# to deliver their respective containers, this yielding time is used to sleep
+# before supercomponent sends the pulse messages the next module in this execution
+# cycle. This value needs to be adjusted for networked simulations to ensure
+# deterministic execution.
+odsupercomponent.pulsetimeack.yield = 5000 # (in microseconds)
+
+# List of modules (without blanks) that will not get a pulse message from odsupercomponent.
+odsupercomponent.pulsetimeack.exclude = odcockpit
+
+###############################################################################
+###############################################################################
+#
+# CONFIGURATION FOR OPENDLV
+#
+
+%%%%%SAMPLE TIME & GPS REFERENCE%%%%%%
+logic-sensation-geolocator.T = 0.1; #Check in docker compose
+logic-sensation-geolocator.GPSreference.latitude = 0
+logic-sensation-geolocator.GPSreference.longitude = 0
+
+%%%%%MODEL UNCERTAINTIES%%%%%%
+logic-sensation-geolocator.Q.X = 0.1
+logic-sensation-geolocator.Q.Y = 0.1
+logic-sensation-geolocator.Q.VelX = 0.1
+logic-sensation-geolocator.Q.VelY = 0.1
+logic-sensation-geolocator.Q.Yaw = 0.1
+logic-sensation-geolocator.Q.Heading = 0.1
+
+%%%%%MEASUREMENT UNCERTAINTIES%%%%%
+logic-sensation-geolocator.R.X = 1
+logic-sensation-geolocator.R.Y = 1
+logic-sensation-geolocator.R.VelX = 1
+logic-sensation-geolocator.R.AccX = 1
+logic-sensation-geolocator.R.AccY = 1
+logic-sensation-geolocator.R.Yaw = 1
+logic-sensation-geolocator.R.Heading = 1
+
+%%%%%VEHICLE MODEL PARAMETERS%%%%%
+logic-action-brakes.vehicle-parameter.m = 188 #kg
 logic-sensation-geolocator.vehicle-parameter.Iz = 105 #kgm^2
 logic-sensation-geolocator.vehicle-parameter.g = 9.82 #m/s2
 logic-sensation-geolocator.vehicle-parameter.l = 1.53 #m
@@ -16,6 +99,7 @@ logic-sensation-geolocator.vehicle-parameter.lf = 0.765 #m (l*0.5)
 logic-sensation-geolocator.vehicle-parameter.lr = 0.765 #m (l*0.5)
 logic-sensation-geolocator.vehicle-parameter.mu = 0.9
 logic-sensation-geolocator.vehicle-parameter.wr = 0.15
+
 
 logic-action-motion.sender-stamp.LeftMotor = 101
 logic-action-motion.sender-stamp.RightMotor = 102
