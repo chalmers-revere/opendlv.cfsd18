@@ -37,7 +37,8 @@ using namespace odcore::base;
 
 Brakes::Brakes(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-brakes"),
-  m_pwmId()
+  m_pwmId(),
+  m_stateID()
 {
 }
 
@@ -57,7 +58,6 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
      float pwm = 3.5f * deceleration.getGroundDeceleration();
      uint32_t pwmrequest = static_cast<uint32_t>(pwmrequest);
 
-     uint16_t pinid = 1;
 
      opendlv::proxy::PulseWidthModulationRequest pr(pwmrequest);
      odcore::data::Container c1(pr);
@@ -71,7 +71,7 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
         state.setState(0);
       }
       odcore::data::Container c2(state);
-      c2.setSenderStamp(pinid);
+      c2.setSenderStamp(m_stateID);
       getConference().send(c2);
   }
 }
@@ -79,8 +79,8 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
 void Brakes::setUp()
 {
   auto kv = getKeyValueConfiguration();
-  double const vM = kv.getValue<double>("logic-action-brakes.vehicle-parameter.m");
-  std::cout << kv << vM << std::endl;
+  m_pwmId = kv.getValue<uint32_t>("opendlv-logic-cfsd18-action-brakes.sender-stamp.brakeID");
+  m_stateID = kv.getValue<uint32_t>("opendlv-logic-cfsd18-action-brakes.sender-stamp.stateID");
 }
 
 void Brakes::tearDown()

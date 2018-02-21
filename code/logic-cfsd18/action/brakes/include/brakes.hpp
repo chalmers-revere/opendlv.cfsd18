@@ -47,6 +47,7 @@ class Brakes : public odcore::base::module::DataTriggeredConferenceClientModule 
 
  private:
    uint32_t m_pwmId;
+   uint32_t m_stateID;
 
 };
 
