@@ -51,9 +51,7 @@ Brakes::~Brakes()
 
 void Brakes::nextContainer(odcore::data::Container &a_container)
 {
-      std::cout << "[" << getName() << "] I received a container." << std::endl;
   if (a_container.getDataType() == opendlv::proxy::GroundDecelerationRequest::ID()) {
-    std::cout << "[" << getName() << "] It is a deceleration request." << std::endl;
      auto deceleration = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
      float pwm = 3.5f * deceleration.getGroundDeceleration();
      uint32_t pwmrequest = static_cast<uint32_t>(pwmrequest);
@@ -79,8 +77,8 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
 void Brakes::setUp()
 {
   auto kv = getKeyValueConfiguration();
-  m_pwmId = kv.getValue<uint32_t>("opendlv-logic-cfsd18-action-brakes.sender-stamp.brakeID");
-  m_stateID = kv.getValue<uint32_t>("opendlv-logic-cfsd18-action-brakes.sender-stamp.stateID");
+  m_pwmId = kv.getValue<uint32_t>("global.sender-stamp.brake");
+  m_stateID = kv.getValue<uint32_t>("global.sender-stamp.state");
 }
 
 void Brakes::tearDown()

@@ -110,9 +110,9 @@ void Ascontrol::setUp()
 {
   auto kv = getKeyValueConfiguration();
 
-  m_pwmIdRed = kv.getValue<uint32_t>("logic-action.sender-stamp.LedRedID");
-  m_pwmIdGreen = kv.getValue<uint32_t>("logic-action-steering.sender-stamp.LedGreenID");
-  m_pwmIdBlue = kv.getValue<uint32_t>("logic-action-steering.sender-stamp.LedBlueID");
+  m_pwmIdRed = kv.getValue<uint32_t>("global.sender-stamp.red");
+  m_pwmIdGreen = kv.getValue<uint32_t>("global.sender-stamp.green");
+  m_pwmIdBlue = kv.getValue<uint32_t>("global.sender-stamp.blue");
 }
 
 void Ascontrol::tearDown()

@@ -31,8 +31,8 @@ global.session.expectedModules = proxy-lynx-steering #optional
 ###############################################################################
 ###############################################################################
 #
-# CONFIGURATION FOR OPENDLV
 #
+
 
 opendlv-logic-cfsd18-action-brakes.example-config = coolest configuration ever!
 proxy-lynx-steering.double = 0.0001
@@ -41,28 +41,31 @@ proxy-lynx-steering.boolean = 1
 proxy-lynx-steering.string-seperator = 10,11,22,33
 
 
-%%%%%VEHICLE MODEL PARAMETERS%%%%%
+######VEHICLE MODEL PARAMETERS######
 global.vehicle-parameter.m = 188 #kg
-logic-sensation-geolocator.vehicle-parameter.Iz = 105 #kgm^2
-logic-sensation-geolocator.vehicle-parameter.g = 9.82 #m/s2
-logic-sensation-geolocator.vehicle-parameter.l = 1.53 #m
-logic-sensation-geolocator.vehicle-parameter.lf = 0.765 #m (l*0.5)
-logic-sensation-geolocator.vehicle-parameter.lr = 0.765 #m (l*0.5)
-logic-sensation-geolocator.vehicle-parameter.mu = 0.9
-logic-sensation-geolocator.vehicle-parameter.wr = 0.15
+global.vehicle-parameter.Iz = 105 #kgm^2
+global.vehicle-parameter.g = 9.82 #m/s2
+global.vehicle-parameter.l = 1.53 #m
+global.vehicle-parameter.lf = 0.765 #m (l*0.5)
+global.vehicle-parameter.lr = 0.765 #m (l*0.5)
+global.vehicle-parameter.mu = 0.9
+global.vehicle-parameter.wr = 0.15
 
+########SENDER STAMPS########
+global.sender-stamp.left-motor = 101
+global.sender-stamp.right-motor = 102
 
-logic-action-motion.sender-stamp.LeftMotor = 101
-logic-action-motion.sender-stamp.RightMotor = 102
+global.sender-stamp.steering = 151
+global.sender-stamp.steering-left = 152
+global.sender-stamp.steering-right = 153
+global.sender-stamp.steering-third = 154
 
-logic-action-steering.sender-stamp.steeringID = 151
-logic-action-steering.sender-stamp.steeringIDLeft = 152
-logic-action-steering.sender-stamp.steeringIDRight = 153
-logic-action-steering.sender-stamp.steeringIDThird = 154
+global.sender-stamp.brake = 171
+global.sender-stamp.state = 172
 
-opendlv-logic-cfsd18-action-brakes.sender-stamp.brakeID = 171
-opendlv-logic-cfsd18-action-brakes.sender-stamp.stateID = 172
+global.sender-stamp.red = 211
+global.sender-stamp.green = 212
+global.sender-stamp.blue = 213
 
-logic-action.sender-stamp.LedRedID = 211
-logic-action.sender-stamp.LedGreenID = 212
-logic-action.sender-stamp.LedBlueID = 213
+######CONTROL PARAMETERS#######
+opendlv-logic-cfsd18-action-steering.control-parameter.Kp = 2

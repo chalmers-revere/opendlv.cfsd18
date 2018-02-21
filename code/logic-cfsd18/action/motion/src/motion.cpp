@@ -95,19 +95,19 @@ void Motion::setUp()
   // std::string const exampleConfig =
   auto kv = getKeyValueConfiguration();
 
-  double const vM = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.m");
-	double const vIz = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.Iz");
-	double const vG = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.g");
-	double const vL = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.l");
-	double const vLf = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.lf");
-	double const vLr = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.lr");
-	double const vMu = kv.getValue<double>("logic-sensation-geolocator.vehicle-parameter.mu");
-	float const vWr = kv.getValue<float>("logic-sensation-geolocator.vehicle-parameter.wr");
+  float const vM = kv.getValue<float>("global.vehicle-parameter.m");
+  float const vIz = kv.getValue<float>("global.vehicle-parameter.Iz");
+  float const vG = kv.getValue<float>("global.vehicle-parameter.g");
+  float const vL = kv.getValue<float>("global.vehicle-parameter.l");
+  float const vLf = kv.getValue<float>("global.vehicle-parameter.lf");
+  float const vLr = kv.getValue<float>("global.vehicle-parameter.lr");
+  float const vMu = kv.getValue<float>("global.vehicle-parameter.mu");
+  float const vWr = kv.getValue<float>("global.vehicle-parameter.wr");
 
   m_vehicleModelParameters << vM,vIz,vG,vL,vLf,vLr,vMu,vWr;
 
-  m_leftMotorID = kv.getValue<int32_t>("logic-action-motion.sender-stamp.LeftMotor");
-  m_rightMotorID = kv.getValue<int32_t>("logic-action-motion.sender-stamp.LeftMotor");
+  m_leftMotorID = kv.getValue<int32_t>("global.sender-stamp.left-motor");
+  m_rightMotorID = kv.getValue<int32_t>("global.sender-stamp.right-motor ");
 }
 
 void Motion::tearDown()
@@ -116,7 +116,7 @@ void Motion::tearDown()
 
 void Motion::calcTorque(float a_arg)
 {
-  float mass = (float) m_vehicleModelParameters(1);
+  float mass = m_vehicleModelParameters(1);
   float wheelRadius = m_vehicleModelParameters(8);
   float torque = a_arg*mass*wheelRadius;
 

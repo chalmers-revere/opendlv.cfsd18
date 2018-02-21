@@ -48,6 +48,7 @@ class Steering : public odcore::base::module::DataTriggeredConferenceClientModul
    int32_t m_stateId1;
    int32_t m_stateId2;
    int32_t m_stateId3;
+   float m_Kp;
 };
 
 }

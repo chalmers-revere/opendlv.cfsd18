@@ -38,7 +38,8 @@ Steering::Steering(int32_t const &a_argc, char **a_argv) :
   m_pwmId(),
   m_stateId1(),
   m_stateId2(),
-  m_stateId3()
+  m_stateId3(),
+  m_Kp()
 {
 }
 
@@ -114,10 +115,12 @@ void Steering::setUp()
 {
   auto kv = getKeyValueConfiguration();
 
-  m_pwmId = kv.getValue<uint32_t>("logic-action-steering.sender-stamp.steeringID");
-  m_stateId1 = kv.getValue<uint32_t>("logic-action-steering.sender-stamp.steeringIDLeft");
-  m_stateId2 = kv.getValue<uint32_t>("logic-action-steering.sender-stamp.steeringIDRight");
-  m_stateId3 = kv.getValue<uint32_t>("logic-action-steering.sender-stamp.steeringIDThird");
+  m_pwmId = kv.getValue<uint32_t>("global.sender-stamp.steering");
+  m_stateId1 = kv.getValue<uint32_t>("global.sender-stamp.steering-left");
+  m_stateId2 = kv.getValue<uint32_t>("global.sender-stamp.steering-right");
+  m_stateId3 = kv.getValue<uint32_t>("global.sender-stamp.steering-third");
+
+  m_Kp = kv.getValue<float>("opendlv-logic-cfsd18-action-steering.control-parameter.Kp");
 }
 
 void Steering::tearDown()
