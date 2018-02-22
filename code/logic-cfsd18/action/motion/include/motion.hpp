@@ -44,6 +44,7 @@ class Motion : public odcore::base::module::DataTriggeredConferenceClientModule 
   void tearDown();
   void calcTorque(float);
   void sendActuationContainer(int32_t, float);
+  float calcYawRateRef(float);
 
  private:
    float m_steeringAngle;
@@ -53,7 +54,10 @@ class Motion : public odcore::base::module::DataTriggeredConferenceClientModule 
    MatrixXd m_vehicleModelParameters;
    int32_t m_leftMotorID;
    int32_t m_rightMotorID;
-
+   float m_PI;
+   float m_aimTime;
+   float m_dt;
+   
 };
 
 }

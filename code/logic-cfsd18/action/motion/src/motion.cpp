@@ -40,7 +40,10 @@ Motion::Motion(int32_t const &a_argc, char **a_argv) :
   m_speed(),
   m_vehicleModelParameters(),
   m_leftMotorID(),
-  m_rightMotorID()
+  m_rightMotorID(),
+  m_PI(),
+  m_aimTime(),
+  m_dt()
 {
 }
 
@@ -95,6 +98,7 @@ void Motion::setUp()
   // std::string const exampleConfig =
   auto kv = getKeyValueConfiguration();
 
+
   float const vM = kv.getValue<float>("global.vehicle-parameter.m");
   float const vIz = kv.getValue<float>("global.vehicle-parameter.Iz");
   float const vG = kv.getValue<float>("global.vehicle-parameter.g");
@@ -106,8 +110,14 @@ void Motion::setUp()
 
   m_vehicleModelParameters << vM,vIz,vG,vL,vLf,vLr,vMu,vWr;
 
+
   m_leftMotorID = kv.getValue<int32_t>("global.sender-stamp.left-motor");
   m_rightMotorID = kv.getValue<int32_t>("global.sender-stamp.right-motor ");
+
+  m_aimTime = kv.getValue<float>("global.sender-stamp.aim-point-time");
+  m_dt = kv.getValue<float>("opendlv-logic-cfsd18-action-motion.torque-parameter");
+
+  m_PI = 3.14159265359;
 }
 
 void Motion::tearDown()
@@ -119,13 +129,24 @@ void Motion::calcTorque(float a_arg)
   float mass = m_vehicleModelParameters(1);
   float wheelRadius = m_vehicleModelParameters(8);
   float torque = a_arg*mass*wheelRadius;
+  float Iz = m_vehicleModelParameters(2);
 
+  float yawRateRef = calcYawRateRef(m_steeringAngle);
+
+  float e_yawRate = -yawRateRef; // Add yaw rate here when Marcus is done with message
+
+  float dT = 0.5f/m_dt*e_yawRate*Iz;
   // Torque distribution
-  float torqueLeft = torque*0.5f;
+  float torqueLeft = torque*0.5f - dT;
   float torqueRight = torque-torqueLeft;
 
   sendActuationContainer(m_leftMotorID,torqueLeft);
   sendActuationContainer(m_rightMotorID,torqueRight);
+}
+
+float Motion::calcYawRateRef(float a_arg){
+  float t = m_aimTime*m_PI/a_arg;
+  return 2.0f*m_PI/t;
 }
 
 void Motion::sendActuationContainer(int32_t a_arg, float torque)
