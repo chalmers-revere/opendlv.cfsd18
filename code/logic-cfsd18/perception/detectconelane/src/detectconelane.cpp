@@ -43,12 +43,15 @@ DetectConeLane::~DetectConeLane()
 
 void DetectConeLane::nextContainer(odcore::data::Container &a_container)
 {
-  if (a_container.getDataType() == opendlv::logic::perception::Object::ID()) {
+  std::cout << "I am in DetectConeLane!" << std::endl;
+  if (a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID()) {
+  	std::cout << "I am in DetectConeLane!I received ObjectDistance!!!" << std::endl;
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
-    opendlv::logic::perception::Surface o1;
-    odcore::data::Container c1(o1);
-    getConference().send(c1);
+    //std::cout << "I am in DetectConeLane!" << std::endl;
+    //opendlv::logic::perception::Surface o1;
+    //odcore::data::Container c1(o1);
+    //getConference().send(c1);
   }
 }
 
