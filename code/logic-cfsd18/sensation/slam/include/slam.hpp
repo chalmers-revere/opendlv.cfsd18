@@ -22,9 +22,13 @@
 
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
+#include <opendavinci/odcore/data/TimeStamp.h>
+#include <opendavinci/odcore/base/Mutex.h>
+#include <opendavinci/odcore/base/Lock.h>
+#include <opendavinci/odcore/wrapper/Eigen.h>
 
-//#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
-#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
+#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
+//#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 
 namespace opendlv {
 namespace logic {
@@ -42,6 +46,12 @@ class Slam : public odcore::base::module::DataTriggeredConferenceClientModule {
  private:
   void setUp();
   void tearDown();
+  bool CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp);
+  uint32_t m_timeDiffMilliseconds;
+  odcore::data::TimeStamp m_lastTimeStamp;
+  Eigen::MatrixXd m_coneCollector;
+  uint32_t m_lastObjectId;
+  odcore::base::Mutex m_coneMutex;
 };
 
 }
