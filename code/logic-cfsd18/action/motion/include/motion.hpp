@@ -47,7 +47,7 @@ class Motion : public odcore::base::module::DataTriggeredConferenceClientModule 
   float calcYawRateRef(float);
 
  private:
-   float m_steeringAngle;
+   float m_headingRequest;
    bool m_brakeEnabled;
    double m_deceleration;
    float m_speed;
@@ -57,7 +57,6 @@ class Motion : public odcore::base::module::DataTriggeredConferenceClientModule 
    float m_PI;
    float m_aimTime;
    float m_dt;
-   
 };
 
 }

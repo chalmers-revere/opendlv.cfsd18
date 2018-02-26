@@ -34,7 +34,7 @@ namespace action {
 
 Motion::Motion(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-motion"),
-  m_steeringAngle(),
+  m_headingRequest(),
   m_brakeEnabled(),
   m_deceleration(),
   m_speed(),
@@ -55,7 +55,6 @@ Motion::~Motion()
 
 void Motion::nextContainer(odcore::data::Container &a_container)
 {
-
   if (a_container.getDataType() == opendlv::proxy::GroundAccelerationRequest::ID()) {
     auto accelerationRequest = a_container.getData<opendlv::proxy::GroundAccelerationRequest>();
     float acceleration = accelerationRequest.getGroundAcceleration();
@@ -91,13 +90,17 @@ void Motion::nextContainer(odcore::data::Container &a_container)
     auto vehicleSpeed = a_container.getData<opendlv::proxy::GroundSpeedReading>();
     m_speed = vehicleSpeed.getGroundSpeed();
   }
+
+  if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
+    auto headingRequest = a_container.getData<opendlv::logic::action::AimPoint>();
+    m_headingRequest = headingRequest.getAzimuthAngle();
+  }
 }
 
 void Motion::setUp()
 {
   // std::string const exampleConfig =
   auto kv = getKeyValueConfiguration();
-
 
   float const vM = kv.getValue<float>("global.vehicle-parameter.m");
   float const vIz = kv.getValue<float>("global.vehicle-parameter.Iz");
@@ -117,7 +120,7 @@ void Motion::setUp()
   m_aimTime = kv.getValue<float>("global.sender-stamp.aim-point-time");
   m_dt = kv.getValue<float>("opendlv-logic-cfsd18-action-motion.torque-parameter");
 
-  m_PI = 3.14159265359;
+  m_PI = 3.14159265359f;
 }
 
 void Motion::tearDown()
@@ -131,7 +134,7 @@ void Motion::calcTorque(float a_arg)
   float torque = a_arg*mass*wheelRadius;
   float Iz = m_vehicleModelParameters(2);
 
-  float yawRateRef = calcYawRateRef(m_steeringAngle);
+  float yawRateRef = calcYawRateRef(m_headingRequest);
 
   float e_yawRate = -yawRateRef; // Add yaw rate here when Marcus is done with message
 
