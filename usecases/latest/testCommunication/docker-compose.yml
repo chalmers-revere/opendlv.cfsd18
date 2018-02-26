@@ -1,0 +1,34 @@
+version: '2'
+
+services:
+    odsupercomponent:
+        image: ${IMAGE}
+        network_mode: host
+        volumes:
+        - .:/opt/opendlv.data
+        command: "/opt/od4/bin/odsupercomponent --cid=${CID} --verbose=1 --configuration=/opt/opendlv.data/configuration"
+
+    # microservice for perception-detectconelane
+    logic-cfsd18-perception-detectconelane:
+        image: ${IMAGE}
+        #ipc: host
+        #user: odv
+        network_mode: host
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectconelane --cid=${CID} --id=1"
+
+#    odcockpit:
+#        image: ${IMAGE}
+#        network_mode: host
+#        environment:
+#        - DISPLAY=$DISPLAY
+#        volumes:
+#        - /tmp/.X11-unix:/tmp/.X11-unix
+#        - .:/opt/opendlv.data
+#        - ~/Downloads/LidarRecordings:/opt/Recordings
+#        ipc: host
+#        user: odv
+#        depends_on:
+#            - odsupercomponent
+#        command: "/opt/od4/bin/odcockpit --cid=${CID}"    
