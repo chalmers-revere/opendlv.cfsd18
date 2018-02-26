@@ -49,11 +49,11 @@ void Track::nextContainer(odcore::data::Container &a_container)
     //std::string type = Surface.getType();
     std::cout << "Message " << a_container.getDataType() <<" recieved" << std::endl;
     std::cout << "localPath set to " << localPath << std::endl;
-    /*float timeToAimPoint = 1;
+    /*float previewTime = 1;
     float currentVelocity = 5;
     float accelerationLimit = 5;
     float decelerationLimit = -5;
-    float headingRequest = Track::driverModelSteering(currentVelocity, timeToAimPoint, localPath);
+    float headingRequest = Track::driverModelSteering(currentVelocity, previewTime, localPath);
     float accelerationRequest = Track::driverModelVelocity(currentVelocity, accelerationLimit, decelerationLimit, headingRequest,localPath);
     */
     float headingRequest = 1.2;
@@ -110,9 +110,9 @@ void Track::nextContainer(odcore::data::Container &a_container)
     -0.183607,    1.80946,
     -0.175,        1.5;
 
-    float timeToAimPoint = 1;
+    float previewTime = 1;
     float currentVelocity = 5;
-    float headingRequest = Track::driverModelSteering(currentVelocity, timeToAimPoint, localPath);
+    float headingRequest = Track::driverModelSteering(currentVelocity, previewTime, localPath);
     float accelerationLimit = 5;
     float decelerationLimit = -5;
     float accelerationRequest = Track::driverModelVelocity(currentVelocity, accelerationLimit, decelerationLimit, headingRequest,localPath);
@@ -148,49 +148,49 @@ void Track::tearDown()
 {
 }
 
-float Track::driverModelSteering(float currentVelocity, float timeToAimPoint, ArrayXXf localPath) {
+float Track::driverModelSteering(float currentVelocity, float previewTime, ArrayXXf localPath) {
   //driverModelSteering calculates the desired heading of CFSD18 vehicle
   // given the vehicles velocity, a set time to aimpoint and a path in local
   // coordinates (vehicle is origo).
   //
   //Input
   //   CURRENTVELOCITY         [1 x 1] Velocity of the vehicle [m/s]
-  //   TIMETOAIMPOINT          [1 x 1] Time to aimpoint [s].
+  //   PREVIEWTIME             [1 x 1] Time to aimpoint [s].
   //   LOCALPATH               [n x 2] Local coordinates of the path [x,y]
   //
   //Output
   //   HEADINGREQUEST  [1 x 1] Desired heading angle [rad]
 
   // Calculate the distance between vehicle and aimpoint;
-  float distanceToAimPoint = currentVelocity*timeToAimPoint;
+  float previewDistance = currentVelocity*previewTime;
   //Distance to aimpoint is currently calculated only on path, Not from vehicle
   float sumPoints = 0.0f;
-  // Sum the distance between all path points until passing distanceToAimPoint
+  // Sum the distance between all path points until passing previewDistance
   // or reaching end of path
   int k=0;
-  while (distanceToAimPoint >= sumPoints && k < localPath.rows()) {
+  while (previewDistance >= sumPoints && k < localPath.rows()) {
     sumPoints += (localPath.row(k+1)-localPath.row(k)).matrix().norm();
     k++;
   }
 
     ArrayXXf aimPoint(1,2); //REMAKE AS VECTOR?
-  if (sumPoints >= distanceToAimPoint) { // it means that the path is longer than distanceToAimpoint
+  if (sumPoints >= previewDistance) { // it means that the path is longer than previewDistance
     float distanceP1P2, overshoot, distanceP1AimPoint, percentage;
     if (k > 0) {// then the aimpoint will be placed after the first path element
       // Distance between last two considered path elements P1 P2 where P2 is the overshoot element.
       distanceP1P2 = (localPath.row(k+1)-localPath.row(k)).matrix().norm();
       // Difference between distance to aimpoint and summed points.
-      overshoot = sumPoints - distanceToAimPoint;
+      overshoot = sumPoints - previewDistance;
       // Distance between next to last considered path element P1 and aimpoint
       distanceP1AimPoint = distanceP1P2 - overshoot;
       // Linear interpolation
       percentage = distanceP1AimPoint/distanceP1P2;
       aimPoint = (localPath.row(k+1)-localPath.row(k))*percentage + localPath.row(k);
     }
-    else {// not needed if sumPoints is initialized as zero, (and distanceToAimpoint>0)
+    else {// not needed if sumPoints is initialized as zero, (and previewDistance>0)
 
       distanceP1P2 = localPath.row(0).matrix().norm(); // Distance is equal to the distance to the first point;
-      overshoot = sumPoints - distanceToAimPoint;
+      overshoot = sumPoints - previewDistance;
       distanceP1AimPoint = distanceP1P2 - overshoot;
       percentage = distanceP1AimPoint/distanceP1P2;
       aimPoint = localPath.row(0)*percentage;
@@ -285,14 +285,13 @@ float Track::driverModelVelocity(float currentVelocity, float accelerationLimit,
     std::cout << "timeBetweenPoints =" << timeBetweenPoints  << std::endl;
     // Requiered acceleration to achieve velocity of following point from previous point
     float requieredAcceleration = (speedProfile(k)-speedProfile(k-1))/timeBetweenPoints;
-    // If braking is needed
+    // If deceleration is needed
     if (requieredAcceleration < 0.0f) {
-      // If acceleration can't be achieved by braking...
+      // If deceleration can't be achieved by braking...
       if (requieredAcceleration < decelerationLimit) {
-        // Set acceleration to maxBrakingAcceleration
-        float modifiedDeceleration = decelerationLimit;
+        // Set deceleration to max achivable deceleration (vehicle specific)
         // Calculate new velocity
-        speedProfile(k-1) = sqrtf(powf(speedProfile(k),2)-2.0f*modifiedDeceleration*pointDistance); // time based on average(v2-v1)/2
+        speedProfile(k-1) = sqrtf(powf(speedProfile(k),2)-2.0f*decelerationLimit*pointDistance); // time based on average(v2-v1)/2
       }
     }
   }
