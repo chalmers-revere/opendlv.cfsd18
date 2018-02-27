@@ -458,6 +458,14 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
   roi.y = std::max(y - radius, 0);
   roi.width = std::min(x + radius, img.cols) - roi.x;
   roi.height = std::min(y + radius, img.rows) - roi.y;
+
+  cv::circle(img, cv::Point (x,y), radius, cv::Scalar (0,0,0));
+  // // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
+  cv::namedWindow("roi", cv::WINDOW_NORMAL);
+  cv::imshow("roi", img);
+  cv::waitKey(0);
+  cv::destroyAllWindows();
+
   auto patchImg = rectified(roi);
 
   tiny_dnn::vec_t data;
@@ -576,9 +584,9 @@ Eigen::MatrixXd DetectCone::Spherical2Cartesian(double azimuth, double zenimuth,
   double yData = distance * cos(zenimuth * static_cast<double>(DEG2RAD))*cos(azimuth * static_cast<double>(DEG2RAD));
   double zData = distance * sin(zenimuth * static_cast<double>(DEG2RAD));
   Eigen::MatrixXd recievedPoint = MatrixXd::Zero(4,1);
-  recievedPoint << xData,
-                   yData,
-                   zData,
+  recievedPoint << xData * 1000,
+                   yData * 1000,
+                   zData * 1000,
                     0;
   return recievedPoint;
 }
@@ -607,9 +615,9 @@ void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
   std::cout << lidarCones << std::endl;
   m_finalPointCloud = lidarCones;
   cv::Vec3f point3D;
-  double xShift = 0;//1872mm
+  double yShift = 0;//1872mm
   for (int i = 0; i < m_finalPointCloud.cols(); i++){
-    point3D << -m_finalPointCloud(1,i), -m_finalPointCloud(2,i), xShift+m_finalPointCloud(0,i);
+    point3D << m_finalPointCloud(0,i), -m_finalPointCloud(2,i), yShift+m_finalPointCloud(1,i);
     m_finalPointCloud(3,i) = backwardDetection(m_img, point3D);
   }
 

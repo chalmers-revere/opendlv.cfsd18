@@ -95,7 +95,7 @@ logic-cfsd18-sensation-attention.yBoundary = 10 #[m]
 logic-cfsd18-sensation-attention.xBoundary = 1.8 #[m]
 logic-cfsd18-sensation-attention.groundLayerZ = -0.17  #[m]
 logic-cfsd18-sensation-attention.coneHeight = 0.4 #[m]
-logic-cfsd18-sensation-attention.connectDistanceThreshold = 1  #[m]
+logic-cfsd18-sensation-attention.connectDistanceThreshold = 0.8 #[m] 0.5
 logic-cfsd18-sensation-attention.layerRangeThreshold = 0.06   #[m]
 logic-cfsd18-sensation-attention.minNumOfPointsForCone = 2
 logic-cfsd18-sensation-attention.maxNumOfPointsForCone = 80
@@ -108,7 +108,7 @@ logic-cfsd18-sensation-attention.zRangeThreshold = 0.08  #[m]
 logic-cfsd18-sensation-attention.inlierRangeTreshold = 0.1 #[m]
 logic-cfsd18-sensation-attention.dotThreshold = 0.3
 logic-cfsd18-sensation-attention.inlierFoundTreshold = 80 #Number of inliers
-logic-cfsd18-sensation-attention.numberOfIterations = 25 
+logic-cfsd18-sensation-attention.numberOfIterations =  10
 ###############################################################################
 ###############################################################################
 odcockpit.directoriesForSharedLibaries = /opt/opendlv.cfsd18
@@ -120,4 +120,17 @@ proxy-camera.camera.width = 2560
 proxy-camera.camera.height = 720
 proxy-camera.camera.bpp = 3
 proxy-camera.camera.flipped = 0 # 1=flipped image, 0=not flipped image
+
+# CONFIGURATION FOR ODRECORDER
+#
+#odrecorder.output = file://recorder.rec
+odrecorder.remoteControl = 0 # 0 = no remote control, 1 = allowing remote control (i.e. start and stop recording)
+odrecorder.dumpSharedData = 1 # 0 = do not dump shared images and shared images, 1 = otherwise
+
+#odrecorderh264.output = file://recorder.rec
+odrecorderh264.remoteControl = 0 # 0 = no remote control, 1 = allowing remote control (i.e. start and stop recording)
+odrecorderh264.dumpSharedData = 1 # 0 = do not dump shared images and shared images, 1 = otherwise
+odrecorderh264.lossless = 1 # Set to 1 to enable h264 lossless encoding.
+odrecorderh264.portbaseforchildprocesses = 29000 # Every spawned child processes is connecting to the parent process via TCP using 
+odcockpit.directoriesForSharedLibaries = /opt
 

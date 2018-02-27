@@ -16,6 +16,8 @@ services:
         ipc: host
         user: odv
         network_mode: host
+        environment:
+             - DISPLAY=$DISPLAY
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectcone --cid=${CID} --id=1"
     # microservice for cfsd18-sensation-attention
     cfsd18-sensation-attention:
@@ -54,4 +56,29 @@ services:
         volumes:
             - /tmp/.X11-unix:/tmp/.X11-unix
         command: "/opt/opendlv.core/bin/opendlv-core-system-proxy-camera --cid=${CID}  --id=1 --freq=20"
+#    odcockpit:
+#        image: ${IMAGE}
+#        network_mode: host
+#        environment:
+#        - DISPLAY=$DISPLAY
+#        volumes:
+#        - /tmp/.X11-unix:/tmp/.X11-unix
+#        - .:/opt/opendlv.data
+#        - ~/Recordings:/opt/Recordings
+#        ipc: host
+#        user: odv
+#        depends_on:
+#            - odsupercomponent
+#        command: "/opt/od4/bin/odcockpit --cid=${CID}"
+#    odrecorderh264:
+#        image: ${IMAGE}
+#        network_mode: host
+#        volumes:
+#        - ~/Recordings:/opt/Recordings
+#        working_dir: "/opt/Recordings"
+#        ipc: host
+#        user: odv
+#        depends_on:
+#            - odsupercomponent
+#        command: "/opt/od4/bin/odrecorderh264 --cid=${CID}"
 
