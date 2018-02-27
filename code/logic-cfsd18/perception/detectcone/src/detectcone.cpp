@@ -41,6 +41,7 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_patchSize(32)
 , m_coneMutex()
 , m_recievedFirstImg(false)
+, m_nn()
 {
   m_diffVec = 0;
   m_pointMatched = Eigen::MatrixXd::Zero(4,1);
@@ -63,6 +64,7 @@ void DetectCone::setUp()
   std::cout << "setup OK " << std::endl;
 
   // testSlidingWindow("0.png");
+  loadCNN(m_dictionary, m_nn);
 }
 
 void DetectCone::tearDown()
@@ -100,6 +102,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
 
       m_recievedFirstImg = true;
     }
+    //forwardDetection(m_img);
   }
   //Marcus
   if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID()) {
@@ -134,7 +137,6 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
     }
 
   }
-
   //Marcus
 }
 
@@ -272,12 +274,13 @@ void DetectCone::reconstruction(cv::Mat img, cv::Mat &Q, cv::Mat &disp, cv::Mat 
   rectified = imgL;
 
   cv::reprojectImageTo3D(disp, XYZ, Q);
+  XYZ *= 2;
 }
 
 void DetectCone::xyz2xy(cv::Mat Q, cv::Vec3f xyz, cv::Vec2f &xy){
-  double X = xyz[0];
-  double Y = xyz[1];
-  double Z = xyz[2];
+  double X = xyz[0] / 2;
+  double Y = xyz[1] / 2;
+  double Z = xyz[2] / 2;
   double Cx = -Q.at<double>(0,3);
   double Cy = -Q.at<double>(1,3);
   double f = Q.at<double>(2,3);
@@ -289,7 +292,7 @@ void DetectCone::xyz2xy(cv::Mat Q, cv::Vec3f xyz, cv::Vec2f &xy){
 }
 
 float_t DetectCone::depth2resizeRate(double x, double y){
-  return 1.6078-0.6767*std::sqrt(std::sqrt(x*x+y*y)/1000);
+  return 1.5*(1.6078-0.4785*std::sqrt(std::sqrt(x*x+y*y)/1000));
 }
 
 
@@ -364,8 +367,7 @@ int DetectCone::forwardDetection(cv::Mat img){
   cv::Mat Q, disp, rectified, XYZ;
   reconstruction(img, Q, disp, rectified, XYZ);
 
-  tiny_dnn::network<tiny_dnn::sequential> nn;
-  loadCNN(m_dictionary, nn);
+  
 
   // manual roi
   // (453, 237, 0.96875,  "orange");
@@ -376,8 +378,8 @@ int DetectCone::forwardDetection(cv::Mat img){
   // (625,  191,  0.34375,  "blue");
   // (396,  183,  0.34375,  "blue");
 
-  int x = 453;
-  int y = 237;
+  int x = 250;
+  int y = 170;
   float_t ratio = depth2resizeRate(319.105, 1033.59);
   int length = ratio * m_patchSize;
   int radius = (length-1)/2;
@@ -385,6 +387,8 @@ int DetectCone::forwardDetection(cv::Mat img){
   cv::Vec2f point2D;
   point2D << x, y;
   cv::Vec3f point3D = XYZ.at<cv::Vec3f>(y,x) * 2;
+  std::cout << "Find one cone, XYZ positon: "
+    << point3D << "mm, xy position: " << point2D << "pixel" << std::endl;
 
   cv::Rect roi;
   roi.x = std::max(x - radius, 0);
@@ -395,7 +399,7 @@ int DetectCone::forwardDetection(cv::Mat img){
 
   tiny_dnn::vec_t data;
   convertImage(patchImg, m_patchSize, m_patchSize, data);
-  auto prob = nn.predict(data);
+  auto prob = m_nn.predict(data);
   float_t threshold = 0.5;
   // std::cout << prob[0] << " " << prob[1] << " " << prob[2] << " " << prob[3] << std::endl;
   int maxIndex = 1;
@@ -420,6 +424,7 @@ int DetectCone::forwardDetection(cv::Mat img){
   // cv::imshow("disp", rectified);
   // cv::waitKey(0);
   // cv::destroyAllWindows();
+   //cv::imwrite("test.png",rectified);
 
   return maxIndex;
 }
@@ -440,8 +445,6 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
   cv::Mat Q, disp, rectified, XYZ;
   reconstruction(img, Q, disp, rectified, XYZ);
 
-  tiny_dnn::network<tiny_dnn::sequential> nn;
-  loadCNN(m_dictionary, nn);
   cv::Vec2f point2D;
   xyz2xy(Q, point3D, point2D);
 
@@ -450,49 +453,55 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
 
   std::cout << "Camera region center: " << x << ", " << y << std::endl;
   float_t ratio = depth2resizeRate(point3D[0], point3D[2]);
-  int length = ratio * m_patchSize;
-  int radius = (length-1)/2;
-
-  cv::Rect roi;
-  roi.x = std::max(x - radius, 0);
-  roi.y = std::max(y - radius, 0);
-  roi.width = std::min(x + radius, img.cols) - roi.x;
-  roi.height = std::min(y + radius, img.rows) - roi.y;
-
-  cv::circle(img, cv::Point (x,y), radius, cv::Scalar (0,0,0));
-  // // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
-  cv::namedWindow("roi", cv::WINDOW_NORMAL);
-  cv::imshow("roi", img);
-  cv::waitKey(0);
-  cv::destroyAllWindows();
-
-  auto patchImg = rectified(roi);
-
-  tiny_dnn::vec_t data;
-  convertImage(patchImg, m_patchSize, m_patchSize, data);
-  auto prob = nn.predict(data);
-  float_t threshold = 0.5;
-  // std::cout << prob[0] << " " << prob[1] << " " << prob[2] << " " << prob[3] << std::endl;
   int maxIndex = 1;
-  float_t maxProb = prob[1];
-  for(int i=2;i<4;i++){
-    if(prob[i]>prob[maxIndex]){
-      maxIndex = i;
-      maxProb = prob[i];
-    }
-  }
+  if (ratio > 0) {
+    int length = ratio * m_patchSize;
+    int radius = (length-1)/2;
+    std::cout << "radius: " << radius << std::endl;
 
-  std::string labels[] = {"yellow", "blue", "orange"};
-  if (maxProb < threshold)
+    cv::Rect roi;
+    roi.x = std::max(x - radius, 0);
+    roi.y = std::max(y - radius, 0);
+    roi.width = std::min(x + radius, img.cols) - roi.x;
+    roi.height = std::min(y + radius, img.rows) - roi.y;
+
+    //cv::circle(img, cv::Point (x,y), radius, cv::Scalar (0,0,0));
+    // // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
+    //cv::namedWindow("roi", cv::WINDOW_NORMAL);
+    //cv::imshow("roi", img);
+    //cv::waitKey(0);
+    //cv::destroyAllWindows();
+
+    auto patchImg = rectified(roi);
+
+    tiny_dnn::vec_t data;
+    convertImage(patchImg, m_patchSize, m_patchSize, data);
+    auto prob = m_nn.predict(data);
+    float_t threshold = 0.5;
+    // std::cout << prob[0] << " " << prob[1] << " " << prob[2] << " " << prob[3] << std::endl;
+    float_t maxProb = prob[1];
+    for(int i=2;i<4;i++){
+      if(prob[i]>prob[maxIndex]){
+        maxIndex = i;
+        maxProb = prob[i];
+      }
+    }
+
+    std::string labels[] = {"yellow", "blue", "orange"};
+    if (maxProb < threshold)
+      std::cout << "No cone detected" << std::endl;
+    else
+      std::cout << "Find one " << labels[maxIndex-1] << " cone, XYZ positon: " << point3D << "mm, xy position: " << point2D << "pixel" << std::endl;
+     cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,0,0), CV_FILLED);
+     // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
+     cv::namedWindow("disp", cv::WINDOW_NORMAL);
+     cv::imshow("disp", rectified);
+     cv::waitKey(10);
+     //cv::destroyAllWindows();
+  }
+  else{
     std::cout << "No cone detected" << std::endl;
-  else
-    std::cout << "Find one " << labels[maxIndex-1] << " cone, XYZ positon: " << point3D << "mm, xy position: " << point2D << "pixel" << std::endl;
-  // cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,0,0), CV_FILLED);
-  // // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
-  // cv::namedWindow("disp", cv::WINDOW_NORMAL);
-  // cv::imshow("disp", rectified);
-  // cv::waitKey(0);
-  // cv::destroyAllWindows();
+  }
   return maxIndex;
 }
 //run cnn ends
@@ -616,8 +625,9 @@ void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
   m_finalPointCloud = lidarCones;
   cv::Vec3f point3D;
   double yShift = 0;//1872mm
+  double zShift = 50;
   for (int i = 0; i < m_finalPointCloud.cols(); i++){
-    point3D << m_finalPointCloud(0,i), -m_finalPointCloud(2,i), yShift+m_finalPointCloud(1,i);
+    point3D << m_finalPointCloud(0,i), -zShift-m_finalPointCloud(2,i), yShift+m_finalPointCloud(1,i);
     m_finalPointCloud(3,i) = backwardDetection(m_img, point3D);
   }
 

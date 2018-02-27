@@ -113,7 +113,7 @@ logic-cfsd18-sensation-attention.numberOfIterations =  10
 ###############################################################################
 odcockpit.directoriesForSharedLibaries = /opt/opendlv.cfsd18
 
-proxy-camera.camera.debug = 1
+proxy-camera.camera.debug = 0
 proxy-camera.camera.name = ZED
 proxy-camera.camera.id = 1 # Select here the proper ID for OpenCV
 proxy-camera.camera.width = 2560 
