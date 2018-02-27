@@ -55,10 +55,11 @@ Motion::~Motion()
 
 void Motion::nextContainer(odcore::data::Container &a_container)
 {
+  std::cout << "next container" << std::endl;
   if (a_container.getDataType() == opendlv::proxy::GroundAccelerationRequest::ID()) {
     auto accelerationRequest = a_container.getData<opendlv::proxy::GroundAccelerationRequest>();
     float acceleration = accelerationRequest.getGroundAcceleration();
-
+    std::cout << "message 1:" << acceleration << std::endl;
     calcTorque(acceleration);
 
     if (m_brakeEnabled)
@@ -100,6 +101,8 @@ void Motion::nextContainer(odcore::data::Container &a_container)
 void Motion::setUp()
 {
   // std::string const exampleConfig =
+  std::cout << "Setting up motion" << std::endl;
+
   auto kv = getKeyValueConfiguration();
 
   float const vM = kv.getValue<float>("global.vehicle-parameter.m");
@@ -142,6 +145,8 @@ void Motion::calcTorque(float a_arg)
   // Torque distribution
   float torqueLeft = torque*0.5f - dT;
   float torqueRight = torque-torqueLeft;
+  std::cout << "Message 2, left torque:" << torqueLeft << std::endl;
+  std::cout << "Message 3, right torque:" << torqueRight << std::endl;
 
   sendActuationContainer(m_leftMotorID,torqueLeft);
   sendActuationContainer(m_rightMotorID,torqueRight);
@@ -158,6 +163,7 @@ void Motion::sendActuationContainer(int32_t a_arg, float torque)
   odcore::data::Container c(tr);
   c.setSenderStamp(a_arg);
   getConference().send(c);
+  std::cout << "Sent torque request" << std::endl;
 }
 
 

@@ -18,6 +18,8 @@
 */
 
 #include <iostream>
+#include <math.h>
+#include <chrono>
 
 #include <opendavinci/odcore/data/TimeStamp.h>
 #include <opendavinci/odcore/strings/StringToolbox.h>
@@ -29,6 +31,7 @@ namespace opendlv {
 namespace logic {
 namespace cfsd18 {
 namespace action {
+
 
 Ascontrol::Ascontrol(int32_t const &a_argc, char **a_argv) :
   TimeTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-ascontrol"),
@@ -54,9 +57,9 @@ void Ascontrol::nextContainer(odcore::data::Container &a_container)
 
 odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
 {
-    std::cout << "[" << getName() << "]: I sent a container" << std::endl;
   while (getModuleStateAndWaitForRemainingTimeInTimeslice() ==
       odcore::data::dmcp::ModuleStateMessage::RUNNING) {
+          std::cout << "Ascontrol update" << std::endl;
 
           opendlv::system::SystemOperationState ASstatusMessage(1,"OKAY");
           odcore::data::Container output(ASstatusMessage);
@@ -65,7 +68,21 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
           opendlv::proxy::GroundDecelerationRequest test;
           odcore::data::Container outTest(test);
           getConference().send(outTest);
-          std::cout << "I sent a container" << std::endl;
+
+    /*      auto time = std::chrono::duration_cast< std::chrono::milliseconds >(
+    std::chrono::system_clock::now().time_since_epoch());
+*/
+          float headingRequest =  0.1f; //*sin ((float)time);
+          opendlv::logic::action::AimPoint aimpoint(headingRequest,0.0f,5.0f);
+          odcore::data::Container c2(aimpoint);
+          getConference().send(c2);
+
+          float accelerationRequest = 2.0f;
+          opendlv::proxy::GroundAccelerationRequest accReq(accelerationRequest);
+          odcore::data::Container c3(accReq);
+          getConference().send(c3);
+
+
   }
 
 
