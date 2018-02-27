@@ -24,6 +24,9 @@
 #include <opendavinci/odcore/data/Container.h>
 
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
+#include <opendavinci/odcore/wrapper/Eigen.h>
+#include <fstream>
+#include <iostream>
 //#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 
 namespace opendlv {
@@ -42,6 +45,15 @@ class DetectConeLane : public odcore::base::module::DataTriggeredConferenceClien
  private:
   void setUp();
   void tearDown();
+
+  Eigen::MatrixXd Spherical2Cartesian(double, double, double);
+  void rebuildLocalMap();
+  void CheckContainer(uint32_t);
+
+
+  Eigen::MatrixXd m_coneCollector;
+  int coneNum;
+  const double DEG2RAD = 0.017453292522222; // PI/180.0
 };
 
 }
