@@ -37,9 +37,13 @@ Slam::Slam(int32_t const &a_argc, char **a_argv) :
 , m_coneCollector()
 , m_lastObjectId()
 , m_coneMutex()
+, m_sensorMutex()
+, m_odometryData()
+, m_gpsReference()
 {
   m_coneCollector = Eigen::MatrixXd::Zero(4,20);
   m_lastObjectId = 0;
+  m_odometryData << 0,0,0;
 }
 
 Slam::~Slam()
@@ -50,6 +54,9 @@ Slam::~Slam()
 
 void Slam::nextContainer(odcore::data::Container &a_container)
 {
+
+
+  //#####################Recieve Landmarks###########################
   if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID()) {
     odcore::base::Lock lockCone(m_coneMutex);
     std::cout << "Recieved Direction" << std::endl;
@@ -81,6 +88,45 @@ void Slam::nextContainer(odcore::data::Container &a_container)
 			m_coneCollector(3,objectId) = 0;
     }
   }
+
+  //#########################Recieve Odometry##################################
+  if(a_container.getDataType() == opendlv::logic::sensation::Geolocation::ID()){
+   
+    odcore::base::Lock lockSensor(m_sensorMutex);
+    auto odometry = a_container.getData<opendlv::logic::sensation::Geolocation>();
+
+    double longitude = odometry.getLongitude();
+    double latitude = odometry.getLatitude();
+    opendlv::data::environment::WGS84Coordinate gpsCurrent = opendlv::data::environment::WGS84Coordinate(latitude, longitude);
+    opendlv::data::environment::Point3 gpsTransform = m_gpsReference.transform(gpsCurrent);
+
+    m_odometryData << gpsTransform.getX(),
+                      gpsTransform.getY(),
+                      odometry.getHeading();
+  }
+
+
+
+  //When new frame
+
+  //Check if keyframe candidate
+     //If candidate do SLAM (ecluidian distance for two closest landmarks)
+
+
+
+  //Else keep collecting
+
+  /*opendlv::data::environment::Point3 xyz;
+  xyz.setX(x(0));
+  xyz.setY(x(1));
+  xyz.setZ(0);
+  opendlv::data::environment::WGS84Coordinate gpsCurrent = m_gpsReference.transform(xyz);
+  opendlv::logic::sensation::Geolocation geoState;
+  geoState.setLatitude(gpsCurrent.getLatitude());
+  geoState.setLongitude(gpsCurrent.getLongitude());
+  geoState.setHeading(x(5));*/
+
+
 }
 
 bool Slam::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp){
@@ -108,10 +154,37 @@ bool Slam::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp){
 		return true;
 }
 
+bool Slam::isKeyframe(){
+
+
+}
+void Slam::performSLAM(){
+
+
+
+
+}
+Eigen::Vector3d Slam::Spherical2Cartesian(double azimuth, double zenimuth, double distance)
+{
+  //double xyDistance = distance * cos(azimuth * static_cast<double>(DEG2RAD));
+  double xData = distance * cos(zenimuth * static_cast<double>(DEG2RAD))*sin(azimuth * static_cast<double>(DEG2RAD));
+  double yData = distance * cos(zenimuth * static_cast<double>(DEG2RAD))*cos(azimuth * static_cast<double>(DEG2RAD));
+  double zData = distance * sin(zenimuth * static_cast<double>(DEG2RAD));
+  Eigen::MatrixXd recievedPoint = Vector3d::Zero();
+  recievedPoint << xData,
+                   yData,
+                   zData;
+  return recievedPoint;
+}
+
 void Slam::setUp()
 {
   auto kv = getKeyValueConfiguration();
   m_timeDiffMilliseconds = kv.getValue<double>("logic-cfsd18-perception-detectcone.timeDiffMilliseconds");
+
+  double const latitude = getKeyValueConfiguration().getValue<double>("logic-sensation-geolocator.GPSreference.latitude");
+  double const longitude = getKeyValueConfiguration().getValue<double>("logic-sensation-geolocator.GPSreference.longitude");
+  m_gpsReference = opendlv::data::environment::WGS84Coordinate(latitude,longitude);
   
 }
 

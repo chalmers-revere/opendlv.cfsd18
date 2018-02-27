@@ -27,6 +27,9 @@
 #include <opendavinci/odcore/base/Lock.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
 
+#include <opendlv/data/environment/Point3.h>
+#include <opendlv/data/environment/WGS84Coordinate.h>
+
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 //#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 
@@ -47,11 +50,17 @@ class Slam : public odcore::base::module::DataTriggeredConferenceClientModule {
   void setUp();
   void tearDown();
   bool CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp);
+  bool Slam::isKeyframe();
+  void Slam::performSLAM();
+  Eigen::Vector3d Slam::Spherical2Cartesian(double azimuth, double zenimuth, double distance);
   uint32_t m_timeDiffMilliseconds;
   odcore::data::TimeStamp m_lastTimeStamp;
   Eigen::MatrixXd m_coneCollector;
   uint32_t m_lastObjectId;
   odcore::base::Mutex m_coneMutex;
+  odcore::base::Mutex m_sensorMutex;
+  Eigen::Vector3d m_odometryData;
+  opendlv::data::environment::WGS84Coordinate m_gpsReference;
 };
 
 }
