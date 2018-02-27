@@ -38,12 +38,16 @@ Slam::Slam(int32_t const &a_argc, char **a_argv) :
 , m_lastObjectId()
 , m_coneMutex()
 , m_sensorMutex()
+, m_mapMutex()
 , m_odometryData()
 , m_gpsReference()
+, m_map()
+, m_newConeThreshold()
 {
   m_coneCollector = Eigen::MatrixXd::Zero(4,20);
   m_lastObjectId = 0;
   m_odometryData << 0,0,0;
+  m_map = Eigen::MatrixXd::Zero(3,1000);
 }
 
 Slam::~Slam()
@@ -108,9 +112,8 @@ void Slam::nextContainer(odcore::data::Container &a_container)
 
 
   //When new frame
+     //If candidate do SLAM (euclidian distance for two closest landmarks)
 
-  //Check if keyframe candidate
-     //If candidate do SLAM (ecluidian distance for two closest landmarks)
 
 
 
@@ -130,7 +133,7 @@ void Slam::nextContainer(odcore::data::Container &a_container)
 }
 
 bool Slam::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp){
-		if (((timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds()) < m_timeDiffMilliseconds*1000)){
+    if (((timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds()) < m_timeDiffMilliseconds*1000)){
       m_lastObjectId = (m_lastObjectId<objectId)?(objectId):(m_lastObjectId);
       m_lastTimeStamp = timeStamp;
 
@@ -142,8 +145,8 @@ bool Slam::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp){
       if(extractedCones.cols() > 1){
       std::cout << "Extracted Cones " << std::endl;
       std::cout << extractedCones << std::endl;
-      if(true){
-          //SetConesToMap(extractedCones);
+      if(isKeyframe(extractedCones)){
+          performSlam(extractedCones);//Thread?
         }
       }
       //Initialize for next collection
@@ -151,14 +154,74 @@ bool Slam::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp){
       m_lastObjectId = 0;
       m_coneCollector = Eigen::MatrixXd::Zero(4,20);
     }
-		return true;
+  return true;
 }
 
-bool Slam::isKeyframe(){
-
-
+bool Slam::isKeyframe(Eigen::MatrixXd Cones){
+//Check if keyframe candidate
+  return true;
 }
-void Slam::performSLAM(){
+
+
+void Slam::performSLAM(Eigen::MatrixXd cones){
+  Eigen::Vector3d pose;
+  {
+    odcore::base::Lock lockSensor(m_sensorMutex);
+    pose = m_odometryData;
+  }
+  Eigen::MatrixXd xyCones = conesToGlobal(pose, cones);
+  addConesToMap(xyCones);
+  addKeyframeToGraph(
+  
+}
+
+Eigen::MatrixXd Slam::conesToGlobal(Eigen::Vector3d pose, Eigen::MatrixXd cones){
+  Eigen::MatrixXd xyCones = Eigen::MatrixXd::Zero(3,20);
+  for(int i = 0; i<cones.cols();i++){
+    Eigen::vector3d cone = Spherical2Cartesian(cones(0,i), cones(1,i), cones(2,i));
+    cone(0) += pose(0);
+    cone(1) += pose(1);
+    xyCones(0,i) = cone(0);
+    xyCones(1,i) = cone(1);
+    xyCones(2,i) = cones(3,i);
+  }
+}
+
+void Slam::addConesToMap(Eigen::MatrixXd cones){
+  odcore::base::Lock lockMap(m_mapMutex);
+  for(int i = 0; i<cones.cols(); i++){
+    if(newCone(cones.col(i))){
+      
+    }
+  }
+}    
+      
+
+
+bool Slam::newCone(Eigen::MatrixXd cone){
+  for(int i = 0; i<m_map.cols(); i++){
+    if(m_map(2,i) == cone(2)){
+      double distance = (m_map(0,i)-cone(0))*(m_map(0,i)-cone(0))+(m_map(1,i)-cone(1))*(m_map(1,i)-cone(1));
+      distance = std::sqrt(distance);
+      if(distance<m_newConeThreshold){
+	return false;
+      }
+    }
+  }
+  return true;
+}
+  
+//Get the new pose
+//Convert cones from local to global coordinate system
+//Add eventual new cones to the global map
+//Convert the cone observation to a g2o node and a edge with the new pose
+//Try to match cones to already observed cones 
+//Add the pose and make a odometry measurement to the previous pose if applicable
+//(Perform localization maybe)
+//Loop closing Find orange cones
+//Update the global map
+//When map is updated send out cones in local spherical coordinates(along with color info)
+
 
 
 
@@ -181,6 +244,7 @@ void Slam::setUp()
 {
   auto kv = getKeyValueConfiguration();
   m_timeDiffMilliseconds = kv.getValue<double>("logic-cfsd18-perception-detectcone.timeDiffMilliseconds");
+  m_newConeThreshold = kv.getValue<double>("logic-cfsd18-sensation-slam.newConeLimit");
 
   double const latitude = getKeyValueConfiguration().getValue<double>("logic-sensation-geolocator.GPSreference.latitude");
   double const longitude = getKeyValueConfiguration().getValue<double>("logic-sensation-geolocator.GPSreference.longitude");

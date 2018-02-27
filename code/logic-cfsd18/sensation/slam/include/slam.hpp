@@ -50,17 +50,25 @@ class Slam : public odcore::base::module::DataTriggeredConferenceClientModule {
   void setUp();
   void tearDown();
   bool CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp);
-  bool Slam::isKeyframe();
-  void Slam::performSLAM();
-  Eigen::Vector3d Slam::Spherical2Cartesian(double azimuth, double zenimuth, double distance);
+  bool isKeyframe();
+  void performSLAM();
+  Eigen::MatrixXd conesToGlobal(Eigen::Vector3d pose, Eigen::MatrixXd Cones);
+  Eigen::Vector3d Spherical2Cartesian(double azimuth, double zenimuth, double distance);
   uint32_t m_timeDiffMilliseconds;
   odcore::data::TimeStamp m_lastTimeStamp;
   Eigen::MatrixXd m_coneCollector;
   uint32_t m_lastObjectId;
   odcore::base::Mutex m_coneMutex;
   odcore::base::Mutex m_sensorMutex;
+  odcore::base::Mutex m_mapMutex;
   Eigen::Vector3d m_odometryData;
   opendlv::data::environment::WGS84Coordinate m_gpsReference;
+  Eigen::MatrixXd m_map;
+  double m_newConeThreshold;
+
+    // Constants for degree transformation
+  const double DEG2RAD = 0.017453292522222; // PI/180.0
+  const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD;
 };
 
 }
