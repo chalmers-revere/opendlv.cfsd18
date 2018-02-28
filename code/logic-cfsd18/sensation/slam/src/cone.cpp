@@ -24,11 +24,11 @@ namespace logic {
 namespace cfsd18 {
 namespace sensation {
 
-Cone::Cone(double x, double y,std::string property,int id)
-, m_x
-, m_y
-, m_property
-, m_id
+Cone::Cone(double x, double y,std::string property,int id):
+  m_x()
+, m_y()
+, m_property()
+, m_id()
 {
   m_x = x;
   m_y = y;
