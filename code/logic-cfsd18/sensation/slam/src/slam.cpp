@@ -146,7 +146,7 @@ bool Slam::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp){
       std::cout << "Extracted Cones " << std::endl;
       std::cout << extractedCones << std::endl;
       if(isKeyframe(extractedCones)){
-          performSlam(extractedCones);//Thread?
+          performSLAM(extractedCones);//Thread?
         }
       }
       //Initialize for next collection
@@ -159,6 +159,7 @@ bool Slam::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp){
 
 bool Slam::isKeyframe(Eigen::MatrixXd Cones){
 //Check if keyframe candidate
+  Eigen::MatrixXd temp = Cones;
   return true;
 }
 
@@ -171,20 +172,21 @@ void Slam::performSLAM(Eigen::MatrixXd cones){
   }
   Eigen::MatrixXd xyCones = conesToGlobal(pose, cones);
   addConesToMap(xyCones);
-  addKeyframeToGraph(
+  //addKeyframeToGraph(
   
 }
 
 Eigen::MatrixXd Slam::conesToGlobal(Eigen::Vector3d pose, Eigen::MatrixXd cones){
   Eigen::MatrixXd xyCones = Eigen::MatrixXd::Zero(3,20);
   for(int i = 0; i<cones.cols();i++){
-    Eigen::vector3d cone = Spherical2Cartesian(cones(0,i), cones(1,i), cones(2,i));
+    Eigen::Vector3d cone = Spherical2Cartesian(cones(0,i), cones(1,i), cones(2,i));
     cone(0) += pose(0);
     cone(1) += pose(1);
     xyCones(0,i) = cone(0);
     xyCones(1,i) = cone(1);
     xyCones(2,i) = cones(3,i);
   }
+  return xyCones;
 }
 
 void Slam::addConesToMap(Eigen::MatrixXd cones){
@@ -200,7 +202,7 @@ void Slam::addConesToMap(Eigen::MatrixXd cones){
 
 bool Slam::newCone(Eigen::MatrixXd cone){
   for(int i = 0; i<m_map.cols(); i++){
-    if(m_map(2,i) == cone(2)){
+    if(fabs(m_map(2,i) - cone(2))<0.0001){
       double distance = (m_map(0,i)-cone(0))*(m_map(0,i)-cone(0))+(m_map(1,i)-cone(1))*(m_map(1,i)-cone(1));
       distance = std::sqrt(distance);
       if(distance<m_newConeThreshold){
@@ -223,10 +225,6 @@ bool Slam::newCone(Eigen::MatrixXd cone){
 //When map is updated send out cones in local spherical coordinates(along with color info)
 
 
-
-
-
-}
 Eigen::Vector3d Slam::Spherical2Cartesian(double azimuth, double zenimuth, double distance)
 {
   //double xyDistance = distance * cos(azimuth * static_cast<double>(DEG2RAD));

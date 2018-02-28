@@ -50,10 +50,12 @@ class Slam : public odcore::base::module::DataTriggeredConferenceClientModule {
   void setUp();
   void tearDown();
   bool CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp);
-  bool isKeyframe();
-  void performSLAM();
+  bool isKeyframe(Eigen::MatrixXd Cones);
+  void performSLAM(Eigen::MatrixXd Cones);
   Eigen::MatrixXd conesToGlobal(Eigen::Vector3d pose, Eigen::MatrixXd Cones);
   Eigen::Vector3d Spherical2Cartesian(double azimuth, double zenimuth, double distance);
+  void addConesToMap(Eigen::MatrixXd cones);
+  bool newCone(Eigen::MatrixXd cone);
   uint32_t m_timeDiffMilliseconds;
   odcore::data::TimeStamp m_lastTimeStamp;
   Eigen::MatrixXd m_coneCollector;
