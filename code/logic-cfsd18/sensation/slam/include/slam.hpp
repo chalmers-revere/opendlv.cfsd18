@@ -32,6 +32,7 @@
 
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 //#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
+#include "cone.hpp"
 
 namespace opendlv {
 namespace logic {
@@ -65,7 +66,7 @@ class Slam : public odcore::base::module::DataTriggeredConferenceClientModule {
   odcore::base::Mutex m_mapMutex;
   Eigen::Vector3d m_odometryData;
   opendlv::data::environment::WGS84Coordinate m_gpsReference;
-  Eigen::MatrixXd m_map;
+  std::vector<Cone> m_map;
   double m_newConeThreshold;
 
     // Constants for degree transformation

@@ -47,7 +47,6 @@ Slam::Slam(int32_t const &a_argc, char **a_argv) :
   m_coneCollector = Eigen::MatrixXd::Zero(4,20);
   m_lastObjectId = 0;
   m_odometryData << 0,0,0;
-  m_map = Eigen::MatrixXd::Zero(3,1000);
 }
 
 Slam::~Slam()
@@ -193,7 +192,8 @@ void Slam::addConesToMap(Eigen::MatrixXd cones){
   odcore::base::Lock lockMap(m_mapMutex);
   for(int i = 0; i<cones.cols(); i++){
     if(newCone(cones.col(i))){
-      
+       Cone cone = Cone(cones(0,i),cones(1,i),(int)cones(2,i),23); //Temp id, think of system later
+       m_map.push_back(cone);
     }
   }
 }    
@@ -201,9 +201,9 @@ void Slam::addConesToMap(Eigen::MatrixXd cones){
 
 
 bool Slam::newCone(Eigen::MatrixXd cone){
-  for(int i = 0; i<m_map.cols(); i++){
-    if(fabs(m_map(2,i) - cone(2))<0.0001){
-      double distance = (m_map(0,i)-cone(0))*(m_map(0,i)-cone(0))+(m_map(1,i)-cone(1))*(m_map(1,i)-cone(1));
+  for(uint32_t i = 0; i<m_map.size(); i++){
+    if(fabs(m_map[i].getProperty() - cone(2))<0.0001){
+      double distance = (m_map[i].getX()-cone(0))*(m_map[i].getX()-cone(0))+(m_map[i].getY()-cone(1))*(m_map[i].getY()-cone(1));
       distance = std::sqrt(distance);
       if(distance<m_newConeThreshold){
 	return false;

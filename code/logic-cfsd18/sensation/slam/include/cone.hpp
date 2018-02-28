@@ -32,17 +32,17 @@ namespace sensation {
 
 class Cone{
   public:
-    Cone(double x, double y,std::string property,int id);
+    Cone(double x, double y,int property,int id);
     ~Cone();
     
     double getX();
     double getY();
-    std::string getProperty();
+    int getProperty();
     int getId();
     
     void setX(double x);
     void setY(double y);
-    void setProperty(std::string property);
+    void setProperty(int property);
     void setId(int id);
 
     //g2o::pointxy_vertex coneToVertex();
@@ -50,7 +50,7 @@ class Cone{
   private:
     double m_x;
     double m_y;
-    std::string m_property;
+    int m_property;
     int m_id;
 
 };

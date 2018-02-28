@@ -24,7 +24,7 @@ namespace logic {
 namespace cfsd18 {
 namespace sensation {
 
-Cone::Cone(double x, double y,std::string property,int id):
+Cone::Cone(double x, double y,int property,int id):
   m_x()
 , m_y()
 , m_property()
@@ -48,7 +48,7 @@ double Cone::getY(){
   return m_y;
 }
 
-std::string Cone::getProperty(){
+int Cone::getProperty(){
   return m_property;
 }
 
@@ -64,7 +64,7 @@ void Cone::setY(double y){
   m_y = y;
 }
 
-void Cone::setProperty(std::string property){
+void Cone::setProperty(int property){
   m_property = property;
 }
 
