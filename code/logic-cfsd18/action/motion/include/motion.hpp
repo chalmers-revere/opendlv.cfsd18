@@ -51,12 +51,20 @@ class Motion : public odcore::base::module::DataTriggeredConferenceClientModule 
    bool m_brakeEnabled;
    double m_deceleration;
    float m_speed;
-   MatrixXd m_vehicleModelParameters;
    int32_t m_leftMotorID;
    int32_t m_rightMotorID;
    float m_PI;
    float m_aimTime;
    float m_dt;
+   float m_mass;
+   float m_Iz;
+   float m_g;
+   float m_L;
+   float m_lf;
+   float m_lr;
+   float m_mu;
+   float m_wr;
+
 };
 
 }

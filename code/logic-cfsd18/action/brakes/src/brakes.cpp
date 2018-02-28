@@ -76,6 +76,7 @@ void Brakes::nextContainer(odcore::data::Container &a_container)
 
 void Brakes::setUp()
 {
+  std::cout << "Brakes setup" << std::endl;
   auto kv = getKeyValueConfiguration();
   m_pwmId = kv.getValue<uint32_t>("global.sender-stamp.brake");
   m_stateID = kv.getValue<uint32_t>("global.sender-stamp.state");

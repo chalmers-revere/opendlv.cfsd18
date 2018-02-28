@@ -38,12 +38,19 @@ Motion::Motion(int32_t const &a_argc, char **a_argv) :
   m_brakeEnabled(),
   m_deceleration(),
   m_speed(),
-  m_vehicleModelParameters(),
   m_leftMotorID(),
   m_rightMotorID(),
   m_PI(),
   m_aimTime(),
-  m_dt()
+  m_dt(),
+  m_mass(),
+  m_Iz(),
+  m_g(),
+  m_L(),
+  m_lf(),
+  m_lr(),
+  m_mu(),
+  m_wr()
 {
 }
 
@@ -55,11 +62,9 @@ Motion::~Motion()
 
 void Motion::nextContainer(odcore::data::Container &a_container)
 {
-  std::cout << "next container" << std::endl;
   if (a_container.getDataType() == opendlv::proxy::GroundAccelerationRequest::ID()) {
     auto accelerationRequest = a_container.getData<opendlv::proxy::GroundAccelerationRequest>();
     float acceleration = accelerationRequest.getGroundAcceleration();
-    std::cout << "message 1:" << acceleration << std::endl;
     calcTorque(acceleration);
 
     if (m_brakeEnabled)
@@ -105,20 +110,20 @@ void Motion::setUp()
 
   auto kv = getKeyValueConfiguration();
 
-  float const vM = kv.getValue<float>("global.vehicle-parameter.m");
-  float const vIz = kv.getValue<float>("global.vehicle-parameter.Iz");
-  float const vG = kv.getValue<float>("global.vehicle-parameter.g");
-  float const vL = kv.getValue<float>("global.vehicle-parameter.l");
-  float const vLf = kv.getValue<float>("global.vehicle-parameter.lf");
-  float const vLr = kv.getValue<float>("global.vehicle-parameter.lr");
-  float const vMu = kv.getValue<float>("global.vehicle-parameter.mu");
-  float const vWr = kv.getValue<float>("global.vehicle-parameter.wr");
+  m_mass = kv.getValue<float>("global.vehicle-parameter.m");
+  m_Iz = kv.getValue<float>("global.vehicle-parameter.Iz");
+  m_g = kv.getValue<float>("global.vehicle-parameter.g");
+  m_L = kv.getValue<float>("global.vehicle-parameter.l");
+  m_lf = kv.getValue<float>("global.vehicle-parameter.lf");
+  m_lr = kv.getValue<float>("global.vehicle-parameter.lr");
+  m_mu = kv.getValue<float>("global.vehicle-parameter.mu");
+  m_wr = kv.getValue<float>("global.vehicle-parameter.wr");
 
-  m_vehicleModelParameters << vM,vIz,vG,vL,vLf,vLr,vMu,vWr;
+  //m_vehicleModelParameters << vM,vIz,vG,vL,vLf,vLr,vMu,vWr;
 
 
   m_leftMotorID = kv.getValue<int32_t>("global.sender-stamp.left-motor");
-  m_rightMotorID = kv.getValue<int32_t>("global.sender-stamp.right-motor ");
+  m_rightMotorID = kv.getValue<int32_t>("global.sender-stamp.right-motor");
 
   m_aimTime = kv.getValue<float>("global.sender-stamp.aim-point-time");
   m_dt = kv.getValue<float>("opendlv-logic-cfsd18-action-motion.torque-parameter");
@@ -132,21 +137,16 @@ void Motion::tearDown()
 
 void Motion::calcTorque(float a_arg)
 {
-  float mass = m_vehicleModelParameters(1);
-  float wheelRadius = m_vehicleModelParameters(8);
-  float torque = a_arg*mass*wheelRadius;
-  float Iz = m_vehicleModelParameters(2);
+  float torque = a_arg*m_mass*m_wr;
 
   float yawRateRef = calcYawRateRef(m_headingRequest);
 
   float e_yawRate = -yawRateRef; // Add yaw rate here when Marcus is done with message
 
-  float dT = 0.5f/m_dt*e_yawRate*Iz;
+  float dT = 0.5f/m_dt*e_yawRate*m_Iz;
   // Torque distribution
   float torqueLeft = torque*0.5f - dT;
   float torqueRight = torque-torqueLeft;
-  std::cout << "Message 2, left torque:" << torqueLeft << std::endl;
-  std::cout << "Message 3, right torque:" << torqueRight << std::endl;
 
   sendActuationContainer(m_leftMotorID,torqueLeft);
   sendActuationContainer(m_rightMotorID,torqueRight);
@@ -163,7 +163,6 @@ void Motion::sendActuationContainer(int32_t a_arg, float torque)
   odcore::data::Container c(tr);
   c.setSenderStamp(a_arg);
   getConference().send(c);
-  std::cout << "Sent torque request" << std::endl;
 }
 
 

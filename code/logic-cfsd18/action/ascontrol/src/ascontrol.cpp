@@ -59,7 +59,6 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
 {
   while (getModuleStateAndWaitForRemainingTimeInTimeslice() ==
       odcore::data::dmcp::ModuleStateMessage::RUNNING) {
-          std::cout << "Ascontrol update" << std::endl;
 
           opendlv::system::SystemOperationState ASstatusMessage(1,"OKAY");
           odcore::data::Container output(ASstatusMessage);
@@ -125,6 +124,8 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Ascontrol::body()
 
 void Ascontrol::setUp()
 {
+  std::cout << "ascontrol setup" << std::endl;
+
   auto kv = getKeyValueConfiguration();
 
   m_pwmIdRed = kv.getValue<uint32_t>("global.sender-stamp.red");

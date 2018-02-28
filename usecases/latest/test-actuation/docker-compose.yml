@@ -1,3 +1,4 @@
+
 # docker-compose.yml - Composition of micro-services to run OpenDLV software.
 # Copyright (C) 2016 Christian Berger
 #
@@ -26,15 +27,24 @@ services:
         - .:/opt/opendlv.data
         command: "/opt/od4/bin/odsupercomponent --cid=${CID} --verbose=0 --configuration=/opt/opendlv.data/configuration"
 
-    # microservice for ascontrol
+
+    # microservice for lynx-steering
+    cfsd-motion:
+        image: ${IMAGE}
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-motion --cid=${CID} --verbose=0 --id=1"
+
+    # microservice for lynx-steering
     cfsd-ascontrol:
         image: ${IMAGE}
         network_mode: "host"
         depends_on:
             - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-ascontrol --cid=${CID} --verbose=0 --id=1 --freq=1"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-ascontrol --cid=${CID} --verbose=0 --freq=5 --id=1"
 
-    # microservice for brakes
+    # microservice for lynx-steering
     cfsd-brakes:
         image: ${IMAGE}
         network_mode: "host"
@@ -42,23 +52,8 @@ services:
             - odsupercomponent
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-brakes --cid=${CID} --verbose=0 --id=1"
 
-    # microservice for ebsmonitoring
-#    cfsd-ebsmonitoring:
-#        image: ${IMAGE}
-#        network_mode: "host"
-#        depends_on:
-#            - odsupercomponent
-#        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-ebsmonitoring --cid=${CID} --verbose=1 --id=1"
-
-    # microservice for motion
-    cfsd-motion:
-        image: ${IMAGE}
-        network_mode: "host"
-        depends_on:
-            - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-motion --cid=${CID} --verbose=1 --id=1"
-
-    # microservice for steering
+    # microservice for lynx-steering
+    cfsd-steering:
         image: ${IMAGE}
         network_mode: "host"
         depends_on:

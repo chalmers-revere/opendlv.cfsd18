@@ -113,6 +113,7 @@ uint32_t Steering::calcSteering(float a_arg) {
 
 void Steering::setUp()
 {
+  std::cout << "steering setup" << std::endl;
   auto kv = getKeyValueConfiguration();
 
   m_pwmId = kv.getValue<uint32_t>("global.sender-stamp.steering");

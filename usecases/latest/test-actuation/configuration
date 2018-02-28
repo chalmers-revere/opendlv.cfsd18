@@ -51,6 +51,9 @@ global.vehicle-parameter.lr = 0.765 #m (l*0.5)
 global.vehicle-parameter.mu = 0.9
 global.vehicle-parameter.wr = 0.15
 
+
+opendlv-logic-cfsd18-action-motion.torque-parameter = 0.5;
+
 ########SENDER STAMPS########
 global.sender-stamp.left-motor = 101
 global.sender-stamp.right-motor = 102
@@ -66,6 +69,8 @@ global.sender-stamp.state = 172
 global.sender-stamp.red = 211
 global.sender-stamp.green = 212
 global.sender-stamp.blue = 213
+
+global.sender-stamp.aim-point-time = 231
 
 ######CONTROL PARAMETERS#######
 opendlv-logic-cfsd18-action-steering.control-parameter.Kp = 2
