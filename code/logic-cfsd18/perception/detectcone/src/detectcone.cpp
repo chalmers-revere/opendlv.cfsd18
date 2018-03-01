@@ -367,7 +367,7 @@ int DetectCone::forwardDetection(cv::Mat img){
   cv::Mat Q, disp, rectified, XYZ;
   reconstruction(img, Q, disp, rectified, XYZ);
 
-  
+
 
   // manual roi
   // (453, 237, 0.96875,  "orange");
