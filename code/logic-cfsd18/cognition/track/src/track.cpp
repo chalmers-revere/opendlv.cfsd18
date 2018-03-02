@@ -44,8 +44,8 @@ Track::~Track()
 void Track::nextContainer(odcore::data::Container &a_container)
 {
 
-  if (a_container.getDataType() == opendlv::logic::perception::Surface::ID()) {
-    auto surface = a_container.getData<opendlv::logic::perception::Surface>();
+  if (a_container.getDataType() == opendlv::logic::perception::GroundSurface::ID()) {
+    auto surface = a_container.getData<opendlv::logic::perception::GroundSurface>();
     m_localPath << surface.getSurfaceId();
 
     std::cout << "Message " << a_container.getDataType() <<" recieved" << std::endl;
