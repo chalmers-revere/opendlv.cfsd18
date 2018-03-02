@@ -16,7 +16,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-project(opendlv-logic-cfsd18-action-betaestimate)
+project(opendlv-logic-cfsd18-action-slipestimate)
 
 include_directories(include)
 

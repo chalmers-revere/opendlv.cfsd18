@@ -17,43 +17,38 @@
  * USA.
  */
 
-#ifndef OPENDLV_LOGIC_CFSD18_ACTION_BETAESTIMATE_HPP
-#define OPENDLV_LOGIC_CFSD18_ACTION_BETAESTIMATE_HPP
+#ifndef OPENDLV_LOGIC_CFSD18_ACTION_SLIPESTIMATE_HPP
+#define OPENDLV_LOGIC_CFSD18_ACTION_SLIPESTIMATE_HPP
 
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
-
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
-//#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
-#include <opendavinci/odcore/wrapper/Eigen.h>
-#include <iostream>
+#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 
 namespace opendlv {
 namespace logic {
 namespace cfsd18 {
 namespace action {
 
-class Betaestimate : public odcore::base::module::DataTriggeredConferenceClientModule {
+class Slipestimate : public odcore::base::module::DataTriggeredConferenceClientModule {
  public:
-  Betaestimate(int32_t const &, char **);
-  Betaestimate(Betaestimate const &) = delete;
-  Betaestimate &operator=(Betaestimate const &) = delete;
-  virtual ~Betaestimate();
+  Slipestimate(int32_t const &, char **);
+  Slipestimate(Slipestimate const &) = delete;
+  Slipestimate &operator=(Slipestimate const &) = delete;
+  virtual ~Slipestimate();
   virtual void nextContainer(odcore::data::Container &);
+
+
+
 
  private:
   void setUp();
   void tearDown();
 
-  Eigen::MatrixXd Spherical2Cartesian(double, double, double);
-  void rebuildLocalMap();
-  void CheckContainer(uint32_t);
-  void newFrame();
+ private:
+   uint32_t m_pwmId;
+   uint32_t m_stateID;
 
-  Eigen::MatrixXd m_coneCollector;
-  int coneNum;
-  const double DEG2RAD = 0.017453292522222;
-  std::vector<Eigen::MatrixXd> m_pastMaps;
 };
 
 }
