@@ -44,28 +44,6 @@ Track::~Track()
 void Track::nextContainer(odcore::data::Container &a_container)
 {
 
-<<<<<<< HEAD
-  if (a_container.getDataType() == opendlv::logic::perception::Surface::ID()) {
-    auto surface = a_container.getData<opendlv::logic::perception::Surface>();
-    auto localPath = surface.getSurfaceId();
-    //std::string type = Surface.getType();
-    std::cout << "[cognition] TRACK.CPP IS RECIEVING SURFACE " << localPath << std::endl;
-    /*float timeToAimPoint = 1;
-    float currentVelocity = 5;
-    float accelerationLimit = 5;
-    float decelerationLimit = -5;
-    float headingRequest = Track::driverModelSteering(currentVelocity, timeToAimPoint, localPath);
-    float accelerationRequest = Track::driverModelVelocity(currentVelocity, accelerationLimit, decelerationLimit, headingRequest,localPath);
-    */
-    float accelerationRequest;
-    if (localPath > 12345){
-      accelerationRequest = 3.4;
-    }
-    else {
-      accelerationRequest = -2.0;
-    }
-    float headingRequest = 1.2;
-=======
   if (a_container.getDataType() == opendlv::logic::perception::GroundSurface::ID()) {
     auto surface = a_container.getData<opendlv::logic::perception::GroundSurface>();
     m_localPath << surface.getSurfaceId();
@@ -78,7 +56,6 @@ void Track::nextContainer(odcore::data::Container &a_container)
     float decelerationLimit = -5;
     float headingRequest = Track::driverModelSteering(currentVelocity, previewTime);
     float accelerationRequest = Track::driverModelVelocity(currentVelocity, accelerationLimit, decelerationLimit, headingRequest);
->>>>>>> 6ecbaa2cf598b286371412b2235889c653b1bc33
 
     opendlv::logic::action::AimPoint o1;
     o1.setAzimuthAngle(headingRequest);
