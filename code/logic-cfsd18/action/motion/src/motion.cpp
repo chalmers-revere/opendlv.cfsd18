@@ -56,7 +56,8 @@ Motion::~Motion()
 void Motion::nextContainer(odcore::data::Container &a_container)
 {
   std::cout << "next container" << std::endl;
-  if (a_container.getDataType() == opendlv::proxy::GroundAccelerationRequest::ID()) {
+  (void) a_container;
+/*  if (a_container.getDataType() == opendlv::proxy::GroundAccelerationRequest::ID()) {
     auto accelerationRequest = a_container.getData<opendlv::proxy::GroundAccelerationRequest>();
     float acceleration = accelerationRequest.getGroundAcceleration();
     std::cout << "message 1:" << acceleration << std::endl;
@@ -95,7 +96,7 @@ void Motion::nextContainer(odcore::data::Container &a_container)
   if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
     auto headingRequest = a_container.getData<opendlv::logic::action::AimPoint>();
     m_headingRequest = headingRequest.getAzimuthAngle();
-  }
+  }*/
 }
 
 void Motion::setUp()
@@ -132,6 +133,7 @@ void Motion::tearDown()
 
 void Motion::calcTorque(float a_arg)
 {
+  (void) a_arg;/*
   float mass = m_vehicleModelParameters(1);
   float wheelRadius = m_vehicleModelParameters(8);
   float torque = a_arg*mass*wheelRadius;
@@ -149,21 +151,23 @@ void Motion::calcTorque(float a_arg)
   std::cout << "Message 3, right torque:" << torqueRight << std::endl;
 
   sendActuationContainer(m_leftMotorID,torqueLeft);
-  sendActuationContainer(m_rightMotorID,torqueRight);
+  sendActuationContainer(m_rightMotorID,torqueRight);*/
 }
 
 float Motion::calcYawRateRef(float a_arg){
+  return a_arg;/*
   float t = m_aimTime*m_PI/a_arg;
-  return 2.0f*m_PI/t;
+  return 2.0f*m_PI/t;*/
 }
 
 void Motion::sendActuationContainer(int32_t a_arg, float torque)
-{
+{(void) a_arg;
+  (void) torque;/*
   opendlv::proxy::TorqueRequest tr(torque);
   odcore::data::Container c(tr);
   c.setSenderStamp(a_arg);
   getConference().send(c);
-  std::cout << "Sent torque request" << std::endl;
+  std::cout << "Sent torque request" << std::endl;*/
 }
 
 
