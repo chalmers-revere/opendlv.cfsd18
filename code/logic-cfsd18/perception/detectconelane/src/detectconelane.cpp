@@ -233,6 +233,90 @@ ArrayXXf DetectConeLane::traceBackToClosestPoint(ArrayXXf p1, ArrayXXf p2)
    return n*d;		// Follow the normal vector for that distance
 }
 
+ArrayXXf DetectConeLane::orderCones(ArrayXXf cones, ArrayXXf vehicleLocation)
+{
+  // Input: Cone and vehicle positions in the same coordinate system
+  // Output: The cones in order
+
+std::cout << "cones: " << cones << std::endl;
+std::cout << "vehicleLocation: " << vehicleLocation << std::endl;
+
+ArrayXXf tmp(1,2);
+tmp << 0,0;
+return tmp;
+}
+
+ArrayXXf DetectConeLane::orderAndFilterCones(ArrayXXf cones, ArrayXXf vehicleLocation)
+{
+  // Input: Cone and vehicle positions in the same coordinate system
+  // Output: The cones that satisfy some requirements in order
+
+std::cout << "cones: " << cones << std::endl;
+std::cout << "vehicleLocation: " << vehicleLocation << std::endl;
+
+ArrayXXf tmp(1,2);
+tmp << 0,0;
+return tmp;
+}
+
+ArrayXXf DetectConeLane::insertNeededGuessedCones(ArrayXXf longSide, ArrayXXf shortSide, ArrayXXf vehicleLocation, float distanceThreshold, float guessDistance, bool guessToTheLeft)
+{
+  // Input: Both cone sides, vehicle position, two distance values and if the guesses should be on the left side
+  // Output: The new short side with mixed real and guessed cones
+
+std::cout << "longSide:  " << longSide << std::endl;
+std::cout << "shortSide:  " << shortSide << std::endl;
+std::cout << "vehicleLocation:  " << vehicleLocation << std::endl;
+std::cout << "distanceThreshold:  " << distanceThreshold << std::endl;
+std::cout << "guessDistance:  " << guessDistance << std::endl;
+std::cout << "guessToTheLeft:  " << guessToTheLeft << std::endl;
+
+ArrayXXf tmp(1,2);
+tmp << 0,0;
+return tmp;
+}
+
+ArrayXXf DetectConeLane::guessCones(ArrayXXf firstCone, ArrayXXf secondCone, float guessDistance, bool guessToTheLeft, bool guessForFirstCone, bool guessForSecondCone)
+{
+  // Input: Two neighbouring cones, the guessing distance, if guesses should go to the left or not, and which known cones should get matching guesses
+  // Output: Guessed cone positions
+
+std::cout << "firstCone: " << firstCone << std::endl;
+std::cout << "secondCone: " << secondCone << std::endl;
+std::cout << "guessDistance: " << guessDistance << std::endl;
+std::cout << "guessToTheLeft: " << guessToTheLeft << std::endl;
+std::cout << "guessForFirstCone: " << guessForFirstCone << std::endl;
+std::cout << "guessForSecondCone: " << guessForSecondCone << std::endl;
+
+ArrayXXf tmp(1,2);
+tmp << 0,0;
+return tmp;
+}
+
+float DetectConeLane::findTotalPathLength(ArrayXXf sidePoints)
+{
+  // Input: Cone positions
+  // Output: Total length of cone sequence
+
+std::cout << "sidePoints: " << sidePoints << std::endl;
+
+float tmp = 0;
+return tmp;
+}
+
+float DetectConeLane::findFactorToClosestPoint(ArrayXXf p1, ArrayXXf p2, ArrayXXf q)
+{
+  // Input: The two cones of a cone segment and a reference point
+  // Output: The factor to multiply with the vector between the cones in order to reach the point on the segment that has a perpendicular line to the reference point
+
+std::cout << "p1: " << p1 << std::endl;
+std::cout << "p2: " << p2 << std::endl;
+std::cout << "q: " << q << std::endl;
+
+float tmp = 0;
+return tmp;
+}
+
 }
 }
 }

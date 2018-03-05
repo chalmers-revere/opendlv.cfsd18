@@ -25,6 +25,7 @@
 
 //#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 #include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
+#include <opendavinci/odcore/wrapper/Eigen.h>
 
 namespace opendlv {
 namespace sim {
@@ -42,6 +43,7 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
  private:
   void setUp();
   void tearDown();
+  ArrayXXf simConeDetectorBox(ArrayXXf, ArrayXXf, float, float, float);
 };
 
 }

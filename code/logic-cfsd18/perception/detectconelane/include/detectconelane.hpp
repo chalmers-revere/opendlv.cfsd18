@@ -46,6 +46,12 @@ class DetectConeLane : public odcore::base::module::DataTriggeredConferenceClien
   ArrayXXf findSafeLocalPath(ArrayXXf, ArrayXXf, float);
   ArrayXXf placeEquidistantPoints(ArrayXXf, bool, int, float);
   ArrayXXf traceBackToClosestPoint(ArrayXXf, ArrayXXf);
+  ArrayXXf orderCones(ArrayXXf, ArrayXXf);
+  ArrayXXf orderAndFilterCones(ArrayXXf, ArrayXXf);
+  ArrayXXf insertNeededGuessedCones(ArrayXXf, ArrayXXf, ArrayXXf, float, float, bool);
+  ArrayXXf guessCones(ArrayXXf, ArrayXXf, float, bool, bool, bool);
+  float findTotalPathLength(ArrayXXf);
+  float findFactorToClosestPoint(ArrayXXf, ArrayXXf, ArrayXXf);
 };
 
 }

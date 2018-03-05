@@ -68,6 +68,22 @@ void DetectCone::tearDown()
 {
 }
 
+ArrayXXf DetectCone::simConeDetectorBox(ArrayXXf globalMap, ArrayXXf location, float heading, float detectRange, float detectWidth)
+{
+  // Input: Positions of cones and vehicle, heading angle, detection ranges forward and to the side
+  // Output: Indices of the cones within the specified area
+
+std::cout << "globalMap: " << globalMap << std::endl;
+std::cout << "location: " << location << std::endl;
+std::cout << "heading: " << heading << std::endl;
+std::cout << "detectRange: " << detectRange << std::endl;
+std::cout << "detectWidth: " << detectWidth << std::endl;
+
+ArrayXXf tmp(1,2);
+tmp << 0,0;
+return tmp;
+}
+
 }
 }
 }
