@@ -70,10 +70,12 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   void xyz2xy(cv::Mat, cv::Vec3f, cv::Vec2f &);
   float_t depth2resizeRate(double, double);
   void convertImage(cv::Mat, int, int, tiny_dnn::vec_t &);
-  void loadCNN(const std::string &, tiny_dnn::network<tiny_dnn::sequential> &);
-  // void testSlidingWindow(const std::string &);
+  void slidingWindow(const std::string &, tiny_dnn::network<tiny_dnn::sequential> &);
   int backwardDetection(cv::Mat, cv::Vec3f);
-  int forwardDetection(cv::Mat);
+  void efficientSlidingWindow(const std::string &, tiny_dnn::network<tiny_dnn::sequential> &, int, int);
+  void softmax(cv::Vec4d, cv::Vec4d &);
+  std::vector <cv::Point> imRegionalMax(cv::Mat, int, double, int);
+  void forwardDetection(cv::Mat);
 
   // void matchPoints(Eigen::MatrixXd, Eigen::MatrixXd);
   // void findMatch(Eigen::MatrixXd, Eigen::MatrixXd);
@@ -93,12 +95,12 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   Eigen::MatrixXd m_coneCollector;
   uint32_t m_lastObjectId;
 
-  cv::Mat m_img;
-  const std::string m_dictionary;
-  int m_patchSize;
   odcore::base::Mutex m_coneMutex;
   bool m_recievedFirstImg;
+  cv::Mat m_img;
   tiny_dnn::network<tiny_dnn::sequential> m_nn;
+  bool m_lidarIsWorking;
+  int64_t m_checkLiarMilliseconds;
 
   const double DEG2RAD = 0.017453292522222; // PI/180.0
   const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD;

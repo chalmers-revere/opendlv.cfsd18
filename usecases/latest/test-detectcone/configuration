@@ -33,7 +33,7 @@ global.session.expectedModules = copplar-control-example
 ###############################################################################
 ###############################################################################
 #
-# NEXT, THE CONFIGURATION FOR OpenDaVINCI TOOLS FOLLOWS. 
+# NEXT, THE CONFIGURATION FOR OpenDaVINCI TOOLS FOLLOWS.
 #
 ###############################################################################
 ###############################################################################
@@ -56,7 +56,7 @@ odsupercomponent.pulsetimeack.timeout = 5000 # (in milliseconds)
 # to deliver their respective containers, this yielding time is used to sleep
 # before supercomponent sends the pulse messages the next module in this execution
 # cycle. This value needs to be adjusted for networked simulations to ensure
-# deterministic execution. 
+# deterministic execution.
 odsupercomponent.pulsetimeack.yield = 5000 # (in microseconds)
 
 # List of modules (without blanks) that will not get a pulse message from odsupercomponent.
@@ -67,7 +67,7 @@ odsupercomponent.pulsetimeack.exclude = odcockpit
 
 logic-cfsd18-perception-detectcone.threshold = 1.5 #[m]
 logic-cfsd18-perception-detectcone.timeDiffMilliseconds = 20 #[ms]
-
+logic-cfsd18-perception-detectcone.checkLidarMilliseconds = 1000 #[ms]
 
 ###############################################################################
 #
@@ -80,8 +80,8 @@ proxy-velodyne16.numberOfBitsForIntensity = 0  #Range 0-7. Only used when CPC is
 proxy-velodyne16.intensityPlacement = 0 #0: higher bits; 1: lower bits
 proxy-velodyne16.distanceEncoding = 1 #0: cm; 1: 2mm
 proxy-velodyne16.sharedMemory.name = velodyne16SM
-#The total size of the shared memory: MAX_POINT_SIZE * NUMBER_OF_COMPONENTS_PER_POINT * sizeof(float), where MAX_POINT_SIZE is the maximum number of points per frame (This upper bound should be set as low as possible, as it affects the shared memory size and thus the frame updating speed), NUMBER_OF_COMPONENTS_PER_POIN=4  Recommended values: MAX_POINT_SIZE=30000->proxy-velodyne16.sharedMemory.size = 480000 
-proxy-velodyne16.sharedMemory.size = 480000 
+#The total size of the shared memory: MAX_POINT_SIZE * NUMBER_OF_COMPONENTS_PER_POINT * sizeof(float), where MAX_POINT_SIZE is the maximum number of points per frame (This upper bound should be set as low as possible, as it affects the shared memory size and thus the frame updating speed), NUMBER_OF_COMPONENTS_PER_POIN=4  Recommended values: MAX_POINT_SIZE=30000->proxy-velodyne16.sharedMemory.size = 480000
+proxy-velodyne16.sharedMemory.size = 480000
 proxy-velodyne16.udpReceiverIP = 0.0.0.0
 proxy-velodyne16.udpPort = 2368
 proxy-velodyne16.calibration = VLP-16.xml
@@ -115,8 +115,8 @@ odcockpit.directoriesForSharedLibaries = /opt/opendlv.cfsd18
 
 proxy-camera.camera.debug = 0
 proxy-camera.camera.name = ZED
-proxy-camera.camera.id = 1 # Select here the proper ID for OpenCV
-proxy-camera.camera.width = 2560 
+proxy-camera.camera.id = 0 # Select here the proper ID for OpenCV
+proxy-camera.camera.width = 2560
 proxy-camera.camera.height = 720
 proxy-camera.camera.bpp = 3
 proxy-camera.camera.flipped = 0 # 1=flipped image, 0=not flipped image
@@ -131,6 +131,5 @@ odrecorder.dumpSharedData = 1 # 0 = do not dump shared images and shared images,
 odrecorderh264.remoteControl = 0 # 0 = no remote control, 1 = allowing remote control (i.e. start and stop recording)
 odrecorderh264.dumpSharedData = 1 # 0 = do not dump shared images and shared images, 1 = otherwise
 odrecorderh264.lossless = 1 # Set to 1 to enable h264 lossless encoding.
-odrecorderh264.portbaseforchildprocesses = 29000 # Every spawned child processes is connecting to the parent process via TCP using 
+odrecorderh264.portbaseforchildprocesses = 29000 # Every spawned child processes is connecting to the parent process via TCP using
 odcockpit.directoriesForSharedLibaries = /opt
-
