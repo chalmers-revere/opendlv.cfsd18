@@ -285,12 +285,78 @@ ArrayXXf DetectConeLane::orderAndFilterCones(ArrayXXf cones, ArrayXXf vehicleLoc
   // Input: Cone and vehicle positions in the same coordinate system
   // Output: The cones that satisfy some requirements in order
 
-std::cout << "cones: " << cones << std::endl;
-std::cout << "vehicleLocation: " << vehicleLocation << std::endl;
+int nCones = cones.rows();
+ArrayXXf current = vehicleLocation;
+ArrayXXf found(nCones,1);
+ArrayXXf orderedCones(nCones,2);
 
-ArrayXXf tmp(1,2);
-tmp << 0,0;
-return tmp;
+float shortestDist;
+float tmpDist;
+int closestConeIndex;
+float line1;
+float line2;
+float line3;
+float angle;
+int nAcceptedCones = 0;
+
+float orderingDistanceThreshold = 5.5; // There might be an alternative to hard coding this...
+const float PI = 3.14159265;
+
+for(int i = 0; i < nCones; i = i+1)
+{
+  shortestDist = std::numeric_limits<float>::infinity();
+  closestConeIndex = -1;
+  // Find closest cone to the last chosen cone
+  for(int j = 0; i < nCones; i = i+1)
+  {
+    if(!((found==j).any()))
+    {
+      tmpDist = ((current-cones.row(j)).matrix()).norm();
+      if(tmpDist < shortestDist && tmpDist < orderingDistanceThreshold)
+      {
+        if(i < 2)
+        {
+          shortestDist = tmpDist;
+          closestConeIndex = j;
+        }
+        else
+        {
+          // Cosine rule
+          line1 = ((cones.row(found(i-2))-cones.row(found(i-1))).matrix()).norm();
+          line2 = ((cones.row(found(i-1))-cones.row(j)).matrix()).norm();
+          line3 = ((cones.row(j)-cones.row(found(i-2))).matrix()).norm();
+          angle = std::acos((float)(-std::pow(line3,2)+std::pow(line2,2)+std::pow(line1,2))/(2*line2*line1));
+
+          if(std::abs(angle) > PI/2)
+          {
+            shortestDist = tmpDist;
+            closestConeIndex = j;
+          } // End of if
+        } // End of else
+      } // End of if
+    } // End of if
+  } // End of for
+  
+  // If no remaining cone was accepted, the algorithm finishes early
+  if(closestConeIndex == -1)
+  {
+    break;
+  } // End of if
+  nAcceptedCones = nAcceptedCones+1;
+  found(i) = closestConeIndex;
+  current = cones.row(closestConeIndex);
+} // End of for
+
+// Rearrange cones to have the order of found
+for(int i = 0; i < nAcceptedCones; i = i+1)
+{
+  orderedCones.row(i) = cones.row(found(i));
+}
+
+//std::cout << "cones: " << cones << std::endl;
+//std::cout << "vehicleLocation: " << vehicleLocation << std::endl;
+
+return orderedCones;
 }
 
 ArrayXXf DetectConeLane::insertNeededGuessedCones(ArrayXXf longSide, ArrayXXf shortSide, ArrayXXf vehicleLocation, float distanceThreshold, float guessDistance, bool guessToTheLeft)
