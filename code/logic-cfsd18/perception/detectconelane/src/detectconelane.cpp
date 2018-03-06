@@ -238,12 +238,46 @@ ArrayXXf DetectConeLane::orderCones(ArrayXXf cones, ArrayXXf vehicleLocation)
   // Input: Cone and vehicle positions in the same coordinate system
   // Output: The cones in order
 
-std::cout << "cones: " << cones << std::endl;
-std::cout << "vehicleLocation: " << vehicleLocation << std::endl;
+int nCones = cones.rows();
+ArrayXXf current = vehicleLocation;
+ArrayXXf found(nCones,1);
+ArrayXXf orderedCones(nCones,2);
 
-ArrayXXf tmp(1,2);
-tmp << 0,0;
-return tmp;
+float shortestDist;
+float tmpDist;
+int closestConeIndex;
+
+for(int i = 0; i < nCones; i = i+1)
+{
+  shortestDist = std::numeric_limits<float>::infinity();
+  // Find closest cone to the last chosen cone
+  for(int j = 0; i < nCones; i = i+1)
+  {
+    if(!((found==j).any()))
+    {
+      tmpDist = ((current-cones.row(j)).matrix()).norm();
+      if(tmpDist < shortestDist)
+      {
+        shortestDist = tmpDist;
+        closestConeIndex = j;
+      } // End of if
+    } // End of if
+  } // End of for
+
+  found(i) = closestConeIndex;
+  current = cones.row(closestConeIndex);
+} // End of for
+
+// Rearrange cones to have the order of found
+for(int i = 0; i < nCones; i = i+1)
+{
+  orderedCones.row(i) = cones.row(found(i));
+}
+
+//std::cout << "cones: " << cones << std::endl;
+//std::cout << "vehicleLocation: " << vehicleLocation << std::endl;
+
+return orderedCones;
 }
 
 ArrayXXf DetectConeLane::orderAndFilterCones(ArrayXXf cones, ArrayXXf vehicleLocation)
