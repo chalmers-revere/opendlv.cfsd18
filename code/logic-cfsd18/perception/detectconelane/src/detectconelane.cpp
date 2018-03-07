@@ -478,10 +478,19 @@ float DetectConeLane::findTotalPathLength(ArrayXXf sidePoints)
   // Input: Cone positions
   // Output: Total length of cone sequence
 
-std::cout << "sidePoints: " << sidePoints << std::endl;
+int nCones = sidePoints.rows();
+float pathLength = 0;
 
-float tmp = 0;
-return tmp;
+float segLength;
+for(int i = 0; i < nCones-1; i = i+1)
+{
+  segLength = ((sidePoints.row(i+1)-sidePoints(i)).matrix()).norm();
+  pathLength = pathLength + segLength;
+}
+
+// std::cout << "sidePoints: " << sidePoints << std::endl;
+
+return pathLength;
 }
 
 float DetectConeLane::findFactorToClosestPoint(ArrayXXf p1, ArrayXXf p2, ArrayXXf q)
