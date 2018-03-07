@@ -159,9 +159,8 @@ for(int i = 0; i < nMidPoints; i = i+1)
     } // End of if
   } // End of for
 
-  // Check if on of the two segments next to the cone has a perpendicular line to the long side point. If so, place the short side point on that place of the segment. If not, place the point on the cone.
-
-  // If it's the first or last cone there is only one segment to check
+  // Check if one of the two segments next to the cone has a perpendicular line to the long side point. If so, place the short side point
+  // on that place of the segment. If not, place the point on the cone. If it's the first or last cone there is only one segment to check
   if(closestConeIndex == 0)
   {
     factor = findFactorToClosestPoint(shortSide.row(0),shortSide.row(1),virtualPointsLong.row(i));
@@ -335,6 +334,7 @@ float shortestDist;
 float tmpDist;
 int closestConeIndex;
 
+// The first chosen cone is the one closest to the vehicle. After that it continues with the closest neighbour
 for(int i = 0; i < nCones; i = i+1)
 {
   shortestDist = std::numeric_limits<float>::infinity();
@@ -371,12 +371,11 @@ return orderedCones;
 ArrayXXf DetectConeLane::orderAndFilterCones(ArrayXXf cones, ArrayXXf vehicleLocation)
 {
   // Input: Cone and vehicle positions in the same coordinate system
-  // Output: The cones that satisfy some requirements in order
+  // Output: The cones that satisfy some requirements, in order
 
 int nCones = cones.rows();
 ArrayXXf current = vehicleLocation;
 ArrayXXf found(nCones,1);
-ArrayXXf orderedCones(nCones,2);
 
 float shortestDist;
 float tmpDist;
@@ -402,14 +401,17 @@ for(int i = 0; i < nCones; i = i+1)
       tmpDist = ((current-cones.row(j)).matrix()).norm();
       if(tmpDist < shortestDist && tmpDist < orderingDistanceThreshold)
       {
+        // If it's one of the first two cones, the nearest neighbour is accepted
         if(i < 2)
         {
           shortestDist = tmpDist;
           closestConeIndex = j;
         }
+        // Otherwise the nearest neighbour needs to be considered to be placed in roughly the same direction as the two previous cones
+        // i.e the angle between the previous line and the next must be larger than pi/2 (it has a forward going component)
         else
         {
-          // Cosine rule
+          // The angle is found with the cosine rule
           line1 = ((cones.row(found(i-2))-cones.row(found(i-1))).matrix()).norm();
           line2 = ((cones.row(found(i-1))-cones.row(j)).matrix()).norm();
           line3 = ((cones.row(j)-cones.row(found(i-2))).matrix()).norm();
@@ -430,12 +432,14 @@ for(int i = 0; i < nCones; i = i+1)
   {
     break;
   } // End of if
+
   nAcceptedCones = nAcceptedCones+1;
   found(i) = closestConeIndex;
   current = cones.row(closestConeIndex);
 } // End of for
 
 // Rearrange cones to have the order of found
+ArrayXXf orderedCones(nAcceptedCones,2);
 for(int i = 0; i < nAcceptedCones; i = i+1)
 {
   orderedCones.row(i) = cones.row(found(i));
@@ -454,13 +458,14 @@ ArrayXXf DetectConeLane::insertNeededGuessedCones(ArrayXXf longSide, ArrayXXf sh
 
 int nConesLong = longSide.rows();
 int nConesShort = shortSide.rows();
-ArrayXXf guessedCones(2*nConesLong-2,2);
+ArrayXXf guessedCones(2*nConesLong-2,2); // 2n-2 is the number of guesses if all known cones need guessed matches
 
 float shortestDist;
 float tmpDist;
 ArrayXXf guess(1,2);
 int nGuessedCones = 0;
 
+// Every long side cone should search for a possible match on the other side
 for(int i = 0; i < nConesLong; i = i+1)
 {
   shortestDist = std::numeric_limits<float>::infinity();
@@ -474,6 +479,8 @@ for(int i = 0; i < nConesLong; i = i+1)
     } // End of if
   } // End of for
   
+  // If the closest cone is not valid, create cone guesses perpendicular to both segments connected to the current cone.
+  // If it's the first or last cone, there is only on segment available.
   if(shortestDist > distanceThreshold)
   {
     if(i == 0)
@@ -499,6 +506,7 @@ for(int i = 0; i < nConesLong; i = i+1)
   } // End of if
 } // End of for
 
+// Collect real and guessed cones in the same array, and order them
 ArrayXXf guessedConesFinal = guessedCones.topRows(nGuessedCones);
 ArrayXXf realAndGuessedCones(nConesShort+nGuessedCones,2);
 realAndGuessedCones.topRows(nConesShort) = shortSide;
@@ -517,7 +525,8 @@ return newShortSide;
 
 ArrayXXf DetectConeLane::guessCones(ArrayXXf firstCone, ArrayXXf secondCone, float guessDistance, bool guessToTheLeft, bool guessForFirstCone, bool guessForSecondCone)
 {
-  // Input: Two neighbouring cones, the guessing distance, if guesses should go to the left or not, and which known cones should get matching guesses
+  // Input: Two neighbouring cones, the guessing distance, if guesses should go to the left or not, and which known cones should
+  // get matching guesses
   // Output: Guessed cone positions
 
 ArrayXXf vector = secondCone-firstCone;
@@ -536,6 +545,7 @@ normal << -vector(1),vector(0);
 normal = normal/((normal.matrix()).norm());
 ArrayXXf guessVector = direction*guessDistance*normal;
 
+// The guess is placed a guessVector away from the cone that should get a mathing guess
 ArrayXXf guessedCones(1,2);
 if(guessForFirstCone && !guessForSecondCone)
 {
@@ -547,7 +557,7 @@ else if(!guessForFirstCone && guessForSecondCone)
 }
 else
 {
-  // Should not be in use. Works in matlab but not here were arraySizes have to be defined in advance? Throw exception if this is called?
+  // Should not be in use. Works in matlab but not here were array sizes have to be defined in advance? Throw exception if this is reached?
   guessedCones << -1000,-1000;
 } // End of else
 
@@ -584,10 +594,11 @@ return pathLength;
 float DetectConeLane::findFactorToClosestPoint(ArrayXXf p1, ArrayXXf p2, ArrayXXf q)
 {
   // Input: The two cones of a cone segment and a reference point
-  // Output: The factor to multiply with the vector between the cones in order to reach the point on the segment that has a perpendicular line to the reference point
+  // Output: The factor to multiply with the vector between the cones in order to reach the point on the segment that has a
+  // perpendicular line to the reference point
 
-ArrayXXf v = p1-p2;
-ArrayXXf n(1,2);
+ArrayXXf v = p1-p2; // The line to follow
+ArrayXXf n(1,2);    // The normal
 n << -v(1),v(0);
 
 float factor = (q(0)-p1(0)+(p1(1)-q(1))*n(0)/n(1))/(v(0)-v(1)*n(0)/n(1));
