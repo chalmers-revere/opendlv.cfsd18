@@ -362,18 +362,69 @@ return orderedCones;
 ArrayXXf DetectConeLane::insertNeededGuessedCones(ArrayXXf longSide, ArrayXXf shortSide, ArrayXXf vehicleLocation, float distanceThreshold, float guessDistance, bool guessToTheLeft)
 {
   // Input: Both cone sides, vehicle position, two distance values and if the guesses should be on the left side
-  // Output: The new short side with mixed real and guessed cones
+  // Output: The new ordered short side with mixed real and guessed cones
 
-std::cout << "longSide:  " << longSide << std::endl;
-std::cout << "shortSide:  " << shortSide << std::endl;
-std::cout << "vehicleLocation:  " << vehicleLocation << std::endl;
-std::cout << "distanceThreshold:  " << distanceThreshold << std::endl;
-std::cout << "guessDistance:  " << guessDistance << std::endl;
-std::cout << "guessToTheLeft:  " << guessToTheLeft << std::endl;
+int nConesLong = longSide.rows();
+int nConesShort = shortSide.rows();
+ArrayXXf guessedCones(2*nConesLong-2,2);
 
-ArrayXXf tmp(1,2);
-tmp << 0,0;
-return tmp;
+float shortestDist;
+float tmpDist;
+ArrayXXf guess(1,2);
+int nGuessedCones = 0;
+
+for(int i = 0; i < nConesLong; i = i+1)
+{
+  shortestDist = std::numeric_limits<float>::infinity();
+  // Find closest cone on the other side
+  for(int j = 0; j < nConesShort; i = i+1)
+  {
+    tmpDist = ((longSide.row(i)-shortSide.row(j)).matrix()).norm();
+    if(tmpDist < shortestDist)
+    {
+      shortestDist = tmpDist;
+    } // End of if
+  } // End of for
+  
+  if(shortestDist > distanceThreshold)
+  {
+    if(i == 0)
+    {
+      guess = guessCones(longSide.row(0),longSide.row(1),guessDistance,guessToTheLeft,true,false);
+      nGuessedCones = nGuessedCones+1;
+    }
+    else if(i == nConesLong-1)
+    {
+      guess = guessCones(longSide.row(nConesLong-2),longSide.row(nConesLong-1),guessDistance,guessToTheLeft,false,true);
+      nGuessedCones = nGuessedCones+1;
+    }
+    else
+    {
+      guess = guessCones(longSide.row(i-1),longSide.row(i),guessDistance,guessToTheLeft,false,true);
+      nGuessedCones = nGuessedCones+1;
+      guessedCones.row(nGuessedCones-1) = guess;
+      guess = guessCones(longSide.row(i),longSide.row(i+1),guessDistance,guessToTheLeft,true,false);
+      nGuessedCones = nGuessedCones+1;
+    } // End of else
+
+    guessedCones.row(nGuessedCones-1) = guess;
+  } // End of if
+} // End of for
+
+ArrayXXf guessedConesFinal = guessedCones.topRows(nGuessedCones);
+ArrayXXf realAndGuessedCones(nConesShort+nGuessedCones,2);
+realAndGuessedCones.topRows(nConesShort) = shortSide;
+realAndGuessedCones.bottomRows(nGuessedCones) = guessedConesFinal;
+ArrayXXf newShortSide = orderCones(realAndGuessedCones,vehicleLocation);
+
+//std::cout << "longSide:  " << longSide << std::endl;
+//std::cout << "shortSide:  " << shortSide << std::endl;
+//std::cout << "vehicleLocation:  " << vehicleLocation << std::endl;
+//std::cout << "distanceThreshold:  " << distanceThreshold << std::endl;
+//std::cout << "guessDistance:  " << guessDistance << std::endl;
+//std::cout << "guessToTheLeft:  " << guessToTheLeft << std::endl;
+
+return newShortSide;
 }
 
 ArrayXXf DetectConeLane::guessCones(ArrayXXf firstCone, ArrayXXf secondCone, float guessDistance, bool guessToTheLeft, bool guessForFirstCone, bool guessForSecondCone)
