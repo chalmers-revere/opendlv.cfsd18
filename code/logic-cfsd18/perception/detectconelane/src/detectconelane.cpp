@@ -432,16 +432,45 @@ ArrayXXf DetectConeLane::guessCones(ArrayXXf firstCone, ArrayXXf secondCone, flo
   // Input: Two neighbouring cones, the guessing distance, if guesses should go to the left or not, and which known cones should get matching guesses
   // Output: Guessed cone positions
 
-std::cout << "firstCone: " << firstCone << std::endl;
-std::cout << "secondCone: " << secondCone << std::endl;
-std::cout << "guessDistance: " << guessDistance << std::endl;
-std::cout << "guessToTheLeft: " << guessToTheLeft << std::endl;
-std::cout << "guessForFirstCone: " << guessForFirstCone << std::endl;
-std::cout << "guessForSecondCone: " << guessForSecondCone << std::endl;
+ArrayXXf vector = secondCone-firstCone;
+float direction;
+if(guessToTheLeft)
+{
+  direction = 1.0;
+}
+else
+{
+  direction = -1.0;
+} // End of else
 
-ArrayXXf tmp(1,2);
-tmp << 0,0;
-return tmp;
+ArrayXXf normal(1,2);
+normal << -vector(1),vector(0);
+normal = normal/((normal.matrix()).norm());
+ArrayXXf guessVector = direction*guessDistance*normal;
+
+ArrayXXf guessedCones(1,2);
+if(guessForFirstCone && !guessForSecondCone)
+{
+  guessedCones << firstCone(0)+guessVector(0),firstCone(1)+guessVector(1);
+}
+else if(!guessForFirstCone && guessForSecondCone)
+{
+  guessedCones << secondCone(0)+guessVector(0),secondCone(1)+guessVector(1);
+}
+else
+{
+  // Should not be in use. Works in matlab but not here were arraySizes have to be defined in advance? Throw exception if this is called?
+  guessedCones << -1000,-1000;
+} // End of else
+
+//std::cout << "firstCone: " << firstCone << std::endl;
+//std::cout << "secondCone: " << secondCone << std::endl;
+//std::cout << "guessDistance: " << guessDistance << std::endl;
+//std::cout << "guessToTheLeft: " << guessToTheLeft << std::endl;
+//std::cout << "guessForFirstCone: " << guessForFirstCone << std::endl;
+//std::cout << "guessForSecondCone: " << guessForSecondCone << std::endl;
+
+return guessedCones;
 }
 
 float DetectConeLane::findTotalPathLength(ArrayXXf sidePoints)
