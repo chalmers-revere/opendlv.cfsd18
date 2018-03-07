@@ -498,12 +498,17 @@ float DetectConeLane::findFactorToClosestPoint(ArrayXXf p1, ArrayXXf p2, ArrayXX
   // Input: The two cones of a cone segment and a reference point
   // Output: The factor to multiply with the vector between the cones in order to reach the point on the segment that has a perpendicular line to the reference point
 
-std::cout << "p1: " << p1 << std::endl;
-std::cout << "p2: " << p2 << std::endl;
-std::cout << "q: " << q << std::endl;
+ArrayXXf v = p1-p2;
+ArrayXXf n(1,2);
+n << -v(1),v(0);
 
-float tmp = 0;
-return tmp;
+float factor = (q(0)-p1(0)+(p1(1)-q(1))*n(0)/n(1))/(v(0)-v(1)*n(0)/n(1));
+
+//std::cout << "p1: " << p1 << std::endl;
+//std::cout << "p2: " << p2 << std::endl;
+//std::cout << "q: " << q << std::endl;
+
+return factor;
 }
 
 }
