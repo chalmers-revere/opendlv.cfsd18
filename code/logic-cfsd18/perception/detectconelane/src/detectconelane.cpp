@@ -112,29 +112,117 @@ void DetectConeLane::tearDown()
 {
 }
 
-ArrayXXf DetectConeLane::findSafeLocalPath(ArrayXXf sidePoints1, ArrayXXf sidePoints2, float distanceBetweenPoints)
+ArrayXXf DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePointsRight, float distanceBetweenPoints)
 {
-  const int nMidPoints = 30; // There might be an alternative to "hard-coding" this.
-  ArrayXXf newSidePoints1 = DetectConeLane::placeEquidistantPoints(sidePoints1,true,nMidPoints,-1);
-  ArrayXXf newSidePoints2 = DetectConeLane::placeEquidistantPoints(sidePoints2,true,nMidPoints,-1);
 
-  ArrayXXf midX = (newSidePoints1.col(0)+newSidePoints2.col(0))/2;
-  ArrayXXf midY = (newSidePoints1.col(1)+newSidePoints2.col(1))/2;
-  ArrayXXf tmpLocalPath(nMidPoints,2);
-  tmpLocalPath.col(0) = midX;
-  tmpLocalPath.col(1) = midY;
+ArrayXXf longSide;
+ArrayXXf shortSide;
 
-  ArrayXXf firstPoint = DetectConeLane::traceBackToClosestPoint(tmpLocalPath.row(0), tmpLocalPath.row(1));
-  ArrayXXf localPath(nMidPoints+1,2);
-  localPath.row(0) = firstPoint;
-  localPath.block(1,0,nMidPoints,2) = tmpLocalPath;
-  localPath = DetectConeLane::placeEquidistantPoints(localPath,false,-1,distanceBetweenPoints);
-  return localPath;
+// Identify the longest side
+float pathLengthLeft = findTotalPathLength(sidePointsLeft);
+float pathLengthRight = findTotalPathLength(sidePointsRight);
+if(pathLengthLeft > pathLengthRight)
+{
+  longSide = sidePointsLeft;
+  shortSide = sidePointsRight;
+}
+else
+{
+  longSide = sidePointsRight;
+  shortSide = sidePointsLeft;
+} // End of else
 
-//  std::cout << "One side:  " << sidePoints1 << std::endl;
-//  std::cout << "Other side:  " << sidePoints2 << std::endl;
-//  ArrayXXf localPath(nMidPoints,2);
-//  return localPath;
+int nMidPoints = longSide.rows()*3; // We might have to choose this more carefully
+int nConesShort = shortSide.rows();
+
+// Divide the longest side into segments of equal length
+ArrayXXf virtualPointsLong = placeEquidistantPoints(longSide,true,nMidPoints,-1);
+ArrayXXf virtualPointsShort(nMidPoints,2);
+
+float shortestDist;
+float tmpDist;
+int closestConeIndex;
+float factor;
+
+// Every virtual point on the long side should get one corresponding point on the short side
+for(int i = 0; i < nMidPoints; i = i+1)
+{
+  // Find short side cone that is closest to the current long side point
+  shortestDist = std::numeric_limits<float>::infinity();
+  for(int j = 0; j < nConesShort; i = i+1)
+  {
+    tmpDist = ((shortSide.row(j)-virtualPointsLong.row(i)).matrix()).norm();
+    if(tmpDist < shortestDist)
+    {
+      shortestDist = tmpDist;
+      closestConeIndex = j;
+    } // End of if
+  } // End of for
+
+  // Check if on of the two segments next to the cone has a perpendicular line to the long side point. If so, place the short side point on that place of the segment. If not, place the point on the cone.
+
+  // If it's the first or last cone there is only one segment to check
+  if(closestConeIndex == 0)
+  {
+    factor = findFactorToClosestPoint(shortSide.row(0),shortSide.row(1),virtualPointsLong.row(i));
+    if(factor > 0 && factor <= 1)
+    {
+      virtualPointsShort.row(i) = shortSide.row(0)+factor*(shortSide.row(1)-shortSide.row(0));
+    }
+    else
+    {
+      virtualPointsShort.row(i) = shortSide.row(0);
+    } // End of else
+  }
+  else if(closestConeIndex == nConesShort-1)
+  {
+    factor = findFactorToClosestPoint(shortSide.row(nConesShort-2),shortSide.row(nConesShort-1),virtualPointsLong.row(i));
+    if(factor > 0 && factor <= 1)
+    {
+      virtualPointsShort.row(i) = shortSide.row(nConesShort-2)+factor*(shortSide.row(nConesShort-1)-shortSide.row(nConesShort-2));
+    }
+    else
+    {
+      virtualPointsShort.row(i) = shortSide.row(nConesShort-1);
+    } // End of else
+  }
+  else
+  {
+    factor = findFactorToClosestPoint(shortSide.row(closestConeIndex-1),shortSide.row(closestConeIndex),virtualPointsLong.row(i));
+    if(factor > 0 && factor <= 1)
+    {
+      virtualPointsShort.row(i) = shortSide.row(closestConeIndex-1)+factor*(shortSide.row(closestConeIndex)-shortSide.row(closestConeIndex-1));
+    }
+    else
+    {
+      factor = findFactorToClosestPoint(shortSide.row(closestConeIndex),shortSide.row(closestConeIndex+1),virtualPointsLong.row(i));
+      if(factor > 0 && factor <= 1)
+      {
+        virtualPointsShort.row(i) = shortSide.row(closestConeIndex)+factor*(shortSide.row(closestConeIndex+1)-shortSide.row(closestConeIndex));
+      }
+      else
+      {
+        virtualPointsShort.row(i) = shortSide.row(closestConeIndex);
+      } // End of else
+    } // End of else
+  } // End of else
+} // End of for
+
+// Match the virtual points from each side into pairs, and find the center of every pair
+ArrayXXf midX = (virtualPointsLong.col(0)+virtualPointsShort.col(0))/2;
+ArrayXXf midY = (virtualPointsLong.col(1)+virtualPointsShort.col(1))/2;
+ArrayXXf tmpLocalPath(nMidPoints,2);
+tmpLocalPath.col(0) = midX;
+tmpLocalPath.col(1) = midY;
+
+// Do the traceback to the vehicle and then go through the midpoint path again to place path points with equal distances between them.
+ArrayXXf firstPoint = DetectConeLane::traceBackToClosestPoint(tmpLocalPath.row(0), tmpLocalPath.row(1));
+ArrayXXf localPath(nMidPoints+1,2);
+localPath.row(0) = firstPoint;
+localPath.block(1,0,nMidPoints,2) = tmpLocalPath;
+localPath = DetectConeLane::placeEquidistantPoints(localPath,false,-1,distanceBetweenPoints);
+
+return localPath;
 }
 
 ArrayXXf DetectConeLane::placeEquidistantPoints(ArrayXXf sidePoints, bool nEqPointsIsKnown, int nEqPoints, float eqDistance)
