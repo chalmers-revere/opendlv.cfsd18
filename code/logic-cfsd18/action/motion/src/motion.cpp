@@ -50,7 +50,7 @@ Motion::Motion(int32_t const &a_argc, char **a_argv) :
   m_lf(),
   m_lr(),
   m_mu(),
-  m_wr()
+  m_wR()
 {
 }
 
@@ -92,9 +92,9 @@ void Motion::nextContainer(odcore::data::Container &a_container)
     }
   }
 
-  if (a_container.getDataType() == opendlv::proxy::GroundSpeedReading::ID()) { // change this to whatever container marcus sends out
-    auto vehicleSpeed = a_container.getData<opendlv::proxy::GroundSpeedReading>();
-    m_speed = vehicleSpeed.getGroundSpeed();
+  if (a_container.getDataType() == opendlv::sim::Frame::ID()) { // change this to whatever container marcus sends out
+    auto vehicleSpeed = a_container.getData<opendlv::sim::Frame>();
+    m_speed = vehicleSpeed.getRoll();
   }
 
   if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
@@ -117,7 +117,7 @@ void Motion::setUp()
   m_lf = kv.getValue<float>("global.vehicle-parameter.lf");
   m_lr = kv.getValue<float>("global.vehicle-parameter.lr");
   m_mu = kv.getValue<float>("global.vehicle-parameter.mu");
-  m_wr = kv.getValue<float>("global.vehicle-parameter.wr");
+  m_wR = kv.getValue<float>("global.vehicle-parameter.wR");
 
   //m_vehicleModelParameters << vM,vIz,vG,vL,vLf,vLr,vMu,vWr;
 
@@ -137,7 +137,7 @@ void Motion::tearDown()
 
 void Motion::calcTorque(float a_arg)
 {
-  float torque = a_arg*m_mass*m_wr;
+  float torque = a_arg*m_mass*m_wR;
 
   float yawRateRef = calcYawRateRef(m_headingRequest);
 
@@ -157,8 +157,7 @@ float Motion::calcYawRateRef(float a_arg){
   return 2.0f*m_PI/t;
 }
 
-void Motion::sendActuationContainer(int32_t a_arg, float torque)
-{
+void Motion::sendActuationContainer(int32_t a_arg, float torque){
   opendlv::proxy::TorqueRequest tr(torque);
   odcore::data::Container c(tr);
   c.setSenderStamp(a_arg);

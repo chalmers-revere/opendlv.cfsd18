@@ -140,6 +140,12 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
 
         m_X += m_x*m_sampleTime + dx*(float)pow(m_sampleTime,2)/2;
         m_x += dx*m_sampleTime;
+
+        opendlv::sim::Frame out1(m_X(0),m_X(1),m_X(2),m_X(3),m_X(4),m_X(5));
+        odcore::data::Container c1(out1);
+        getConference().send(c1);
+
+        sendAccelerationRequest(yawRef);
     }
 
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
@@ -234,15 +240,19 @@ Eigen::ArrayXf Vehsim::tireModel(Eigen::ArrayXf delta, Eigen::ArrayXf x, Eigen::
   float v = x(1);
   float r = x(2);
 
-  float a1 = -atan2(v+m_lf*r,u+m_wf*r);
-  float a2 = -atan2(v+m_lf*r,u-m_wf*r);
-  float a3 = -atan2(v-m_lf*r,u+m_wf*r);
-  float a4 = -atan2(v-m_lf*r,u-m_wf*r);
+  float a1, a2, a3, a4;
 
-  std::cout << "a1: " << a1;
-  std::cout << ".    a2: " << a2;
-  std::cout << ".    a3: " << a3;
-  std::cout << ".    a4: " << a4 << std::endl;
+  if(abs(v)>1e-4){
+    a1 = -atan2(v+m_lf*r,u+m_wf*r);
+    a2 = -atan2(v+m_lf*r,u-m_wf*r);
+    a3 = -atan2(v-m_lf*r,u+m_wf*r);
+    a4 = -atan2(v-m_lf*r,u-m_wf*r);
+  } else{
+    a1 = 0;
+    a2 = 0;
+    a3 = 0;
+    a4 = 0;
+  }
 
   Eigen::ArrayXf alpha(4);
   alpha << a1, a2, a3, a4;
@@ -319,6 +329,25 @@ Eigen::ArrayXf Vehsim::atanArr(Eigen::ArrayXf a)
   return arrOut;
 }
 
+void Vehsim::sendAccelerationRequest(float yawRef)
+{
+  float u_max = 50/3.6;
+  float u_min = 2;
+  float k = 3;
+
+  float u = m_x(0);
+  float v = 1/(k*abs(yawRef)+1)*u_max;
+  float v_ref = std::max(u_min,v);
+  float e = v_ref - u;
+
+  if(e > 0) {
+    opendlv::proxy::GroundAccelerationRequest out1(e);
+  } else {
+    opendlv::proxy::GroundDecelerationRequest out2(e);
+  }
+
+}
+
 void Vehsim::setUp()
 {
   std::cout << "vehsim setup" << std::endl;
@@ -380,7 +409,7 @@ void Vehsim::setUp()
   m_B << Bf, Bf, Br, Br;
   m_D << Df, Df, Dr, Dr;
 
-  m_aimPoint = opendlv::logic::action::AimPoint(0.0f,0.0f,1.0f);
+  m_aimPoint = opendlv::logic::action::AimPoint(0.0f,0.1f,5.0f);
 
 }
 

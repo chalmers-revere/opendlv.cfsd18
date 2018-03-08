@@ -50,6 +50,7 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
   Eigen::ArrayXf atanArr(Eigen::ArrayXf);
   Eigen::ArrayXf longitudinalControl(Eigen::ArrayXf);
   Eigen::ArrayXf motion(Eigen::ArrayXf,Eigen::ArrayXf,Eigen::ArrayXf,Eigen::ArrayXf);
+  void sendAccelerationRequest(float);
 
  private:
    opendlv::logic::action::AimPoint m_aimPoint;

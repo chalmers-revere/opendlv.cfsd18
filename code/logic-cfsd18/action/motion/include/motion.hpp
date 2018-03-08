@@ -63,7 +63,7 @@ class Motion : public odcore::base::module::DataTriggeredConferenceClientModule 
    float m_lf;
    float m_lr;
    float m_mu;
-   float m_wr;
+   float m_wR;
 
 };
 
