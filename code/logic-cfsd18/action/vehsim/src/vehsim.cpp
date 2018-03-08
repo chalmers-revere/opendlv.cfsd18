@@ -74,11 +74,9 @@ Vehsim::Vehsim(int32_t const &a_argc, char **a_argv) :
   m_phi(),
   m_phiDot(),
   m_wheelLiftOffFlag(),
-  m_Bf(),
-  m_Br(),
+  m_B(),
   m_C(),
-  m_Df(),
-  m_Dr(),
+  m_D(),
   m_E(),
   m_x(),
   m_X(),
@@ -122,20 +120,27 @@ void Vehsim::nextContainer(odcore::data::Container &a_container)
 
 odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
 {
-  //Eigen::Array4f Fx(4); Fx << 0,0,0,0;
   while (getModuleStateAndWaitForRemainingTimeInTimeslice() ==
       odcore::data::dmcp::ModuleStateMessage::RUNNING) {
 
         float yawRef = yawModel(m_aimPoint, m_x);
-        Eigen::Array4f delta = calcSteerAngle(yawRef, m_x);
-        Eigen::Array4f Fz = loadTransfer(m_x);
-        Eigen::Array4f Fx = longitudinalControl(Fz);
-        Eigen::Array4f Fy = tireModel(delta,m_x,Fz);
+        Eigen::ArrayXf delta = calcSteerAngle(yawRef, m_x);
+        Eigen::ArrayXf Fz = loadTransfer(m_x);
+        Eigen::ArrayXf Fx = longitudinalControl(Fz);
+        Eigen::ArrayXf Fy = tireModel(delta,m_x,Fz);
         Eigen::ArrayXf dx = motion(delta,Fy,Fx,m_x);
+
+/*
+        std::cout << "du: " << dx(0);
+        std::cout << ".   dv: " << dx(1);
+        std::cout << ".   dr: " << dx(2);
+        std::cout << ".   ddu: " << dx(3);
+        std::cout << ".   ddv: " << dx(4);
+        std::cout << ".   ddr: " << dx(5) << std::endl;*/
 
         m_X += m_x*m_sampleTime + dx*(float)pow(m_sampleTime,2)/2;
         m_x += dx*m_sampleTime;
-      }
+    }
 
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
 }
@@ -145,7 +150,7 @@ float Vehsim::yawModel(opendlv::logic::action::AimPoint aimPoint, Eigen::ArrayXf
   float headingReq = aimPoint.getAzimuthAngle();
   float dist  = aimPoint.getDistance();
   float sgn   = (float) !(headingReq > 0);
-  float u = x(1);
+  float u = x(0);
 
   float R = dist/(float)(sqrt(2.0f*(1.0f-(float)cos(2.0f*headingReq))));
   float r = sgn*u/R;
@@ -153,22 +158,25 @@ float Vehsim::yawModel(opendlv::logic::action::AimPoint aimPoint, Eigen::ArrayXf
   return r;
 }
 
-Eigen::Array4f Vehsim::calcSteerAngle(float rRef, Eigen::ArrayXf x)
+Eigen::ArrayXf Vehsim::calcSteerAngle(float rRef, Eigen::ArrayXf x)
 {
   float maxDelta = PI/6;
-  float u = x(1);
-  float deltaf = (m_L+m_Ku*m_mass*(float)pow(u,2.0f))*rRef/u;
+  float u = x(0);
+  float deltaf = 0.0f;
+
+  if(u>0.1f){
+      deltaf = (m_L+m_Ku*m_mass*(float)pow(u,2.0f))*rRef/u;
+  }
 
   deltaf = std::max<float>(std::min<float>(deltaf,maxDelta),-maxDelta);
 
-  Eigen::Array4f delta(1,1,0,0);
+  Eigen::ArrayXf delta(4);
   delta *= deltaf;
-
 
   return delta;
 }
 
-Eigen::Array4f Vehsim::loadTransfer(Eigen::ArrayXf x)
+Eigen::ArrayXf Vehsim::loadTransfer(Eigen::ArrayXf x)
 {
   float u   = x(0);
   float ax  = x(3);
@@ -177,29 +185,33 @@ Eigen::Array4f Vehsim::loadTransfer(Eigen::ArrayXf x)
   float Fl  = 1/2*m_A*m_rho*m_Cl*(float)pow(u,2.0f);
   float Fd  = 1/2*m_A*m_rho*m_Cd*(float)pow(u,2.0f);
 
-  Eigen::Array4f weightDist(-m_lr, -m_lr, m_lf, m_lf);
+  Eigen::ArrayXf weightDist(4);
+  weightDist << -m_lr, -m_lr, m_lf, m_lf;
   weightDist /= (2.0f*m_L);
-  Eigen::Array4f FzStatic = weightDist*(Fl + m_mass*m_g);
+
+  Eigen::ArrayXf FzStatic = weightDist*(Fl + m_mass*m_g);
 
   //##################### dFz calculations
   float phiDDot = (m_ms*ay*m_h0-m_kPhi*m_phiDot-(m_cPhi)*m_phi+m_ms*m_g*m_h0*(float)sin(m_phi))/(m_Ix+m_ms*(float)pow(m_h0,2.0f));
 
-  Eigen::Array4f dFzy((-(m_mass*(-m_lr)*ay*m_h1/m_wf/m_L/2.0f)+(m_cPhi1*m_phi+m_kPhi1*m_phiDot)),
+  Eigen::ArrayXf dFzy(4);
+  dFzy << (-(m_mass*(-m_lr)*ay*m_h1/m_wf/m_L/2.0f)+(m_cPhi1*m_phi+m_kPhi1*m_phiDot)),
   ((m_mass*(-m_lr)*ay*m_h1/m_wf/m_L/2.0f)-(m_cPhi1*m_phi+m_kPhi1*m_phiDot)),
   (-(m_mass*(m_lf)*ay*m_h2/m_wr/m_L/2.0f)+(m_cPhi2*m_phi+m_kPhi2*m_phiDot)),
-  ((m_mass*(m_lf)*ay*m_h2/m_wr/m_L/2.0f)-(m_cPhi2*m_phi+m_kPhi2*m_phiDot)));
+  ((m_mass*(m_lf)*ay*m_h2/m_wr/m_L/2.0f)-(m_cPhi2*m_phi+m_kPhi2*m_phiDot));
 
-  Eigen::Array4f dFzx(-m_mass*ax*m_h/2/m_L - Fd*m_hp/2.0f/m_L,
+  Eigen::ArrayXf dFzx(4);
+  dFzx << -m_mass*ax*m_h/2/m_L - Fd*m_hp/2.0f/m_L,
   -m_mass*ax*m_h/2.0f/m_L - Fd*m_hp/2.0f/m_L,
   +m_mass*ax*m_h/2.0f/m_L + Fd*m_hp/2.0f/m_L,
-  +m_mass*ax*m_h/2.0f/m_L + Fd*m_hp/2.0f/m_L);
+  +m_mass*ax*m_h/2.0f/m_L + Fd*m_hp/2.0f/m_L;
 
-  (void) phiDDot;
-  Eigen::Array4f Fz = FzStatic+dFzy+dFzx;
+
+  Eigen::ArrayXf Fz = FzStatic+dFzy+dFzx;
 
   float eps = 1e-3;
   m_wheelLiftOffFlag = 0;
-  for (int i; i <= Fz.size(); i++)
+  for (int i=0; i < Fz.size(); i++)
   {
     if (Fz(i) < 0)
     {
@@ -210,34 +222,41 @@ Eigen::Array4f Vehsim::loadTransfer(Eigen::ArrayXf x)
 
   m_phiDot += m_phiDot*m_sampleTime + phiDDot*(float)pow(m_sampleTime,2);
   m_phiDot += phiDDot*m_sampleTime;
+
   return Fz;
 }
 
-Eigen::Array4f Vehsim::tireModel(Eigen::Array4f delta, Eigen::ArrayXf x, Eigen::Array4f Fz)
+Eigen::ArrayXf Vehsim::tireModel(Eigen::ArrayXf delta, Eigen::ArrayXf x, Eigen::ArrayXf Fz)
 {
-  Eigen::Array4f Fy;
+  Eigen::ArrayXf Fy(4);
+
   float u = x(0);
   float v = x(1);
   float r = x(2);
 
-  Eigen::Array4f alpha(-atan2(v+m_lf*r,u+m_wf*r),
-  -atan2(v+m_lf*r,u-m_wf*r),
-  -atan2(v-m_lf*r,u+m_wf*r),
-  -atan2(v-m_lf*r,u-m_wf*r));
-  alpha += delta;
+  float a1 = -atan2(v+m_lf*r,u+m_wf*r);
+  float a2 = -atan2(v+m_lf*r,u-m_wf*r);
+  float a3 = -atan2(v-m_lf*r,u+m_wf*r);
+  float a4 = -atan2(v-m_lf*r,u-m_wf*r);
 
-  Eigen::Array4f B(m_Bf,m_Bf,m_Br,m_Br);
-  Eigen::Array4f D(m_Df,m_Df,m_Dr,m_Dr);
+  std::cout << "a1: " << a1;
+  std::cout << ".    a2: " << a2;
+  std::cout << ".    a3: " << a3;
+  std::cout << ".    a4: " << a4 << std::endl;
 
+  Eigen::ArrayXf alpha(4);
+  alpha << a1, a2, a3, a4;
+  alpha = alpha + delta;
 
-  Fy = Fz*D*sin(m_C*atanArr(B*alpha - m_E*(B*alpha - atanArr(B*alpha))));
+  Fy = Fy + Fz*m_D*sin(m_C*atanArr(m_B*alpha - m_E*(m_B*alpha - atanArr(m_B*alpha))));
+
   return Fy;
 }
 
 
-Eigen::Array4f Vehsim::longitudinalControl(Eigen::Array4f Fz)
+Eigen::ArrayXf Vehsim::longitudinalControl(Eigen::ArrayXf Fz)
 {
-  Eigen::Array4f Fx;
+  Eigen::ArrayXf Fx(4);
   float tr1 = m_torqueRequest1;
   float tr2 = m_torqueRequest2;
 
@@ -256,61 +275,33 @@ Eigen::Array4f Vehsim::longitudinalControl(Eigen::Array4f Fz)
   (void) (Fz);
   return Fx;
 }
-/*
-Eigen::Array4f Vehsim::longitudinalControl(Eigen::ArrayXf x, float yawRef, Eigen::Array4f Fz)
-{
-  float u = x(0);
-  float u_min =  3/3.6;
-  float u_max = 70/3.6;
-  float k = 3;
 
-  float v_ref = 1/(k*abs(yawRef)+1)*u_max;
-  v_ref = std::max<float>(u_min,v_ref);
-  float e = v_ref-u;
 
-  float fx = e*m_mass;
-  Eigen::Array4f Fx;
-
-  if (fx > 0)
-  {
-    Fx << 0, 0, 1, 1;
-  } else {
-    Fx << -m_lr, -m_lr, m_lf, m_lf;
-    Fx /= m_L;
-  }
-
-  Fx += fx/2;
-  (void) (Fz);
-  return Fx;
-}
-*/
-
-Eigen::ArrayXf Vehsim::motion(Eigen::Array4f delta, Eigen::Array4f Fy, Eigen::Array4f Fx, Eigen::ArrayXf x)
+Eigen::ArrayXf Vehsim::motion(Eigen::ArrayXf delta, Eigen::ArrayXf Fy, Eigen::ArrayXf Fx, Eigen::ArrayXf x)
 {
   float u = x(0);
   float v = x(1);
   float r = x(2);
 
-  Eigen::ArrayXf dx(6); dx << 0, 0, 0, 0, 0, 0;
+  Eigen::ArrayXf dx(6);
 //################################
   float Ffly = Fy(0)*(float)cos(delta(0))+Fx(0)*(float)sin(delta(0));
-  float Ffry = Fy(1)*(float)cos(delta(1))+Fx(1)*(float)sin(delta(2));
-  float Frly = Fy(2)*(float)cos(delta(2))+Fx(2)*(float)sin(delta(3));
-  float Frry = Fy(3)*(float)cos(delta(3))+Fx(3)*(float)sin(delta(4));
+  float Ffry = Fy(1)*(float)cos(delta(1))+Fx(1)*(float)sin(delta(1));
+  float Frly = Fy(2)*(float)cos(delta(2))+Fx(2)*(float)sin(delta(2));
+  float Frry = Fy(3)*(float)cos(delta(3))+Fx(3)*(float)sin(delta(3));
 
   float Fflx = Fx(0)*(float)cos(delta(0))-Fy(0)*(float)sin(delta(0));
-  float Ffrx = Fx(1)*(float)cos(delta(1))-Fy(1)*(float)sin(delta(2));
-  float Frlx = Fx(2)*(float)cos(delta(2))-Fy(2)*(float)sin(delta(3));
-  float Frrx = Fx(3)*(float)cos(delta(3))-Fy(3)*(float)sin(delta(4));
+  float Ffrx = Fx(1)*(float)cos(delta(1))-Fy(1)*(float)sin(delta(1));
+  float Frlx = Fx(2)*(float)cos(delta(2))-Fy(2)*(float)sin(delta(2));
+  float Frrx = Fx(3)*(float)cos(delta(3))-Fy(3)*(float)sin(delta(3));
 
   float du = (Ffrx+Fflx+Frlx+Frrx)/m_mass + r*v;
   float dv = (Ffry+Ffly+Frly+Frry)/m_mass - r*u;
   float dr = (m_lr*(Frry+Frly)+m_lf*(Ffry+Ffly)+m_wf*(Ffrx-Fflx)+m_wr*(Frrx-Frlx))/m_Iz;
 
-  float ddu = (du - v*r - x(4))*(1/m_sampleTime);
-  float ddv = (dv + u*r - x(5))*(1/m_sampleTime);
-  float ddr = (dr - x(6))*(1/m_sampleTime);
-
+  float ddu = (du - v*r - x(3))*(1/m_sampleTime);
+  float ddv = (dv + u*r - x(4))*(1/m_sampleTime);
+  float ddr = (dr - x(5))*(1/m_sampleTime);
 
   dx << du, dv, dr, ddu, ddv, ddr;
   return dx;
@@ -362,11 +353,11 @@ void Vehsim::setUp()
   m_kLambda = kv.getValue<float>("global.vehicle-parameter.kLambda");
   m_cLambda = kv.getValue<float>("global.vehicle-parameter.cLambda");
   m_sampleTime = kv.getValue<float>("opendlv-logic-cfsd18-action-vehsim.simulation-setup.sampleTime");
-  m_Bf = kv.getValue<float>("opendlv-logic-cfsd18-action-vehsim.simulation-setup.Bf");
-  m_Br = kv.getValue<float>("opendlv-logic-cfsd18-action-vehsim.simulation-setup.Br");
+  float Bf = kv.getValue<float>("opendlv-logic-cfsd18-action-vehsim.simulation-setup.Bf");
+  float Br = kv.getValue<float>("opendlv-logic-cfsd18-action-vehsim.simulation-setup.Br");
   m_C = kv.getValue<float>("opendlv-logic-cfsd18-action-vehsim.simulation-setup.C");
-  m_Df = kv.getValue<float>("opendlv-logic-cfsd18-action-vehsim.simulation-setup.Df");
-  m_Dr = kv.getValue<float>("opendlv-logic-cfsd18-action-vehsim.simulation-setup.Dr");
+  float Df = kv.getValue<float>("opendlv-logic-cfsd18-action-vehsim.simulation-setup.Df");
+  float Dr = kv.getValue<float>("opendlv-logic-cfsd18-action-vehsim.simulation-setup.Dr");
   m_E = kv.getValue<float>("opendlv-logic-cfsd18-action-vehsim.simulation-setup.E");
   m_leftMotorID = kv.getValue<uint32_t>("global.sender-stamp.left-motor");
   m_rightMotorID = kv.getValue<uint32_t>("global.sender-stamp.right-motor");
@@ -379,8 +370,18 @@ void Vehsim::setUp()
   m_kPhi1 = m_kPhi*m_kLambda;
   m_kPhi2 = m_kPhi-m_kPhi1;
 
+  m_x = Eigen::ArrayXf(6);
+  m_X = Eigen::ArrayXf(6);
   m_x << 0,0,0,0,0,0;
   m_X << 0,0,0,0,0,0;
+
+  m_B = Eigen::ArrayXf(4);
+  m_D = Eigen::ArrayXf(4);
+  m_B << Bf, Bf, Br, Br;
+  m_D << Df, Df, Dr, Dr;
+
+  m_aimPoint = opendlv::logic::action::AimPoint(0.0f,0.0f,1.0f);
+
 }
 
 void Vehsim::tearDown()

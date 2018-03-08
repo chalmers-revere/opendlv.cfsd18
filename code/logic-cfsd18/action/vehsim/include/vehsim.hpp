@@ -44,12 +44,12 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
   void setUp();
   void tearDown();
   float yawModel(opendlv::logic::action::AimPoint, Eigen::ArrayXf);
-  Eigen::Array4f calcSteerAngle(float,Eigen::ArrayXf);
-  Eigen::Array4f loadTransfer(Eigen::ArrayXf);
-  Eigen::Array4f tireModel(Eigen::Array4f, Eigen::ArrayXf, Eigen::Array4f);
+  Eigen::ArrayXf calcSteerAngle(float,Eigen::ArrayXf);
+  Eigen::ArrayXf loadTransfer(Eigen::ArrayXf);
+  Eigen::ArrayXf tireModel(Eigen::ArrayXf, Eigen::ArrayXf, Eigen::ArrayXf);
   Eigen::ArrayXf atanArr(Eigen::ArrayXf);
-  Eigen::Array4f longitudinalControl(Eigen::Array4f);
-  Eigen::ArrayXf motion(Eigen::Array4f,Eigen::Array4f,Eigen::Array4f,Eigen::ArrayXf);
+  Eigen::ArrayXf longitudinalControl(Eigen::ArrayXf);
+  Eigen::ArrayXf motion(Eigen::ArrayXf,Eigen::ArrayXf,Eigen::ArrayXf,Eigen::ArrayXf);
 
  private:
    opendlv::logic::action::AimPoint m_aimPoint;
@@ -89,11 +89,9 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
    float m_phi;
    float m_phiDot;
    float m_wheelLiftOffFlag;
-   float m_Bf;
-   float m_Br;
+   Eigen::ArrayXf m_B;
    float m_C;
-   float m_Df;
-   float m_Dr;
+   Eigen::ArrayXf m_D;
    float m_E;
    Eigen::ArrayXf m_x;
    Eigen::ArrayXf m_X;

@@ -42,14 +42,41 @@ proxy-lynx-steering.string-seperator = 10,11,22,33
 
 
 ######VEHICLE MODEL PARAMETERS######
-global.vehicle-parameter.m = 188 #kg
+global.vehicle-parameter.m = 217.4 #kg
+global.vehicle-parameter.m-unsprung = 28 #kg
 global.vehicle-parameter.Iz = 105 #kgm^2
+global.vehicle-parameter.Ix = 105 #kgm²
 global.vehicle-parameter.g = 9.82 #m/s2
 global.vehicle-parameter.l = 1.53 #m
-global.vehicle-parameter.lf = 0.765 #m (l*0.5)
-global.vehicle-parameter.lr = 0.765 #m (l*0.5)
+global.vehicle-parameter.lf = 0.8415 #m (l*0.5)
+global.vehicle-parameter.lr = 0.6885 #m (l*0.5)
+global.vehicle-parameter.wf = 1.25 #m
+global.vehicle-parameter.wr = 1.2 #m
 global.vehicle-parameter.mu = 0.9
-global.vehicle-parameter.wr = 0.15
+global.vehicle-parameter.wR = 0.15
+global.vehicle-parameter.area = 1; #m²
+global.vehicle-parameter.rho = 1.2 #kg/m³
+global.vehicle-parameter.Cl = 0.3 # lift coefficient
+global.vehicle-parameter.Cd = 0.3 # drag coefficient
+global.vehicle-parameter.Ca1 = 20e3 # Cornering stiffness front
+global.vehicle-parameter.Ca2 = 20e3 # Cornering stiffness rear
+global.vehicle-parameter.h0 = 0.2128
+global.vehicle-parameter.h1 = 0.04
+global.vehicle-parameter.h2 = 0.093
+global.vehicle-parameter.h = 0.282
+global.vehicle-parameter.hp = 0.432
+global.vehicle-parameter.kPhi = 8000 # Roll damping
+global.vehicle-parameter.cPhi = 7000 # Roll stiffness
+global.vehicle-parameter.kLambda = 0.57
+global.vehicle-parameter.cLambda = 0.55
+
+opendlv-logic-cfsd18-action-vehsim.simulation-setup.sampleTime = 0.01
+opendlv-logic-cfsd18-action-vehsim.simulation-setup.Bf = 11700
+opendlv-logic-cfsd18-action-vehsim.simulation-setup.Br = 11700
+opendlv-logic-cfsd18-action-vehsim.simulation-setup.C = 1.9
+opendlv-logic-cfsd18-action-vehsim.simulation-setup.Df = 0.9
+opendlv-logic-cfsd18-action-vehsim.simulation-setup.Dr = 0.9
+opendlv-logic-cfsd18-action-vehsim.simulation-setup.E = 1
 
 
 opendlv-logic-cfsd18-action-motion.torque-parameter = 0.5;
