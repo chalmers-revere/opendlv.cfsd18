@@ -43,14 +43,21 @@ DetectConeLane::~DetectConeLane()
 
 void DetectConeLane::nextContainer(odcore::data::Container &a_container)
 {
-//// Map 4
-//ArrayXXf side1(3,2); ArrayXXf side2(3,2);
-//side1 << -1,2,
-//	 0,2.5,
-//	 0,3;
-//side2 << 1,1.5,
-//	 2,2,
-//	 2,2.5;
+// Map with no guesses
+ArrayXXf sideLeft(4,2); ArrayXXf sideRight(5,2); ArrayXXf location(1,2);
+sideLeft << -68.0726,51.3005,
+            -70.1104,46.7798,
+            -69.1145,48.9532,
+            -66.9452,53.4154;
+sideRight << -65.4468,49.8283,
+             -64.5145,51.6441,
+             -63.5884,52.9191,
+             -66.4618,47.5305,
+             -67.5248,45.2408;
+location << -70,44;
+
+float distanceThreshold = 3.5;
+float guessDistance = 3.0;
 
 //// Map 3
 //ArrayXXf side1(9,2); ArrayXXf side2(8,2);
@@ -72,11 +79,40 @@ void DetectConeLane::nextContainer(odcore::data::Container &a_container)
 //	 -0.35, 2,
 //	 -0.35, 1;
 
-//// Actual test
-//std::cout << "Side1: " << side1 << std::endl;
-//std::cout << "Side2: " << side2 << std::endl;
-//ArrayXXf localPath = DetectConeLane::findSafeLocalPath(side1, side2, 0.5);
-//std::cout << "localPath: " << localPath << std::endl;
+// Actual test
+std::cout << "SideLeft: " << sideLeft << std::endl;
+std::cout << "SideRight: " << sideRight << std::endl;
+std::cout << "Location: " << location << std::endl;
+
+ArrayXXf orderedConesLeft = DetectConeLane::orderAndFilterCones(sideLeft,location);
+ArrayXXf orderedConesRight = DetectConeLane::orderAndFilterCones(sideRight,location);
+std::cout << "orderedConesLeft: " << orderedConesLeft << std::endl;
+std::cout << "orderedConesRight: " << orderedConesRight << std::endl;
+
+float pathLengthLeft = DetectConeLane::findTotalPathLength(orderedConesLeft);
+float pathLengthRight = DetectConeLane::findTotalPathLength(orderedConesRight);
+std::cout << "pathLengthLeft: " << pathLengthLeft << std::endl;
+std::cout << "pathLengthRight: " << pathLengthRight << std::endl;
+
+ArrayXXf longSide;
+ArrayXXf shortSide;
+if(pathLengthLeft > pathLengthRight)
+{
+  longSide.resize(orderedConesLeft.rows(),orderedConesLeft.cols());
+  longSide = orderedConesLeft;
+  shortSide = DetectConeLane::insertNeededGuessedCones(orderedConesLeft, orderedConesRight, location, distanceThreshold,  guessDistance, false);
+}
+else
+{
+  longSide.resize(orderedConesRight.rows(),orderedConesRight.cols());
+  longSide = orderedConesRight;
+  shortSide = DetectConeLane::insertNeededGuessedCones(orderedConesRight, orderedConesLeft, location, distanceThreshold,  guessDistance, true);
+} // End of else
+std::cout << "longSide: " << longSide << std::endl;
+std::cout << "shortSide: " << shortSide << std::endl;
+
+ArrayXXf localPath = DetectConeLane::findSafeLocalPath(longSide, shortSide, location, 0.5);
+std::cout << "localPath: " << localPath << std::endl;
 
 //std::cout << "DETECTCONELANE IS SENDING SURFACE" << std::endl;
 //opendlv::logic::perception::Surface o9;
@@ -112,7 +148,7 @@ void DetectConeLane::tearDown()
 {
 }
 
-ArrayXXf DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePointsRight, float distanceBetweenPoints)
+ArrayXXf DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePointsRight, ArrayXXf vehicleLocation, float distanceBetweenPoints)
 {
 
 ArrayXXf longSide;
@@ -215,7 +251,7 @@ tmpLocalPath.col(0) = midX;
 tmpLocalPath.col(1) = midY;
 
 // Do the traceback to the vehicle and then go through the midpoint path again to place path points with equal distances between them.
-ArrayXXf firstPoint = DetectConeLane::traceBackToClosestPoint(tmpLocalPath.row(0), tmpLocalPath.row(1));
+ArrayXXf firstPoint = DetectConeLane::traceBackToClosestPoint(tmpLocalPath.row(0), tmpLocalPath.row(1), vehicleLocation);
 ArrayXXf localPath(nMidPoints+1,2);
 localPath.row(0) = firstPoint;
 localPath.block(1,0,nMidPoints,2) = tmpLocalPath;
@@ -308,15 +344,17 @@ ArrayXXf DetectConeLane::placeEquidistantPoints(ArrayXXf sidePoints, bool nEqPoi
   return newSidePoints;
 }
 
-ArrayXXf DetectConeLane::traceBackToClosestPoint(ArrayXXf p1, ArrayXXf p2)
+ArrayXXf DetectConeLane::traceBackToClosestPoint(ArrayXXf p1, ArrayXXf p2, ArrayXXf q)
 {
    // Input: The coordinates of the first two points. (row vectors)
-   // Output: the point along the line that is closest to the origin.
+   //        A reference point q (vehicle location)
+   // Output: the point along the line that is closest to the reference point.
 
    ArrayXXf v = p1-p2;	// The line to trace
    ArrayXXf n(1,2);	// The normal vector
    n(0,0) = -v(0,1); n(0,1) = v(0,0);
-   float d = (p1(0,0)*v(0,1)-v(0,0)*p1(0,1))/(n(0,0)*v(0,1)-v(0,0)*n(0,1)); // Shortest distance between [0,0] and the vector
+   //float d = (p1(0,0)*v(0,1)-v(0,0)*p1(0,1))/(n(0,0)*v(0,1)-v(0,0)*n(0,1)); // Shortest distance between [0,0] and the vector
+   float d = (v(0,1)*(p1(0,0)-q(0,0))+v(0,0)*(q(0,1)-p1(0,1)))/(n(0,0)*v(0,1)-v(0,0)*n(0,1)); // Shortest distance between q and the vector
    return n*d;		// Follow the normal vector for that distance
 }
 
@@ -394,7 +432,7 @@ for(int i = 0; i < nCones; i = i+1)
   shortestDist = std::numeric_limits<float>::infinity();
   closestConeIndex = -1;
   // Find closest cone to the last chosen cone
-  for(int j = 0; i < nCones; i = i+1)
+  for(int j = 0; j < nCones; j = j+1)
   {
     if(!((found==j).any()))
     {
@@ -426,7 +464,7 @@ for(int i = 0; i < nCones; i = i+1)
       } // End of if
     } // End of if
   } // End of for
-  
+
   // If no remaining cone was accepted, the algorithm finishes early
   if(closestConeIndex == -1)
   {
@@ -582,7 +620,7 @@ float pathLength = 0;
 float segLength;
 for(int i = 0; i < nCones-1; i = i+1)
 {
-  segLength = ((sidePoints.row(i+1)-sidePoints(i)).matrix()).norm();
+  segLength = ((sidePoints.row(i+1)-sidePoints.row(i)).matrix()).norm();
   pathLength = pathLength + segLength;
 }
 

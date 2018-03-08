@@ -43,9 +43,9 @@ class DetectConeLane : public odcore::base::module::DataTriggeredConferenceClien
  private:
   void setUp();
   void tearDown();
-  ArrayXXf findSafeLocalPath(ArrayXXf, ArrayXXf, float);
+  ArrayXXf findSafeLocalPath(ArrayXXf, ArrayXXf, ArrayXXf, float);
   ArrayXXf placeEquidistantPoints(ArrayXXf, bool, int, float);
-  ArrayXXf traceBackToClosestPoint(ArrayXXf, ArrayXXf);
+  ArrayXXf traceBackToClosestPoint(ArrayXXf, ArrayXXf, ArrayXXf);
   ArrayXXf orderCones(ArrayXXf, ArrayXXf);
   ArrayXXf orderAndFilterCones(ArrayXXf, ArrayXXf);
   ArrayXXf insertNeededGuessedCones(ArrayXXf, ArrayXXf, ArrayXXf, float, float, bool);
