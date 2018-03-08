@@ -331,19 +331,25 @@ Eigen::ArrayXf Vehsim::atanArr(Eigen::ArrayXf a)
 
 void Vehsim::sendAccelerationRequest(float yawRef)
 {
+  (void) yawRef;
+  /*
   float u_max = 50/3.6;
   float u_min = 2;
-  float k = 3;
+  float k = 3;*/
 
   float u = m_x(0);
-  float v = 1/(k*abs(yawRef)+1)*u_max;
-  float v_ref = std::max(u_min,v);
+  //float v = 1/(k*abs(yawRef)+1)*u_max;
+  float v_ref = 5; //std::max(u_min,v);
   float e = v_ref - u;
 
   if(e > 0) {
     opendlv::proxy::GroundAccelerationRequest out1(e);
+    odcore::data::Container c1(out1);
+    getConference().send(c1);
   } else {
     opendlv::proxy::GroundDecelerationRequest out2(e);
+    odcore::data::Container c2(out2);
+    getConference().send(c2);
   }
 
 }
