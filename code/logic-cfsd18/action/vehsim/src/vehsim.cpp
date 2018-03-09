@@ -136,7 +136,12 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         std::cout << ".   dr: " << dx(2);
         std::cout << ".   ddu: " << dx(3);
         std::cout << ".   ddv: " << dx(4);
-        std::cout << ".   ddr: " << dx(5) << std::endl;*/
+        std::cout << ".   ddr: " << dx(5) << std::endl;
+*/
+        std::cout << "u: " << m_x(0);
+        std::cout << ".   v: " << m_x(1);
+        std::cout << ".   r: " << m_x(3) << std::endl;
+
 
         m_X += m_x*m_sampleTime + dx*(float)pow(m_sampleTime,2)/2;
         m_x += dx*m_sampleTime;

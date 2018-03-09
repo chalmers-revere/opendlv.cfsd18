@@ -70,7 +70,7 @@ global.vehicle-parameter.cPhi = 7000 # Roll stiffness
 global.vehicle-parameter.kLambda = 0.57
 global.vehicle-parameter.cLambda = 0.55
 
-opendlv-logic-cfsd18-action-vehsim.simulation-setup.sampleTime = 0.01
+opendlv-logic-cfsd18-action-vehsim.simulation-setup.sampleTime = 1
 opendlv-logic-cfsd18-action-vehsim.simulation-setup.Bf = 11700
 opendlv-logic-cfsd18-action-vehsim.simulation-setup.Br = 11700
 opendlv-logic-cfsd18-action-vehsim.simulation-setup.C = 1.9
