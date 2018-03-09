@@ -94,19 +94,57 @@ float pathLengthRight = DetectConeLane::findTotalPathLength(orderedConesRight);
 std::cout << "pathLengthLeft: " << pathLengthLeft << std::endl;
 std::cout << "pathLengthRight: " << pathLengthRight << std::endl;
 
-ArrayXXf longSide;
-ArrayXXf shortSide;
+int mostCones = std::max(orderedConesLeft.rows(),orderedConesRight.rows());
+ArrayXXf longSide(mostCones,2);
+ArrayXXf shortSide(2*mostCones-2,2);
 if(pathLengthLeft > pathLengthRight)
 {
-  longSide.resize(orderedConesLeft.rows(),orderedConesLeft.cols());
-  longSide = orderedConesLeft;
-  shortSide = DetectConeLane::insertNeededGuessedCones(orderedConesLeft, orderedConesRight, location, distanceThreshold,  guessDistance, false);
+std::cout << "first if: " << std::endl;
+  ArrayXXf tmpLongSide = orderedConesLeft;
+  ArrayXXf tmpShortSide = DetectConeLane::insertNeededGuessedCones(orderedConesLeft, orderedConesRight, location, distanceThreshold,  guessDistance, false);
+
+  //if(tmpLongSide.rows() != longSide.rows())
+  //{
+std::cout << "Long size before: " << longSide.rows() << " " << longSide.cols() << std::endl;
+    longSide.resize(tmpLongSide.rows(),tmpLongSide.cols());
+std::cout << "Long size after: " << longSide.rows() << " " << longSide.cols() << std::endl;
+  //} // End of if
+
+  longSide = tmpLongSide;
+
+  //if(tmpShortSide.rows() != shortSide.rows())
+  //{
+std::cout << "Short size before: " << shortSide.rows() << " " << shortSide.cols() << std::endl;
+    shortSide.resize(tmpShortSide.rows(),tmpShortSide.cols());
+std::cout << "Short size after: " << shortSide.rows() << " " << shortSide.cols() << std::endl;
+  //} // End of if
+
+  shortSide = tmpShortSide;
 }
 else
 {
-  longSide.resize(orderedConesRight.rows(),orderedConesRight.cols());
-  longSide = orderedConesRight;
-  shortSide = DetectConeLane::insertNeededGuessedCones(orderedConesRight, orderedConesLeft, location, distanceThreshold,  guessDistance, true);
+std::cout << "second if: " << std::endl;
+  ArrayXXf tmpLongSide = orderedConesRight;
+  ArrayXXf tmpShortSide = DetectConeLane::insertNeededGuessedCones(orderedConesRight, orderedConesLeft, location, distanceThreshold,  guessDistance, true);
+std::cout << "got through first bit " << std::endl;
+
+  //if(tmpLongSide.rows() != longSide.rows())
+  //{
+std::cout << "Long size before: " << longSide.rows() << " " << longSide.cols() << std::endl;
+    longSide.resize(tmpLongSide.rows(),tmpLongSide.cols());
+std::cout << "Long size after: " << longSide.rows() << " " << longSide.cols() << std::endl;
+  //} // End of if
+
+  longSide = tmpLongSide;
+
+  //if(tmpShortSide.rows() != shortSide.rows())
+  //{
+std::cout << "Short size before: " << shortSide.rows() << " " << shortSide.cols() << std::endl;
+    shortSide.resize(tmpShortSide.rows(),tmpShortSide.cols());
+std::cout << "Short size after: " << shortSide.rows() << " " << shortSide.cols() << std::endl;
+  //} // End of if
+
+  shortSide = tmpShortSide;
 } // End of else
 std::cout << "longSide: " << longSide << std::endl;
 std::cout << "shortSide: " << shortSide << std::endl;
@@ -185,7 +223,7 @@ for(int i = 0; i < nMidPoints; i = i+1)
 {
   // Find short side cone that is closest to the current long side point
   shortestDist = std::numeric_limits<float>::infinity();
-  for(int j = 0; j < nConesShort; i = i+1)
+  for(int j = 0; j < nConesShort; j = j+1)
   {
     tmpDist = ((shortSide.row(j)-virtualPointsLong.row(i)).matrix()).norm();
     if(tmpDist < shortestDist)
@@ -241,6 +279,7 @@ for(int i = 0; i < nMidPoints; i = i+1)
       } // End of else
     } // End of else
   } // End of else
+//std::cout << "factor: " << factor << std::endl;
 } // End of for
 
 // Match the virtual points from each side into pairs, and find the center of every pair
@@ -256,6 +295,11 @@ ArrayXXf localPath(nMidPoints+1,2);
 localPath.row(0) = firstPoint;
 localPath.block(1,0,nMidPoints,2) = tmpLocalPath;
 localPath = DetectConeLane::placeEquidistantPoints(localPath,false,-1,distanceBetweenPoints);
+
+//ArrayXXf localPath = tmpLocalPath;
+//std::cout << "unused vl:  " << vehicleLocation << std::endl;
+//std::cout << "unused dbp:  " << distanceBetweenPoints << std::endl;
+
 
 return localPath;
 }
@@ -355,7 +399,7 @@ ArrayXXf DetectConeLane::traceBackToClosestPoint(ArrayXXf p1, ArrayXXf p2, Array
    n(0,0) = -v(0,1); n(0,1) = v(0,0);
    //float d = (p1(0,0)*v(0,1)-v(0,0)*p1(0,1))/(n(0,0)*v(0,1)-v(0,0)*n(0,1)); // Shortest distance between [0,0] and the vector
    float d = (v(0,1)*(p1(0,0)-q(0,0))+v(0,0)*(q(0,1)-p1(0,1)))/(n(0,0)*v(0,1)-v(0,0)*n(0,1)); // Shortest distance between q and the vector
-   return n*d;		// Follow the normal vector for that distance
+   return q+n*d;       // Follow the normal vector for that distance
 }
 
 ArrayXXf DetectConeLane::orderCones(ArrayXXf cones, ArrayXXf vehicleLocation)
@@ -366,6 +410,7 @@ ArrayXXf DetectConeLane::orderCones(ArrayXXf cones, ArrayXXf vehicleLocation)
 int nCones = cones.rows();
 ArrayXXf current = vehicleLocation;
 ArrayXXf found(nCones,1);
+found.fill(-1);
 ArrayXXf orderedCones(nCones,2);
 
 float shortestDist;
@@ -377,7 +422,7 @@ for(int i = 0; i < nCones; i = i+1)
 {
   shortestDist = std::numeric_limits<float>::infinity();
   // Find closest cone to the last chosen cone
-  for(int j = 0; i < nCones; i = i+1)
+  for(int j = 0; j < nCones; j = j+1)
   {
     if(!((found==j).any()))
     {
@@ -414,6 +459,7 @@ ArrayXXf DetectConeLane::orderAndFilterCones(ArrayXXf cones, ArrayXXf vehicleLoc
 int nCones = cones.rows();
 ArrayXXf current = vehicleLocation;
 ArrayXXf found(nCones,1);
+found.fill(-1);
 
 float shortestDist;
 float tmpDist;
@@ -444,6 +490,7 @@ for(int i = 0; i < nCones; i = i+1)
         {
           shortestDist = tmpDist;
           closestConeIndex = j;
+//std::cout << "Accepted " << j << " at i = " << i << std::endl;
         }
         // Otherwise the nearest neighbour needs to be considered to be placed in roughly the same direction as the two previous cones
         // i.e the angle between the previous line and the next must be larger than pi/2 (it has a forward going component)
@@ -459,6 +506,7 @@ for(int i = 0; i < nCones; i = i+1)
           {
             shortestDist = tmpDist;
             closestConeIndex = j;
+//std::cout << "Accepted " << j << " at i = " << i << std::endl;
           } // End of if
         } // End of else
       } // End of if
@@ -468,11 +516,13 @@ for(int i = 0; i < nCones; i = i+1)
   // If no remaining cone was accepted, the algorithm finishes early
   if(closestConeIndex == -1)
   {
+std::cout << "I BREAK NOW" << std::endl;
     break;
   } // End of if
 
   nAcceptedCones = nAcceptedCones+1;
   found(i) = closestConeIndex;
+//std::cout << "found: " << found << std::endl;
   current = cones.row(closestConeIndex);
 } // End of for
 
@@ -508,7 +558,7 @@ for(int i = 0; i < nConesLong; i = i+1)
 {
   shortestDist = std::numeric_limits<float>::infinity();
   // Find closest cone on the other side
-  for(int j = 0; j < nConesShort; i = i+1)
+  for(int j = 0; j < nConesShort; j = j+1)
   {
     tmpDist = ((longSide.row(i)-shortSide.row(j)).matrix()).norm();
     if(tmpDist < shortestDist)
@@ -517,6 +567,7 @@ for(int i = 0; i < nConesLong; i = i+1)
     } // End of if
   } // End of for
   
+
   // If the closest cone is not valid, create cone guesses perpendicular to both segments connected to the current cone.
   // If it's the first or last cone, there is only on segment available.
   if(shortestDist > distanceThreshold)
@@ -566,6 +617,8 @@ ArrayXXf DetectConeLane::guessCones(ArrayXXf firstCone, ArrayXXf secondCone, flo
   // Input: Two neighbouring cones, the guessing distance, if guesses should go to the left or not, and which known cones should
   // get matching guesses
   // Output: Guessed cone positions
+
+std::cout << "Entered guessCones" << std::endl;
 
 ArrayXXf vector = secondCone-firstCone;
 float direction;
@@ -635,7 +688,7 @@ float DetectConeLane::findFactorToClosestPoint(ArrayXXf p1, ArrayXXf p2, ArrayXX
   // Output: The factor to multiply with the vector between the cones in order to reach the point on the segment that has a
   // perpendicular line to the reference point
 
-ArrayXXf v = p1-p2; // The line to follow
+ArrayXXf v = p2-p1; // The line to follow
 ArrayXXf n(1,2);    // The normal
 n << -v(1),v(0);
 
