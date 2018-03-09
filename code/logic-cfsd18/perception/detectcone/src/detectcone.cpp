@@ -54,6 +54,7 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 DetectCone::~DetectCone()
 {
   m_img.release();
+  cv::destroyAllWindows();
 }
 
 void DetectCone::setUp()
@@ -104,50 +105,50 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
       m_recievedFirstImg = true;
     }
     if (((timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds()) > m_checkLiarMilliseconds*1000)){
-      std::cout << "Lidar fails! Camera detection only!" << std::endl;
+      std::cout << "Lidar fails! Camera detection only! " << std::endl;
       m_lidarIsWorking = false;
     }
     else{
       m_lidarIsWorking = true;
       std::cout << "Lidar is working!" << std::endl;
     }
-    if(!m_lidarIsWorking){
-      forwardDetection(m_img);
-    }
+    // if(!m_lidarIsWorking){
+    //   forwardDetection(m_img);
+    // }
   }
 
-  // if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID()) {
-  //   odcore::base::Lock lockCone(m_coneMutex);
-  //   std::cout << "Recieved Direction" << std::endl;
-  //   //Retrive data and timestamp
-  //   odcore::data::TimeStamp timeStamp = a_container.getReceivedTimeStamp();
-  //   auto coneDirection = a_container.getData<opendlv::logic::perception::ObjectDirection>();
-	// 	uint32_t objectId = coneDirection.getObjectId();
-  //
-  //   //Check last timestamp if they are from same message
-  //   //std::cout << "Message Recieved " << std::endl;
-  //   if (CheckContainer(objectId,timeStamp)){
-  //     //std::cout << "Test 2 " << std::endl;
-  //     m_coneCollector(0,objectId) = coneDirection.getAzimuthAngle();
-	// 		m_coneCollector(1,objectId) = coneDirection.getZenithAngle();
-  //   }
-  //
-  // }
-	// if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID()){
-  //   odcore::base::Lock lockCone(m_coneMutex);
-  //   std::cout << "Recieved Distance" << std::endl;
-	// 	odcore::data::TimeStamp timeStamp = a_container.getReceivedTimeStamp();
-  //   auto coneDistance = a_container.getData<opendlv::logic::perception::ObjectDistance>();
-	// 	uint32_t objectId = coneDistance.getObjectId();
-  //
-  //   //Check last timestamp if they are from same message
-  //   //std::cout << "Message Recieved " << std::endl;
-  //   if (CheckContainer(objectId,timeStamp)){
-  //     m_coneCollector(2,objectId) = coneDistance.getDistance();
-	// 		m_coneCollector(3,objectId) = 0;
-  //   }
-  //
-  // }
+  if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID()) {
+    odcore::base::Lock lockCone(m_coneMutex);
+    std::cout << "Recieved Direction" << std::endl;
+    //Retrive data and timestamp
+    odcore::data::TimeStamp timeStamp = a_container.getReceivedTimeStamp();
+    auto coneDirection = a_container.getData<opendlv::logic::perception::ObjectDirection>();
+		uint32_t objectId = coneDirection.getObjectId();
+
+    //Check last timestamp if they are from same message
+    //std::cout << "Message Recieved " << std::endl;
+    if (CheckContainer(objectId,timeStamp)){
+      //std::cout << "Test 2 " << std::endl;
+      m_coneCollector(0,objectId) = coneDirection.getAzimuthAngle();
+			m_coneCollector(1,objectId) = coneDirection.getZenithAngle();
+    }
+
+  }
+	if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID()){
+    odcore::base::Lock lockCone(m_coneMutex);
+    std::cout << "Recieved Distance" << std::endl;
+		odcore::data::TimeStamp timeStamp = a_container.getReceivedTimeStamp();
+    auto coneDistance = a_container.getData<opendlv::logic::perception::ObjectDistance>();
+		uint32_t objectId = coneDistance.getObjectId();
+
+    //Check last timestamp if they are from same message
+    //std::cout << "Message Recieved " << std::endl;
+    if (CheckContainer(objectId,timeStamp)){
+      m_coneCollector(2,objectId) = coneDistance.getDistance();
+			m_coneCollector(3,objectId) = 0;
+    }
+
+  }
 }
 
 bool DetectCone::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp){
@@ -302,7 +303,7 @@ void DetectCone::xyz2xy(cv::Mat Q, cv::Vec3f xyz, cv::Vec2f &xy){
 }
 
 float_t DetectCone::depth2resizeRate(double x, double y){
-  return 1.5*(1.6078-0.4785*std::sqrt(std::sqrt(x*x+y*y)/1000));
+  return 2*(1.6078-0.4785*std::sqrt(std::sqrt(x*x+y*y)/1000));
 }
 
 
@@ -373,7 +374,7 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
   // (396,	183,	0.34375,	"blue", 586.295, 67.1457, 3899.47);
 
   // convert imagefile to vec_t
-  std::cout << "image size: " << img.size() << std::endl;
+  // std::cout << "image size: " << img.size() << std::endl;
   cv::Mat Q, disp, rectified, XYZ;
   reconstruction(img, Q, disp, rectified, XYZ);
 
@@ -383,13 +384,13 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
   int x = point2D[0];
   int y = point2D[1];
 
-  std::cout << "Camera region center: " << x << ", " << y << std::endl;
+  // std::cout << "Camera region center: " << x << ", " << y << std::endl;
   float_t ratio = depth2resizeRate(point3D[0], point3D[2]);
   int maxIndex = 1;
   if (ratio > 0) {
     int length = ratio * 32;
     int radius = (length-1)/2;
-    std::cout << "radius: " << radius << std::endl;
+    // std::cout << "radius: " << radius << std::endl;
 
     cv::Rect roi;
     roi.x = std::max(x - radius, 0);
@@ -403,13 +404,16 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
     //cv::imshow("roi", img);
     //cv::waitKey(0);
     //cv::destroyAllWindows();
-
+    if (roi.width <= 0 || roi.height <= 0){
+      std::cout << "Wrong roi!" << std::endl;
+      return 0;
+    }
     auto patchImg = rectified(roi);
 
     tiny_dnn::vec_t data;
     convertImage(patchImg, 32, 32, data);
     auto prob = m_nn.predict(data);
-    float_t threshold = 0.5;
+    float_t threshold = 0.1;
     // std::cout << prob[0] << " " << prob[1] << " " << prob[2] << " " << prob[3] << std::endl;
     float_t maxProb = prob[1];
     for(int i=2;i<4;i++){
@@ -422,14 +426,23 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
     std::string labels[] = {"yellow", "blue", "orange"};
     if (maxProb < threshold)
       std::cout << "No cone detected" << std::endl;
-    else
-      std::cout << "Find one " << labels[maxIndex-1] << " cone, XYZ positon: " << point3D << "mm, xy position: " << point2D << "pixel" << std::endl;
-     cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,0,0), CV_FILLED);
-     // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
-     cv::namedWindow("disp", cv::WINDOW_NORMAL);
-     cv::imshow("disp", rectified);
-     cv::waitKey(10);
-     //cv::destroyAllWindows();
+    else{
+      std::cout << "Find one " << labels[maxIndex-1] << " cone, XYZ positon: " << point3D << "mm, xy position: " << point2D << "pixel, certainty: " << prob[maxIndex] << std::endl;
+      if (labels[maxIndex-1] == "yellow")
+        cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,255,255), CV_FILLED);
+      else if (labels[maxIndex-1] == "blue")
+        cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (255,0,0), CV_FILLED);
+      else if (labels[maxIndex-1] == "orange")
+        cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,165,255), CV_FILLED);
+      else
+        cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,0,0), CV_FILLED);
+
+       // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
+       cv::namedWindow("disp", cv::WINDOW_NORMAL);
+       cv::imshow("disp", rectified);
+       cv::waitKey(10);
+       //cv::destroyAllWindows();
+    }
   }
   else{
     std::cout << "No cone detected" << std::endl;
@@ -795,7 +808,7 @@ void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
   m_finalPointCloud = lidarCones;
   cv::Vec3f point3D;
   double yShift = 0;//1872mm
-  double zShift = 50;
+  double zShift = 0;
   for (int i = 0; i < m_finalPointCloud.cols(); i++){
     point3D << m_finalPointCloud(0,i), -zShift-m_finalPointCloud(2,i), yShift+m_finalPointCloud(1,i);
     m_finalPointCloud(3,i) = backwardDetection(m_img, point3D);
