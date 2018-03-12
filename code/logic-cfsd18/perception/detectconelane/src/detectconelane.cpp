@@ -43,41 +43,97 @@ DetectConeLane::~DetectConeLane()
 
 void DetectConeLane::nextContainer(odcore::data::Container &a_container)
 {
-// Map with no guesses
-ArrayXXf sideLeft(4,2); ArrayXXf sideRight(5,2); ArrayXXf location(1,2);
-sideLeft << -68.0726,51.3005,
-            -70.1104,46.7798,
-            -69.1145,48.9532,
-            -66.9452,53.4154;
-sideRight << -65.4468,49.8283,
-             -64.5145,51.6441,
-             -63.5884,52.9191,
-             -66.4618,47.5305,
-             -67.5248,45.2408;
-location << -70,44;
+// Map with no guesses or filtering
+//ArrayXXf sideLeft(4,2); ArrayXXf sideRight(5,2); ArrayXXf location(1,2);
+//sideLeft << -68.0726,51.3005,
+//            -70.1104,46.7798,
+//            -69.1145,48.9532,
+//            -66.9452,53.4154;
+//sideRight << -65.4468,49.8283,
+//             -64.5145,51.6441,
+//             -63.5884,52.9191,
+//             -66.4618,47.5305,
+//             -67.5248,45.2408;
+//location << -70,44;
+
+// Map with no filtering but some guesses
+//ArrayXXf sideLeft(8,2); ArrayXXf sideRight(4,2); ArrayXXf location(1,2);
+//sideLeft << -65.7229,55.0356,
+//            -58.4039,60.0614,
+//            -63.4316,57.4711,
+//            -64.5641,56.3201,
+//            -62.3371,58.4472,
+//            -57.2672,59.6403,
+//            -61.2345,59.2276,
+//            -60.1803,59.7912;
+//sideRight << -62.4745,54.1608,
+//             -63.5884,52.9191,
+//             -61.4630,55.2024,
+//             -60.5469,56.0359;
+//location << -66,54;
+
+// Map with only one detected side
+//ArrayXXf sideLeft(0,2); ArrayXXf sideRight(5,2); ArrayXXf location(1,2);
+//sideRight << -71.3926,38.6152,
+//             -68.7047,42.9798,
+//             -67.5248,45.2408,
+//             -66.4618,47.5305,
+//             -69.9846,40.6632;
+//location << -72,38;
+
+// Map with both filtering and guesses (seeing later part of track)
+//ArrayXXf sideLeft(4,2); ArrayXXf sideRight(8,2); ArrayXXf location(1,2);
+//sideLeft << -77.1638,-19.5275,
+//            -74.6719,-22.8084,
+//            -76.1332,-20.4146,
+//            -75.3298,-21.4609;
+//sideRight << -75.3114,-17.1634,
+//             -76.8202,-16.2099,
+//             -77.9561,-12.1569,
+//             -78.1355,-15.3939,
+//             -73.8542,-18.4595,
+//             -76.8529,-12.6378,
+//             -79.4938,-14.6250,
+//             -72.6859,-20.0369;
+//location << -73,-22;
+
+// Map with both filtering and guesses (seeing earlier part of track)
+//ArrayXXf sideLeft(4,2); ArrayXXf sideRight(9,2); ArrayXXf location(1,2);
+//sideLeft << -79.0031,-7.1247,
+//            -83.4068,-15.5843,
+//            -79.2091,-5.7584,
+//            -82.4479,-16.2767;
+//sideRight << -79.8760,-11.2204,
+//             -81.7276,-13.0964,
+//             -80.5293,-13.9657,
+//             -81.8028,-8.2125,
+//             -82.2223,-5.6942,
+//             -79.4938,-14.6250,
+//             -78.8625,-11.7738,
+//             -82.6931,-12.5203,
+//             -81.1177,-9.6574;
+//location << -81,-5;
+
+// Map with a guess where cones are placed poorly
+ArrayXXf sideLeft(6,2); ArrayXXf sideRight(7,2); ArrayXXf location(1,2);
+sideLeft << -55.3944,58.0601,
+            -60.1803,59.7912,
+            -57.2672,59.6403,
+            -58.4039,60.0614,
+            -61.2345,59.2276,
+            -56.4540,59.3048;
+sideRight << -58.1339,56.8301,
+             -57.8483,56.0774,
+             -59.8076,56.5859,
+             -58.1000,56.7947,
+             -59.0203,57.0216,
+             -59.0262,57.1244,
+             -58.7363,57.0246;
+location << -61,57;
 
 float distanceThreshold = 3.5;
 float guessDistance = 3.0;
 
-//// Map 3
-//ArrayXXf side1(9,2); ArrayXXf side2(8,2);
-//side1 << -0.8, 0,
-//	 -0.85, 1,
-//	 -0.85,2,
-//	 -0.8, 3,
-//	 -0.72, 4.3,
-//	 -0.5, 4.8,
-//	 -0.4, 4.8,
-//	 -0.1, 4,
-//	 0, 2;
-//side2 << -0.5, 0,
-//	 -0.6, 1,
-//	 -0.6, 2,
-//	 -0.53, 3,
-//	 -0.43, 3.6,
-//	 -0.35, 3,
-//	 -0.35, 2,
-//	 -0.35, 1;
 
 // Actual test
 std::cout << "SideLeft: " << sideLeft << std::endl;
@@ -649,6 +705,7 @@ else if(!guessForFirstCone && guessForSecondCone)
 else
 {
   // Should not be in use. Works in matlab but not here were array sizes have to be defined in advance? Throw exception if this is reached?
+  std::cout << "WARNING, ENTERED DANGEROUS AREA IN GUESSCONES " << std::endl;
   guessedCones << -1000,-1000;
 } // End of else
 
