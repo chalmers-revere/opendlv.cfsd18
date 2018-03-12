@@ -129,6 +129,7 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   double m_inlierFoundTreshold;
   double m_ransacIterations;
   double m_dotThreshold;
+  uint32_t m_senderStamp = 0;
   Eigen::MatrixXd m_lastBestPlane;
   
 

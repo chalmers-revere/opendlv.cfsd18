@@ -63,6 +63,8 @@ void DetectCone::setUp()
   m_threshold = kv.getValue<double>("logic-cfsd18-perception-detectcone.threshold");
   m_timeDiffMilliseconds = kv.getValue<double>("logic-cfsd18-perception-detectcone.timeDiffMilliseconds");
   m_checkLiarMilliseconds = kv.getValue<double>("logic-cfsd18-perception-detectcone.checkLidarMilliseconds");
+  m_senderStamp = kv.getValue<int>("logic-cfsd18-perception-detectcone.senderStamp");
+  m_attentionSenderStamp = kv.getValue<int>("logic-cfsd18-perception-detectcone.attentionSenderStamp");
   std::cout << "setup OK " << std::endl;
 
   // testSlidingWindow("0.png");
@@ -116,8 +118,8 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
     //   forwardDetection(m_img);
     // }
   }
-
-  if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID()) {
+  bool correctSenderStamp = a_container.getSenderStamp() == m_attentionSenderStamp;
+  if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID() && correctSenderStamp) {
     odcore::base::Lock lockCone(m_coneMutex);
     std::cout << "Recieved Direction" << std::endl;
     //Retrive data and timestamp
@@ -134,7 +136,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
     }
 
   }
-	if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID()){
+  else if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID() && correctSenderStamp){
     odcore::base::Lock lockCone(m_coneMutex);
     std::cout << "Recieved Distance" << std::endl;
 		odcore::data::TimeStamp timeStamp = a_container.getReceivedTimeStamp();
@@ -845,11 +847,38 @@ void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
 void DetectCone::SendMatchedContainer(Eigen::MatrixXd cones)
 {
   for(int n = 0; n < cones.cols(); n++){
+
+    opendlv::logic::sensation::Point conePoint;
+    Cartesian2Spherical(cones(0,n), cones(1,n), cones(2,n), conePoint);
+
+    opendlv::logic::perception::ObjectDirection coneDirection;
+    coneDirection.setObjectId(n);
+    coneDirection.setAzimuthAngle(conePoint.getAzimuthAngle());
+    coneDirection.setZenithAngle(conePoint.getZenithAngle());
+    odcore::data::Container c2(coneDirection);
+    c2.setSenderStamp(m_senderStamp);
+    getConference().send(c2);
+
+    opendlv::logic::perception::ObjectDistance coneDistance;
+    coneDistance.setObjectId(n);
+    coneDistance.setDistance(conePoint.getDistance());
+    odcore::data::Container c3(coneDistance);
+    c3.setSenderStamp(m_senderStamp);
+    getConference().send(c3);
+
+    opendlv::logic::perception::ObjectType coneType;
+    coneType.setObjectId(n);
+    coneType.setType(cones(3,n));
+    odcore::data::Container c4(coneType);
+    c3.setSenderStamp(m_senderStamp);
+    getConference().send(c4);
+/*
     opendlv::logic::sensation::Point conePoint;
     Cartesian2Spherical(cones(0,n), cones(1,n), cones(2,n), conePoint);
     odcore::data::Container c1(conePoint);
     getConference().send(c1);
     std::cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << std::endl;
+*/
   }
 }
 

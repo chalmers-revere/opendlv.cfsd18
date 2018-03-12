@@ -212,6 +212,7 @@ void Attention::setUp()
   m_inlierFoundTreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.inlierFoundTreshold");
   m_ransacIterations = kv.getValue<double>("logic-cfsd18-sensation-attention.numberOfIterations");
   m_dotThreshold = kv.getValue<double>("logic-cfsd18-sensation-attention.dotThreshold");
+  m_senderStamp = kv.getValue<int>("logic-cfsd18-sensation-attention.senderStamp");
   m_lastBestPlane = Eigen::MatrixXd::Zero(1,4);
   m_lastBestPlane << 0,0,1,0;
 
@@ -624,12 +625,14 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
     coneDirection.setAzimuthAngle(conePoint.getAzimuthAngle());
     coneDirection.setZenithAngle(conePoint.getZenithAngle());
     odcore::data::Container c2(coneDirection);
+    c2.setSenderStamp(m_senderStamp);
     getConference().send(c2);
 
     opendlv::logic::perception::ObjectDistance coneDistance;
     coneDistance.setObjectId(i);
     coneDistance.setDistance(conePoint.getDistance());
     odcore::data::Container c3(coneDistance);
+    c3.setSenderStamp(m_senderStamp);
     getConference().send(c3);
     //std::cout << "Cone Sent" << std::endl;
     //std::cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << std::endl;
