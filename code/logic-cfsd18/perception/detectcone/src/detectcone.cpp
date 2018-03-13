@@ -397,8 +397,8 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
     cv::Rect roi;
     roi.x = std::max(x - radius, 0);
     roi.y = std::max(y - radius, 0);
-    roi.width = std::min(x + radius, img.cols) - roi.x;
-    roi.height = std::min(y + radius, img.rows) - roi.y;
+    roi.width = std::min(x + radius, rectified.cols) - roi.x;
+    roi.height = std::min(y + radius, rectified.rows) - roi.y;
 
     //cv::circle(img, cv::Point (x,y), radius, cv::Scalar (0,0,0));
     // // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
@@ -406,7 +406,7 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
     //cv::imshow("roi", img);
     //cv::waitKey(0);
     //cv::destroyAllWindows();
-    if (roi.width <= 0 || roi.height <= 0){
+    if (0 > roi.x || 0 > roi.width || roi.x + roi.width > rectified.cols || 0 > roi.y || 0 > roi.height || roi.y + roi.height > rectified.rows){
       std::cout << "Wrong roi!" << std::endl;
       return 0;
     }
@@ -438,13 +438,12 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
         cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,165,255), CV_FILLED);
       else
         cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,0,0), CV_FILLED);
-
+    }
        // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
        cv::namedWindow("disp", cv::WINDOW_NORMAL);
        cv::imshow("disp", rectified);
        cv::waitKey(10);
        //cv::destroyAllWindows();
-    }
   }
   else{
     std::cout << "No cone detected" << std::endl;

@@ -21,7 +21,7 @@ services:
              - DISPLAY=$DISPLAY
         volumes:
             - /tmp/.X11-unix:/tmp/.X11-unix
-            - /home/cfsdpowerkeg/project/perception.master/opendlv.cfsd18/usecases/latest/test-detectcone/:/opt/tmp
+            - /home/weiming/ubuntu-project/opendlv.cfsd18/usecases/latest/test-detectcone:/opt/tmp
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectcone --cid=${CID} --id=1"
     # microservice for cfsd18-sensation-attention
     cfsd18-sensation-attention:
@@ -54,7 +54,7 @@ services:
         ipc: host
         user: odv
         devices:
-            - "/dev/video0:/dev/video0"
+            - "/dev/video1:/dev/video1"
         environment:
             - DISPLAY=$DISPLAY
         volumes:
