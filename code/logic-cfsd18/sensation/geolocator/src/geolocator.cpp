@@ -35,7 +35,7 @@ namespace cfsd18 {
 namespace sensation {
 
 Geolocator::Geolocator(int32_t const &a_argc, char **a_argv)
-    : TimeTriggeredConferenceClientModule(a_argc, a_argv, "logic-csfd18-sensation-geolocator")
+    : TimeTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-sensation-geolocator")
     , m_measurementsTimeStamp()
     , m_paramVecR()
     , m_sensorMutex()
