@@ -43,11 +43,23 @@ DetectConeLane::~DetectConeLane()
 {
 }
 
+void DetectConeLane::setUp()
+{
+  // std::string const exampleConfig = 
+  //   getKeyValueConfiguration().getValue<std::string>(
+  //     "logic-cfsd18-perception-detectconelane.example-config");
 
+  // if (isVerbose()) {
+  //   std::cout << "Example config is " << exampleConfig << std::endl;
+  // }
+}
+
+void DetectConeLane::tearDown()
+{
+}
 
 void DetectConeLane::nextContainer(odcore::data::Container &a_container)
 {
-  //std::cout << "I am in DetectConeLane!" << std::endl;
     if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID()) {
         auto coneDirection = a_container.getData<opendlv::logic::perception::ObjectDirection>();
 	    uint32_t objectId = coneDirection.getObjectId();
@@ -70,7 +82,8 @@ void DetectConeLane::nextContainer(odcore::data::Container &a_container)
 
 }
 
-void DetectConeLane::CheckContainer(uint32_t objectId){
+void DetectConeLane::CheckContainer(uint32_t objectId)
+{
 	if (objectId == 0){
 		rebuildLocalMap();
 		m_coneCollector = Eigen::MatrixXd::Zero(4,20);
@@ -103,33 +116,62 @@ void DetectConeLane::rebuildLocalMap()
         //m_coneCollector.col(p) = cone;
         coneLocal.col(p) = cone.topRows(2);
     }
-    std::cout << "Cones " << std::endl;
-    std::cout << coneLocal << std::endl;
 
-    std::ofstream outfile;
-    std::cout << "I am writing to txt!!!!!!!!!" << std::endl;
-    outfile.open("/opt/testdata/coneLocal.txt", std::ios::out | std::ios::app); // opens file named "filename" for output
-    outfile << coneLocal << std::endl;//saves "Hello" to the outfile with the insertion operator
-    outfile.close();// closes file; always do this when you are done using the file
+    //std::cout << "Cones " << std::endl;
+    //std::cout << coneLocal << std::endl;
+    
+    // the following code only for test
+    // manually set left cones and right cones
+    int n_left = 0;
+    int n_right = 0;
+    for(int q = 0; q < coneNum; q++){
+        if(coneLocal(0,q) < 0){
+            n_left++;
+        }else if(coneLocal(0,q) > 0){
+        	n_right++;
+        }
+    }
+
+    if(n_left > 1 || n_right > 1 ){
+
+	    Eigen::MatrixXd coneLeft = Eigen::MatrixXd::Zero(2,n_left);
+	    Eigen::MatrixXd coneRight = Eigen::MatrixXd::Zero(2,n_right);
+	    int i = 0;
+	    int j = 0;
+
+        for(int k = 0; k < coneNum; k++){
+            if(coneLocal(0,k) < 0){
+                coneLeft.col(i) = coneLocal.col(k);
+                i++;
+            }else if(coneLocal(0,k) > 0){
+                    coneRight.col(j) = coneLocal.col(k);
+                    j++;
+                }
+            }
+            /*
+            std::cout << "Left " << std::endl;
+            std::cout << coneLeft << std::endl;
+            std::cout << "Right " << std::endl;
+            std::cout << coneRight << std::endl;
+            */
+
+
+    }
+    
+}    
+    //std::ofstream outfile;
+    //std::cout << "I am writing to txt!!!!!!!!!" << std::endl;
+    //outfile.open("/opt/testdata/coneLocal.txt", std::ios::out | std::ios::app); // opens file named "filename" for output
+    //outfile << coneLocal << std::endl;//saves "Hello" to the outfile with the insertion operator
+    //outfile.close();// closes file; always do this when you are done using the file
+    
+
+
+
+
 
 }
-
-void DetectConeLane::setUp()
-{
-  // std::string const exampleConfig = 
-  //   getKeyValueConfiguration().getValue<std::string>(
-  //     "logic-cfsd18-perception-detectconelane.example-config");
-
-  // if (isVerbose()) {
-  //   std::cout << "Example config is " << exampleConfig << std::endl;
-  // }
+}
+}
 }
 
-void DetectConeLane::tearDown()
-{
-}
-
-}
-}
-}
-}
