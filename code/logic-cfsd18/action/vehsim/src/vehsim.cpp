@@ -346,7 +346,7 @@ Eigen::ArrayXf Vehsim::atanArr(Eigen::ArrayXf a)
 void Vehsim::sendAccelerationRequest(float yawRef)
 {
   (void) yawRef;
-  
+
   float u = m_x(0);
   float v_ref = 5; //std::max(u_min,v);
   float e = (v_ref - u);
@@ -475,7 +475,7 @@ void Vehsim::setUp()
   // ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
   std::cout << "Path: " << "/home/oscar/Desktop/" <<  std::endl;
 
-  std::ifstream file ( "/home/Desktop/TireData.txt" );
+  std::ifstream file( "/opt/opendlv.data/TireData.txt", std::ifstream::in );
   std::string row;
   std::string value;
   int irow = 1;
