@@ -139,9 +139,6 @@ float tmpDist;
 int closestConeIndex;
 float factor;
 
-
-std::cout  <<  "1" << std::endl;
-
 // Every virtual point on the long side should get one corresponding point on the short side
 for(int i = 0; i < nMidPoints; i = i+1)
 {
@@ -157,14 +154,10 @@ for(int i = 0; i < nMidPoints; i = i+1)
     } // End of if
   } // End of for
 
-std::cout  <<  "2" << std::endl;
-
   // Check if one of the two segments next to the cone has a perpendicular line to the long side point. If so, place the short side point
   // on that place of the segment. If not, place the point on the cone. If it's the first or last cone there is only one segment to check
   if(closestConeIndex == 0)
   {
-  	std::cout  <<  "5" << std::endl;
-  	std::cout << shortSide.rows() << std::endl;
     
     if(shortSide.rows() > 1)
     {
@@ -175,13 +168,11 @@ std::cout  <<  "2" << std::endl;
 
     if(shortSide.rows() > 1 && factor > 0 && factor <= 1)
     {
-      std::cout  <<  "3" << std::endl;
       virtualPointsShort.row(i) = shortSide.row(0)+factor*(shortSide.row(1)-shortSide.row(0));
 
     }
     else
     {
-      std::cout  <<  "4" << std::endl;
       virtualPointsShort.row(i) = shortSide.row(0);
     } // End of else
   }
@@ -626,18 +617,12 @@ float DetectConeLane::findFactorToClosestPoint(ArrayXXf p1, ArrayXXf p2, ArrayXX
   // Input: The two cones of a cone segment and a reference point
   // Output: The factor to multiply with the vector between the cones in order to reach the point on the segment that has a
   // perpendicular line to the reference point
-std::cout << "6" << std::endl;
-ArrayXXf v = p2-p1; // The line to follow
 
-std::cout << "v" << v << std::endl;
+ArrayXXf v = p2-p1; // The line to follow
 ArrayXXf n(1,2);    // The normal
 n << -v(1),v(0);
 
-std::cout << "n" << n << std::endl;
-
 float factor = (q(0)-p1(0)+(p1(1)-q(1))*n(0)/n(1))/(v(0)-v(1)*n(0)/n(1));
-
-std::cout << "factor" << factor << std::endl;
 
 //std::cout << "p1: " << p1 << std::endl;
 //std::cout << "p2: " << p2 << std::endl;
