@@ -73,17 +73,17 @@ logic-cfsd18-sensation-geolocator.senderStamp = 114
 logic-cfsd18-sensation-geolocator.imuSenderStamp = 112
 
 %%%%%SAMPLE TIME & GPS REFERENCE%%%%%%
-logic-cfsd18-sensation-geolocator.T = 0.1; #Check in docker compose
-logic-cfsd18-sensation-geolocator.GPSreference.latitude = 0
-logic-cfsd18-sensation-geolocator.GPSreference.longitude = 0
+logic-cfsd18-sensation-geolocator.T = 0.05; #Check in docker compose
+logic-cfsd18-sensation-geolocator.GPSreference.latitude = 57.7
+logic-cfsd18-sensation-geolocator.GPSreference.longitude = 11.95
 
 %%%%%MODEL UNCERTAINTIES%%%%%% 
-logic-cfsd18-sensation-geolocator.Q.X = 0.1
-logic-cfsd18-sensation-geolocator.Q.Y = 0.1
-logic-cfsd18-sensation-geolocator.Q.VelX = 0.1
-logic-cfsd18-sensation-geolocator.Q.VelY = 0.1
-logic-cfsd18-sensation-geolocator.Q.Yaw = 0.1
-logic-cfsd18-sensation-geolocator.Q.Heading = 0.1
+logic-cfsd18-sensation-geolocator.Q.X = 1
+logic-cfsd18-sensation-geolocator.Q.Y = 1
+logic-cfsd18-sensation-geolocator.Q.VelX = 2000
+logic-cfsd18-sensation-geolocator.Q.VelY = 2
+logic-cfsd18-sensation-geolocator.Q.Yaw = 1
+logic-cfsd18-sensation-geolocator.Q.Heading = 1
 
 %%%%%MEASUREMENT UNCERTAINTIES%%%%%
 logic-cfsd18-sensation-geolocator.R.X = 1

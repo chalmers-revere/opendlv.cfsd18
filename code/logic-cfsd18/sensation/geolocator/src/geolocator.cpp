@@ -39,6 +39,7 @@ Geolocator::Geolocator(int32_t const &a_argc, char **a_argv)
     , m_measurementsTimeStamp()
     , m_paramVecR()
     , m_sensorMutex()
+    , m_deltaMutex()
     , m_accXYReading()
     , m_yawReading()
     , m_gpsReading()
@@ -85,6 +86,7 @@ void Geolocator::nextContainer(odcore::data::Container &a_container)
 
         auto groundspeed = a_container.getData<opendlv::proxy::GroundSpeedReading>();
         m_groundSpeedReading = groundspeed.getGroundSpeed();
+        m_groundSpeedReading = (m_groundSpeedReading < 0.01)?(0):(m_groundSpeedReading);
     }
 
     //Accelerometer
@@ -97,6 +99,8 @@ void Geolocator::nextContainer(odcore::data::Container &a_container)
         m_accXYReading << accReading.getAccelerationX(),
                           accReading.getAccelerationY();
 
+        m_accXYReading(0) = (m_accXYReading(0) < 0.05f)?(0):(m_accXYReading(0));
+        m_accXYReading(0) = (m_accXYReading(0) > -0.05f)?(0):(m_accXYReading(0));
 
      }
      //Gyro
@@ -140,7 +144,7 @@ void Geolocator::nextContainer(odcore::data::Container &a_container)
      //Racktravel
      if (a_container.getDataType() == opendlv::proxy::GroundSteeringReading::ID()){
 
-        odcore::base::Lock l(m_sensorMutex);
+        odcore::base::Lock ld(m_deltaMutex);
         auto racktravel = a_container.getData<opendlv::proxy::GroundSteeringReading>();
 
         double rT = racktravel.getGroundSteering();
@@ -156,9 +160,9 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Geolocator::body()
 
   while (getModuleStateAndWaitForRemainingTimeInTimeslice() == odcore::data::dmcp::ModuleStateMessage::RUNNING) {
    
-    odcore::base::Lock l(m_sensorMutex);
     odcore::data::TimeStamp currentTime;
     
+
     //Check last recieved measurement from each sensor, if longer than 1 sec, start trusting the model more     
     for(int i = 0; i < 7; i++){
         
@@ -398,6 +402,9 @@ MatrixXd Geolocator::UKFUpdate(MatrixXd &x)
     //Collect measurements from sensor
 
     MatrixXd y = MatrixXd::Zero(7,1);
+
+    {
+    odcore::base::Lock l(m_sensorMutex);
     y << m_gpsReading(0,0), 
          m_gpsReading(1,0),
          m_groundSpeedReading,
@@ -405,6 +412,7 @@ MatrixXd Geolocator::UKFUpdate(MatrixXd &x)
          m_accXYReading(1,0),
          m_yawReading,
          m_headingReading;
+    }
 
     //State update
     x = x + Pxy*S.inverse()*(y-y_hat);
@@ -419,12 +427,13 @@ MatrixXd Geolocator::UKFUpdate(MatrixXd &x)
 
 MatrixXd Geolocator::vehicleModel(MatrixXd &x)
 {
-
+    odcore::base::Lock ld(m_deltaMutex);
 
     if(x(2) < 0.0001){
 
         x(2) = 0.01;
     }
+
 
     double alphaF = std::atan((m_vehicleModelParameters(3)*x(4)) + x(3)/x(2)) - m_delta;
     double alphaR = std::atan((x(3)-m_vehicleModelParameters(4)*x(4))/x(2));
@@ -453,6 +462,7 @@ MatrixXd Geolocator::vehicleModel(MatrixXd &x)
 MatrixXd Geolocator::measurementModel(MatrixXd &x)
 {
 
+    odcore::base::Lock ld(m_deltaMutex);
     MatrixXd hx = MatrixXd::Zero(7,1);
     double alphaF = std::atan((m_vehicleModelParameters(3)*x(4)) + x(3)/x(2)) - m_delta;
     double alphaR = std::atan((x(3)-m_vehicleModelParameters(4)*x(4))/x(2));
@@ -501,9 +511,10 @@ double Geolocator::rackTravelToFrontWheelSteering(double &rackTravel)
 void Geolocator::stateSender(MatrixXd &x)
 {
   std::array<double,2> cartesianPos;
-  cartesianPos[0] = x(1);
-  cartesianPos[1] = x(0);
+  cartesianPos[0] = x(0);
+  cartesianPos[1] = x(1);
   std::array<double,2> sendGps = wgs84::fromCartesian(m_gpsReference, cartesianPos);
+
     opendlv::logic::sensation::Geolocation geoState;
     geoState.setLatitude(sendGps[0]);
     geoState.setLongitude(sendGps[1]);
@@ -514,12 +525,15 @@ void Geolocator::stateSender(MatrixXd &x)
 
     opendlv::logic::sensation::Equilibrioception kinematicState;
     kinematicState.setVx(x(2));
-    kinematicState.setVx(x(3));
+    kinematicState.setVy(x(3));
     kinematicState.setYawRate(x(4));
     odcore::data::Container c2(kinematicState);
     c2.setSenderStamp(m_senderStamp);
     getConference().send(c2);
-
+    std::cout << "Pos long/lat: " << sendGps[0] << " , " << sendGps[1] << std::endl;
+    std::cout << "Velocity: " << x(2) << std::endl;
+    std::cout << "Heading: " << x(5) << std::endl;
+    std::cout << "YawRate: " << x(4) << std::endl;
 }
 
 }

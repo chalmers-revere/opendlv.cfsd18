@@ -32,4 +32,11 @@ services:
         depends_on:
             - odsupercomponent
         network_mode: host
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-sensation-geolocator --cid=${CID} --freq=10"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-sensation-geolocator --cid=${CID} --freq=20"
+#    proxy-ellipse2n:
+#        image: "ellipseproxy:ellipsev0.0.2"
+#        network_mode: "host"
+#        ipc: host
+#        devices:
+#            - "/dev/ttyUSB0:/dev/ttyUSB0"
+#        command: "opendlv-proxy-ellipse2n --cid=120 --id=112"
