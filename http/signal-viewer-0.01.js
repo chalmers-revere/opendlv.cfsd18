@@ -44,7 +44,7 @@ function setupViewer() {
   var lc = libcluon();
 
   if ("WebSocket" in window) {
-    var ws = new WebSocket("ws://" + window.location.host + "/");
+    var ws = new WebSocket("ws://" + window.location.host + "/", "data");
     ws.binaryType = 'arraybuffer';
 
     ws.onopen = function() {
@@ -86,14 +86,15 @@ function onStreamClosed() {
 
 function onMessageReceived(lc, msg) {
 
-
-  console.log("Message got");
+  console.log(msg);
 
   if (g_pause) {
     return;
   }
 
   var data_str = lc.decodeEnvelopeToJSON(msg);
+  
+  console.log(data_str);
 
   if (data_str.length == 2) {
     return;
