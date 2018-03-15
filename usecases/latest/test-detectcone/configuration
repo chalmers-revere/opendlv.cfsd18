@@ -68,8 +68,8 @@ odsupercomponent.pulsetimeack.exclude = odcockpit
 logic-cfsd18-perception-detectcone.threshold = 1.5 #[m]
 logic-cfsd18-perception-detectcone.timeDiffMilliseconds = 20 #[ms]
 logic-cfsd18-perception-detectcone.checkLidarMilliseconds = 1000 #[ms]
-logic-cfsd18-perception-detectcone.senderStamp = 18
-logic-cfsd18-perception-detectcone.attentionSenderStamp = 16
+logic-cfsd18-perception-detectcone.senderStamp = 118
+logic-cfsd18-perception-detectcone.attentionSenderStamp = 116
 
 ###############################################################################
 #
@@ -104,7 +104,7 @@ logic-cfsd18-sensation-attention.maxNumOfPointsForCone = 80
 logic-cfsd18-sensation-attention.farConeRadiusThreshold = 0.2
 logic-cfsd18-sensation-attention.nearConeRadiusThreshold = 0.25
 logic-cfsd18-sensation-attention.zRangeThreshold = 0.08  #[m]
-logic-cfsd18-sensation-attention.senderStamp = 16
+logic-cfsd18-sensation-attention.senderStamp = 116
 
 %RANSAC
 
