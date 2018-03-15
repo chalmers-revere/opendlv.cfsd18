@@ -68,6 +68,10 @@ odsupercomponent.pulsetimeack.exclude = odcockpit
 # CONFIGURATION FOR OPENDLV
 #
 
+%%%%%SENDER STAMPS%%%%%%%%%%%%%%%%%%
+logic-cfsd18-sensation-geolocator.senderStamp = 114
+logic-cfsd18-sensation-geolocator.imuSenderStamp = 112
+
 %%%%%SAMPLE TIME & GPS REFERENCE%%%%%%
 logic-cfsd18-sensation-geolocator.T = 0.1; #Check in docker compose
 logic-cfsd18-sensation-geolocator.GPSreference.latitude = 0
