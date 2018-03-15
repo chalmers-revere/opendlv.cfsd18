@@ -20,10 +20,12 @@
 #include <iostream>
 #include <math.h>
 #include <chrono>
+#include <fstream>
 
 #include <opendavinci/odcore/data/TimeStamp.h>
 #include <opendavinci/odcore/strings/StringToolbox.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
+
 
 #include "vehsim.hpp"
 
@@ -86,7 +88,10 @@ Vehsim::Vehsim(int32_t const &a_argc, char **a_argv) :
   m_Fbrake(),
   m_leftMotorID(),
   m_rightMotorID(),
-  m_brakeEnabled()
+  m_brakeEnabled(),
+  m_tireLoad(),
+  m_tireSlip(),
+  m_tireForce()
   {
 }
 
@@ -137,11 +142,11 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         std::cout << ".   ddu: " << dx(3);
         std::cout << ".   ddv: " << dx(4);
         std::cout << ".   ddr: " << dx(5) << std::endl;
-*/
+
         std::cout << "u: " << m_x(0);
         std::cout << ".   v: " << m_x(1);
         std::cout << ".   r: " << m_x(3) << std::endl;
-
+*/
 
         m_X += m_x*m_sampleTime + dx*(float)pow(m_sampleTime,2)/2;
         m_x += dx*m_sampleTime;
@@ -203,7 +208,7 @@ Eigen::ArrayXf Vehsim::loadTransfer(Eigen::ArrayXf x)
   Eigen::ArrayXf FzStatic = weightDist*(Fl + m_mass*m_g);
 
   //##################### dFz calculations
-  float phiDDot = (m_ms*ay*m_h0-m_kPhi*m_phiDot-(m_cPhi)*m_phi+m_ms*m_g*m_h0*(float)sin(m_phi))/(m_Ix+m_ms*(float)pow(m_h0,2.0f));
+  float phiDDot = 0; //(m_ms*ay*m_h0-m_kPhi*m_phiDot-(m_cPhi)*m_phi+m_ms*m_g*m_h0*(float)sin(m_phi))/(m_Ix+m_ms*(float)pow(m_h0,2.0f));
 
   Eigen::ArrayXf dFzy(4);
   dFzy << (-(m_mass*(-m_lr)*ay*m_h1/m_wf/m_L/2.0f)+(m_cPhi1*m_phi+m_kPhi1*m_phiDot)),
@@ -263,8 +268,12 @@ Eigen::ArrayXf Vehsim::tireModel(Eigen::ArrayXf delta, Eigen::ArrayXf x, Eigen::
   alpha << a1, a2, a3, a4;
   alpha = alpha + delta;
 
-  Fy = Fy + Fz*m_D*sin(m_C*atanArr(m_B*alpha - m_E*(m_B*alpha - atanArr(m_B*alpha))));
+  float Fy1 = interp2(m_tireLoad, m_tireSlip, m_tireForce, Fz(0), a1);
+  float Fy2 = interp2(m_tireLoad, m_tireSlip, m_tireForce, Fz(1), a2);
+  float Fy3 = interp2(m_tireLoad, m_tireSlip, m_tireForce, Fz(2), a3);
+  float Fy4 = interp2(m_tireLoad, m_tireSlip, m_tireForce, Fz(3), a4);
 
+  Fy << Fy1,Fy2,Fy3,Fy4;
   return Fy;
 }
 
@@ -337,15 +346,10 @@ Eigen::ArrayXf Vehsim::atanArr(Eigen::ArrayXf a)
 void Vehsim::sendAccelerationRequest(float yawRef)
 {
   (void) yawRef;
-  /*
-  float u_max = 50/3.6;
-  float u_min = 2;
-  float k = 3;*/
-
+  
   float u = m_x(0);
-  //float v = 1/(k*abs(yawRef)+1)*u_max;
   float v_ref = 5; //std::max(u_min,v);
-  float e = v_ref - u;
+  float e = (v_ref - u);
 
   if(e > 0) {
     opendlv::proxy::GroundAccelerationRequest out1(e);
@@ -357,6 +361,51 @@ void Vehsim::sendAccelerationRequest(float yawRef)
     getConference().send(c2);
   }
 
+}
+
+float Vehsim::interp2(Eigen::VectorXf arg_X, Eigen::VectorXf arg_Y, Eigen::MatrixXf arg_V, float arg_xq, float arg_yq)
+{
+  Eigen::RowVectorXf X(2);
+  Eigen::VectorXf Y(2);
+  Eigen::MatrixXf V(2,2);
+
+  int i = 0;
+  int j = 0;
+  // Find betweem which two points x lies
+  while (arg_xq > arg_X(i)) {
+    if (i >= arg_X.size()-1) {
+      std::cout << "Interp2: x-value out of bounds" << std::endl;
+      break;
+    }
+    i++;
+  }
+  // Find betweem which two points y lies
+  while (arg_yq > arg_Y(j)) {
+    if (j >= arg_Y.size()-1) {
+      std::cout << "Interp2: y-value out of bounds" << std::endl;
+      break;
+    }
+    j++;
+  }
+
+  X << arg_X(i)-arg_xq, arg_xq-arg_X(i-1);
+  Y << arg_Y(j)-arg_yq, arg_yq-arg_Y(j-1);
+  V << arg_V(j-1,i-1), arg_V(j-1,i),
+       arg_V(j,i-1), arg_V(j,i);
+
+  auto vq = X*V*Y;
+  (void) vq;
+
+  std::cout << vq << std::endl;
+
+  (void) arg_Y;
+  (void) arg_X;
+  (void) arg_V;
+  (void) arg_xq;
+  (void) arg_yq;
+  (void) Y;
+
+  return 0.01f;
 }
 
 void Vehsim::setUp()
@@ -420,8 +469,45 @@ void Vehsim::setUp()
   m_B << Bf, Bf, Br, Br;
   m_D << Df, Df, Dr, Dr;
 
-  m_aimPoint = opendlv::logic::action::AimPoint(0.0f,0.1f,5.0f);
+  m_aimPoint = opendlv::logic::action::AimPoint(0.0f,0.0f,5.0f);
 
+  // char result[ PATH_MAX ];
+  // ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+  std::cout << "Path: " << "/home/oscar/Desktop/" <<  std::endl;
+
+  std::ifstream file ( "/home/Desktop/TireData.txt" );
+  std::string row;
+  std::string value;
+  int irow = 1;
+  int icol;
+
+  std::cout << file.is_open() << std::endl;
+  if (file.is_open()){
+    std::cout << "File open" << std::endl;
+    while(file.good()){
+      std::cout << "reading new row" << std::endl;
+      icol = 1;
+      getline ( file, row);
+      while(file.good()){
+        std::cout << "reading new column, ";
+        getline ( file, value,',');
+        if(irow == 1 && icol != 1){
+          m_tireLoad(icol-1) = std::stof(value);
+        } else if (icol == 1 && irow != 1) {
+          m_tireSlip(irow) = std::stof(value);
+        } else {
+          m_tireForce(icol-1,irow-1) = std::stof(value);
+        }
+        std::cout << m_tireLoad << std::endl;
+        std::cout << m_tireSlip << std::endl;
+        icol ++;
+      }
+      irow ++;
+    }
+  }
+
+// m_tireLoad << 1500, 1392.857, 1285.714, 1178.571, 1071.429,
+//    964.2857, 857.1429, 750, 642.8571, 535.7143, 428.5714, 321.4286, 214.2857, 107.1429, 0;
 }
 
 void Vehsim::tearDown()

@@ -51,6 +51,7 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
   Eigen::ArrayXf longitudinalControl(Eigen::ArrayXf);
   Eigen::ArrayXf motion(Eigen::ArrayXf,Eigen::ArrayXf,Eigen::ArrayXf,Eigen::ArrayXf);
   void sendAccelerationRequest(float);
+  float interp2(Eigen::VectorXf, Eigen::VectorXf, Eigen::MatrixXf, float, float);
 
  private:
    opendlv::logic::action::AimPoint m_aimPoint;
@@ -103,6 +104,9 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
    uint32_t m_leftMotorID;
    uint32_t m_rightMotorID;
    bool m_brakeEnabled;
+   Eigen::VectorXf m_tireLoad;
+   Eigen::VectorXf m_tireSlip;
+   Eigen::VectorXf m_tireForce;
 };
 
 }

@@ -140,10 +140,10 @@ void Motion::calcTorque(float a_arg)
   float torque = a_arg*m_mass*m_wR;
 
   float yawRateRef = calcYawRateRef(m_headingRequest);
+  (void) yawRateRef;
+  //float e_yawRate = -yawRateRef; // Add yaw rate here when Marcus is done with message
 
-  float e_yawRate = -yawRateRef; // Add yaw rate here when Marcus is done with message
-
-  float dT = 0.5f/m_dt*e_yawRate*m_Iz;
+  float dT = 0; // 0.5f/m_dt*e_yawRate*m_Iz;
   // Torque distribution
   float torqueLeft = torque*0.5f - dT;
   float torqueRight = torque-torqueLeft;
