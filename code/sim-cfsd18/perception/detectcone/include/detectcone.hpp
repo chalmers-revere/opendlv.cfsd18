@@ -17,34 +17,33 @@
  * USA.
  */
 
-#ifndef OPENDLV_LOGIC_CFSD18_ACTION_LATERAL_HPP
-#define OPENDLV_LOGIC_CFSD18_ACTION_LATERAL_HPP
+#ifndef OPENDLV_SIM_CFSD18_PERCEPTION_DETECTCONE_HPP
+#define OPENDLV_SIM_CFSD18_PERCEPTION_DETECTCONE_HPP
 
-#include <opendavinci/odcore/base/module/TimeTriggeredConferenceClientModule.h>
+#include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
 
 //#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 #include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
+#include <opendavinci/odcore/wrapper/Eigen.h>
 
 namespace opendlv {
-namespace logic {
+namespace sim {
 namespace cfsd18 {
-namespace action {
+namespace perception {
 
-class Lateral : public odcore::base::module::TimeTriggeredConferenceClientModule {
+class DetectCone : public odcore::base::module::DataTriggeredConferenceClientModule {
  public:
-  Lateral(int32_t const &, char **);
-  Lateral(Lateral const &) = delete;
-  Lateral &operator=(Lateral const &) = delete;
-  virtual ~Lateral();
+  DetectCone(int32_t const &, char **);
+  DetectCone(DetectCone const &) = delete;
+  DetectCone &operator=(DetectCone const &) = delete;
+  virtual ~DetectCone();
   virtual void nextContainer(odcore::data::Container &);
 
  private:
   void setUp();
   void tearDown();
-  odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode body();
-
-  void sendGroundSteeringRequest(double);
+  ArrayXXf simConeDetectorBox(ArrayXXf, ArrayXXf, float, float, float);
 };
 
 }

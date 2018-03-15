@@ -23,11 +23,14 @@
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
 
+
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
 #include <fstream>
 #include <iostream>
+#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 //#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
+
 
 namespace opendlv {
 namespace logic {
@@ -46,6 +49,7 @@ class DetectConeLane : public odcore::base::module::DataTriggeredConferenceClien
   void setUp();
   void tearDown();
 
+
   Eigen::MatrixXd Spherical2Cartesian(double, double, double);
   void rebuildLocalMap();
   void CheckContainer(uint32_t);
@@ -54,6 +58,17 @@ class DetectConeLane : public odcore::base::module::DataTriggeredConferenceClien
   Eigen::MatrixXd m_coneCollector;
   int coneNum;
   const double DEG2RAD = 0.017453292522222; // PI/180.0
+
+  ArrayXXf findSafeLocalPath(ArrayXXf, ArrayXXf, ArrayXXf, float);
+  ArrayXXf placeEquidistantPoints(ArrayXXf, bool, int, float);
+  ArrayXXf traceBackToClosestPoint(ArrayXXf, ArrayXXf, ArrayXXf);
+  ArrayXXf orderCones(ArrayXXf, ArrayXXf);
+  ArrayXXf orderAndFilterCones(ArrayXXf, ArrayXXf);
+  ArrayXXf insertNeededGuessedCones(ArrayXXf, ArrayXXf, ArrayXXf, float, float, bool);
+  ArrayXXf guessCones(ArrayXXf, ArrayXXf, float, bool, bool, bool);
+  float findTotalPathLength(ArrayXXf);
+  float findFactorToClosestPoint(ArrayXXf, ArrayXXf, ArrayXXf);
+
 };
 
 }
