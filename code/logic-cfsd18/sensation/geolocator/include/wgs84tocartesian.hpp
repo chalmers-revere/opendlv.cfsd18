@@ -51,8 +51,10 @@ inline std::array<double, 2> toCartesian(const std::array<double, 2> &WGS84Refer
     constexpr double EQUATOR_RADIUS{6378137.0};
     constexpr double FLATTENING{1.0 / 298.257223563};
     constexpr double SQUARED_ECCENTRICITY{2.0 * FLATTENING - FLATTENING * FLATTENING};
-    //constexpr double SQUARE_ROOT_ONE_MINUS_ECCENTRICITY{0.996647189335};
-    //constexpr double POLE_RADIUS{EQUATOR_RADIUS * SQUARE_ROOT_ONE_MINUS_ECCENTRICITY};
+    /*Not used so causes compiler errors
+    //constexpr double SQUARE_ROOT_ONE_MINUS_ECCENTRICITY{0.996647189335}; 
+    //constexpr double POLE_RADIUS{EQUATOR_RADIUS * SQUARE_ROOT_ONE_MINUS_ECCENTRICITY}; 
+    */
 
     constexpr double C00{1.0};
     constexpr double C02{0.25};
@@ -87,7 +89,7 @@ inline std::array<double, 2> toCartesian(const std::array<double, 2> &WGS84Refer
     auto msfn = [&](const double &sinPhi, const double &cosPhi, const double &es) { return (cosPhi / std::sqrt(1.0 - es * sinPhi * sinPhi)); };
 
     auto project = [&](double lat, double lon) {
-        std::array<double, 2> retVal{lon, -1.0 * ML0};
+        std::array<double, 2> retVal{{lon, -1.0 * ML0}}; //Compiler complains with single braces
         if (!(std::abs(lat) < EPSILON10)) {
             const double ms{(std::abs(std::sin(lat)) > EPSILON10) ? msfn(std::sin(lat), std::cos(lat), SQUARED_ECCENTRICITY) / std::sin(lat) : 0.0};
             retVal[0] = ms * std::sin(lon *= std::sin(lat));
@@ -99,14 +101,14 @@ inline std::array<double, 2> toCartesian(const std::array<double, 2> &WGS84Refer
     auto fwd = [&](double lat, double lon) {
         const double D = std::abs(lat) - HALF_PI;
         if ((D > EPSILON12) || (std::abs(lon) > 10.0)) {
-            return std::array<double, 2>{0.0, 0.0};
+            return std::array<double, 2>{{0.0, 0.0}}; //Compiler complains with single braces
         }
         if (std::abs(D) < EPSILON12) {
             lat = (lat < 0.0) ? -1.0 * HALF_PI : HALF_PI;
         }
         lon -= WGS84Reference[1] * DEG_TO_RAD;
         const auto projectedRetVal{project(lat, lon)};
-        return std::array<double, 2>{EQUATOR_RADIUS * projectedRetVal[0], EQUATOR_RADIUS * projectedRetVal[1]};
+        return std::array<double, 2>{{EQUATOR_RADIUS * projectedRetVal[0], EQUATOR_RADIUS * projectedRetVal[1]}}; //Compiler complains with single braces
     };
 
     return fwd(WGS84Position[0] * DEG_TO_RAD, WGS84Position[1] * DEG_TO_RAD);
