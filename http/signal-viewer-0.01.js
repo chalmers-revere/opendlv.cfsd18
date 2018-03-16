@@ -87,6 +87,8 @@ function onStreamClosed() {
 function onMessageReceived(lc, msg) {
 
   console.log(msg);
+  var z = new Uint8Array(msg);
+  console.log('int arry ' + z);
 
   if (g_pause) {
     return;

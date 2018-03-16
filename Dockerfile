@@ -17,4 +17,4 @@ FROM chalmersrevere/opendlv-ui-server:v0.0.1
 MAINTAINER Ola Benderius "ola.benderius@chalmers.se"
 
 COPY ./http/ /srv/http
-CMD ["/usr/bin/opendlv-ui-server", "--cid=111", "--http-root=/srv/http", "--port=8000"]
+ENTRYPOINT ["/usr/bin/opendlv-ui-server", "--http-root=/srv/http", "--port=8000"]
