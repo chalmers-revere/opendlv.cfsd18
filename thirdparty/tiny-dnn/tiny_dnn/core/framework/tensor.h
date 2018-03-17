@@ -142,13 +142,13 @@ class Tensor {
    *
    * @return Iterator pointing to the beginning of Tensor
    */
-  auto host_begin() { return storage_.xbegin(); }
+  auto host_begin() { return storage_.begin(); }
 
-  const auto host_begin() const { return storage_.cxbegin(); }
+  const auto host_begin() const { return storage_.cbegin(); }
 
-  auto host_end() { return storage_.xend(); }
+  auto host_end() { return storage_.end(); }
 
-  const auto host_end() const { return storage_.cxend(); }
+  const auto host_end() const { return storage_.cend(); }
 
 // TODO(Randl)
 /*
@@ -194,7 +194,7 @@ auto host_data() {
     // static_assert(!kConst, "Non-constant operation on constant Tensor");
     // data_is_on_host_ = true;
     // data_dirty_ = true;
-    std::fill(storage_.xbegin(), storage_.xend(), value);
+    std::fill(storage_.begin(), storage_.end(), value);
     return *this;
   }
 
@@ -230,14 +230,20 @@ auto host_data() {
    return res;
  }*/
 
+  // TODO(blackccpie): when upgrading to xtensor 0.14.0 and beyond,
+  // the std::make_unsigned_t trick will be useless.
+  // for further details see :
+  // http://github.com/QuantStack/xtensor/issues/594
   /**
    * Returns view of current Tensor
    * @tparam Values index type
    */
   template <typename... Values>
-  Tensor<U, xt::xview<Storage &, xt::xrange<Values>...>> subView(
-    std::initializer_list<Values>... lists) {
-    using SharedTensor = Tensor<U, xt::xview<Storage &, xt::xrange<Values>...>>;
+  Tensor<U, xt::xview<Storage &, xt::xrange<std::make_unsigned_t<Values>>...>>
+  subView(std::initializer_list<Values>... lists) {
+    using SharedTensor =
+      Tensor<U,
+             xt::xview<Storage &, xt::xrange<std::make_unsigned_t<Values>>...>>;
     return SharedTensor(storage_,
                         xt::range(*(lists.begin()), *(lists.begin() + 1))...);
   }

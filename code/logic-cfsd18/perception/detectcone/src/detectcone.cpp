@@ -67,32 +67,15 @@ void DetectCone::setUp()
   m_attentionSenderStamp = kv.getValue<int>("logic-cfsd18-perception-detectcone.attentionSenderStamp");
   std::cout << "setup OK " << std::endl;
 
-  // testSlidingWindow("0.png");
-  slidingWindow("slidingWindow", m_nn);
+  // slidingWindow("slidingWindow");
+
+  efficientSlidingWindow("efficientSlidingWindow", 640, 120);
+  forwardDetection();
 }
 
 void DetectCone::tearDown()
 {
 }
-
-////save image with time stamp
-// void DetectCone::nextContainer(odcore::data::Container &a_container)
-// {
-//   odcore::data::TimeStamp incommingDataTime = a_container.getSampleTimeStamp();
-//   double currentTime = static_cast<double>(incommingDataTime.toMicroseconds())/1000000.0;
-//   std::cout << "Current time: " << currentTime << "s" << std::endl;
-//
-//   if (a_container.getDataType() == odcore::data::image::SharedImage::ID()) {
-//     odcore::data::image::SharedImage sharedImg =
-//         a_container.getData<odcore::data::image::SharedImage>();
-//     if (!ExtractSharedImage(&sharedImg)) {
-//       std::cout << "[" << getName() << "] " << "[Unable to extract shared image."
-//           << std::endl;
-//       return;
-//     }
-//     saveImg(currentTime);
-//   }
-// }
 
 void DetectCone::nextContainer(odcore::data::Container &a_container)
 {
@@ -323,15 +306,7 @@ void DetectCone::convertImage(cv::Mat img, int w, int h, tiny_dnn::vec_t &data){
   }
 }
 
-// void DetectCone::testSlidingWindow(const std::string &imgPath){
-//   cv::Mat img = cv::imread(imgPath);
-//   // cv::Vec3f point3D;
-//   // point3D << 1182.67, 166.36, 1750.78;
-//   // backwardDetection(img, point3D);
-//   forwardDetection(img);
-// }
-
-void DetectCone::slidingWindow(const std::string &dictionary, tiny_dnn::network<tiny_dnn::sequential> &nn) {
+void DetectCone::slidingWindow(const std::string &dictionary) {
   using conv    = tiny_dnn::convolutional_layer;
   using pool    = tiny_dnn::max_pooling_layer;
   using fc      = tiny_dnn::fully_connected_layer;
@@ -343,7 +318,7 @@ void DetectCone::slidingWindow(const std::string &dictionary, tiny_dnn::network<
   const int n_fc     = 64;  // number of hidden units in fc layer
   tiny_dnn::core::backend_t backend_type = tiny_dnn::core::default_engine();
 
-  nn << conv(32, 32, 5, 3, n_fmaps, tiny_dnn::padding::same, true, 1, 1,
+  m_nn << conv(32, 32, 5, 3, n_fmaps, tiny_dnn::padding::same, true, 1, 1,
              backend_type)                      // C1
      << pool(32, 32, n_fmaps, 2, backend_type)  // P2
      << relu()                                  // activation
@@ -361,7 +336,7 @@ void DetectCone::slidingWindow(const std::string &dictionary, tiny_dnn::network<
 
   // load nets
   std::ifstream ifs(dictionary.c_str());
-  ifs >> nn;
+  ifs >> m_nn;
 }
 
 int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
@@ -451,23 +426,29 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
   return maxIndex;
 }
 
-void DetectCone::efficientSlidingWindow(const std::string &dictionary, tiny_dnn::network<tiny_dnn::sequential> &nn, int width, int height) {
+void DetectCone::efficientSlidingWindow(const std::string &dictionary, int width, int height) {
   using conv    = tiny_dnn::convolutional_layer;
   using relu    = tiny_dnn::relu_layer;
-  tiny_dnn::core::backend_t backend_type = tiny_dnn::core::default_engine();
+  tiny_dnn::core::backend_t backend_type = tiny_dnn::core::backend_t::avx;
 
-  nn << conv(width, height, 7, 3, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-6, height-6, 7, 32, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     //<< dropout((inputSize-12)*(inputSize-12)*32, 0.25)
-     << conv(width-12, height-12, 5, 32, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-16, height-16, 5, 32, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     //<< dropout((inputSize-20)*(inputSize-20)*32, 0.25)
-     << conv(width-20, height-20, 3, 32, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-22, height-22, 3, 32, 4, tiny_dnn::padding::valid, true, 1, 1, backend_type);
+  m_nn << conv(width, height, 7, 3, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+     << conv(width-6, height-6, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+     // << dropout((input_size-12)*(input_size-12)*16, 0.25)
+     << conv(width-12, height-12, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+     << conv(width-18, height-18, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+     // << dropout((input_size-24)*(input_size-24)*16, 0.25)
+     << conv(width-24, height-24, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+     << conv(width-28, height-28, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+     // << dropout((input_size-32)*(input_size-32)*16, 0.25)
+     << conv(width-32, height-32, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+     << conv(width-36, height-36, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+     // << dropout((input_size-40)*(input_size-40)*16, 0.25)
+     << conv(width-40, height-40, 3, 16, 128, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+     << conv(width-42, height-42, 3, 128, 4, tiny_dnn::padding::valid, true, 1, 1, backend_type);
 
   // load nets
   std::ifstream ifs(dictionary.c_str());
-  ifs >> nn;
+  ifs >> m_nn;
 }
 
 void DetectCone::softmax(cv::Vec4d x, cv::Vec4d &y) {
@@ -504,7 +485,7 @@ std::vector <cv::Point> DetectCone::imRegionalMax(cv::Mat input, int nLocMax, do
             for (int r = r0; r <= r1; r++) {
                 for (int c = c0; c <= c1; c++) {
                     if (sqrt((r-row)*(r-row)+(c-col)*(c-col)) <= minDistBtwLocMax) {
-                      scratch.at<float>(r,c) = 0.0;
+                      scratch.at<double>(r,c) = 0.0;
                     }
                 }
             }
@@ -515,66 +496,66 @@ std::vector <cv::Point> DetectCone::imRegionalMax(cv::Mat input, int nLocMax, do
     return locations;
 }
 
-void DetectCone::forwardDetection(cv::Mat imgSource) {
-  double threshold = 0.9;
-  int patchSize = 25;
-  int patchRadius = 12;
-  int width = 320;
-  int height = 180;
-  int inputWidth = width;
-  int heightUp = 70;
-  int heightDown = 50;
-  int inputHeight = height-heightUp-heightDown;
+void DetectCone::forwardDetection() {
+  double threshold = 0.5;
+  int patchSize = 45;
+  int patchRadius = 22;
+  int inputWidth = 640;
+  int heightUp = 170;
+  int heightDown = 290;
+  int inputHeight = heightDown-heightUp;
 
   int outputWidth  = inputWidth - (patchSize - 1);
   int outputHeight  = inputHeight - (patchSize - 1);
 
-  tiny_dnn::network<tiny_dnn::sequential> nn;
-
-  efficientSlidingWindow("efficientSlidingWindow", nn, inputWidth, inputHeight);
+  // efficientSlidingWindow("efficientSlidingWindow", nn, inputWidth, inputHeight);
 
   cv::Rect roi;
   roi.x = 0;
   roi.y = heightUp;
   roi.width = inputWidth;
   roi.height = inputHeight;
-  imgSource = cv::imread("test.png");
+  cv::Mat imgSource = cv::imread("test.png");
 
-  cv::Mat img;
-  cv::resize(imgSource, img, cv::Size(width, height));
+  cv::Mat Q, disp, rectified, XYZ;
+  reconstruction(imgSource, Q, disp, rectified, XYZ);
 
-  auto patchImg = img(roi);
+  auto patchImg = rectified(roi);
+  // cv::namedWindow("roi", cv::WINDOW_NORMAL);
+  // cv::imshow("roi", patchImg);
+  // cv::waitKey(0);
 
   // convert imagefile to vec_t
   tiny_dnn::vec_t data;
   convertImage(patchImg, inputWidth, inputHeight, data);
 
   // recognize
-  auto prob = nn.predict(data);
+  auto prob = m_nn.predict(data);
 
-  cv::Mat probMap = cv::Mat::zeros(outputHeight, outputWidth, CV_32FC4);
+  cv::Mat probMap = cv::Mat::zeros(outputHeight, outputWidth, CV_64FC4);
   for (int c = 0; c < 4; ++c)
     for (int y = 0; y < outputHeight; ++y)
       for (int x = 0; x < outputWidth; ++x)
-         probMap.at<cv::Vec4f>(y, x)[c] = prob[c * outputWidth * outputHeight + y * outputWidth + x];
+         probMap.at<cv::Vec4d>(y, x)[c] = prob[c * outputWidth * outputHeight + y * outputWidth + x];
 
   cv::Vec4d probSoftmax(4);
-  cv::Mat probMapSoftmax = cv::Mat::zeros(outputHeight, outputWidth, CV_32FC3);
+  cv::Mat probMapSoftmax = cv::Mat::zeros(outputHeight, outputWidth, CV_64FC3);
   for (int y = 0; y < outputHeight; ++y)
     for (int x = 0; x < outputWidth; ++x){
       softmax(probMap.at<cv::Vec4d>(y, x), probSoftmax);
       for (int c = 0; c < 3; ++c)
         if(probSoftmax[c+1] > threshold)
-          probMapSoftmax.at<cv::Vec3f>(y, x)[c] = probSoftmax[c+1];
+          probMapSoftmax.at<cv::Vec3d>(y, x)[c] = probSoftmax[c+1];
     }
   cv::Mat probMapSplit[3];
   cv::split(probMapSoftmax, probMapSplit);
+  std::cout << probMapSplit[0].rows << " " << probMapSplit[0].cols << std::endl;
 
   // for (int c = 0; c < 3; ++c){
-  //   cv::namedWindow("img", cv::WINDOW_NORMAL);
-  //   cv::imshow("img", probMapSplit[c]);
+  //   cv::namedWindow("probMap", cv::WINDOW_NORMAL);
+  //   cv::imshow("probMap", probMapSplit[c]);
   //   cv::waitKey(0);
-  //   cv::destroyAllWindows();
+  //   // cv::destroyAllWindows();
   // }
 
   std::vector <cv::Point> yellow, blue, orange;
@@ -586,13 +567,10 @@ void DetectCone::forwardDetection(cv::Mat imgSource) {
 
   cv::Point position, positionShift = cv::Point(patchRadius, patchRadius+heightUp);
 
-  cv::Mat Q, disp, rectified, XYZ;
-  reconstruction(img, Q, disp, rectified, XYZ);
-
   if (yellow.size()>0){
     for(size_t i=0; i<yellow.size(); i++){
-      position = (yellow[i] + positionShift)*2;
-      cv::circle(imgSource, position, 1, {0, 255, 255}, -1);
+      position = yellow[i] + positionShift;
+      cv::circle(rectified, position, 1, {0, 255, 255}, -1);
       cv::Vec3f point3D = XYZ.at<cv::Vec3f>(position) * 2;
       std::cout << "Find one yellow cone, XYZ positon: "
       << point3D << "mm, xy position: " << position << "pixel" << std::endl;
@@ -600,8 +578,8 @@ void DetectCone::forwardDetection(cv::Mat imgSource) {
   }
   if (blue.size()>0){
     for(size_t i=0; i<blue.size(); i++){
-      position = (blue[i] + positionShift)*2;
-      cv::circle(imgSource, position, 1, {255, 0, 0}, -1);
+      position = blue[i] + positionShift;
+      cv::circle(rectified, position, 1, {255, 0, 0}, -1);
       cv::Vec3f point3D = XYZ.at<cv::Vec3f>(position) * 2;
       std::cout << "Find one blue cone, XYZ positon: "
       << point3D << "mm, xy position: " << position << "pixel" << std::endl;
@@ -609,8 +587,8 @@ void DetectCone::forwardDetection(cv::Mat imgSource) {
   }
   if (orange.size()>0){
     for(size_t i=0; i<orange.size(); i++){
-      position = (orange[i] + positionShift)*2;
-      cv::circle(imgSource, position, 1, {0, 165, 255}, -1);
+      position = orange[i] + positionShift;
+      cv::circle(rectified, position, 1, {0, 165, 255}, -1);
       cv::Vec3f point3D = XYZ.at<cv::Vec3f>(position) * 2;
       std::cout << "Find one orange cone, XYZ positon: "
       << point3D << "mm, xy position: " << position << "pixel" << std::endl;
@@ -618,22 +596,157 @@ void DetectCone::forwardDetection(cv::Mat imgSource) {
   }
   // int index = imgPath.find_last_of('/');
   // std::string savePath(imgPath.substr(index+1));
-  // cv::namedWindow("img", cv::WINDOW_NORMAL);
-  // cv::imshow("img", imgSource);
-  // cv::waitKey(0);
-  // cv::imwrite("result/"+savePath, imgSource);
+  cv::namedWindow("result", cv::WINDOW_NORMAL);
+  cv::imshow("result", rectified);
+  cv::waitKey(0);
+  // cv::imwrite("result/"+savePath, rectified);
 }
+
+Eigen::MatrixXd DetectCone::Spherical2Cartesian(double azimuth, double zenimuth, double distance)
+{
+  //double xyDistance = distance * cos(azimuth * static_cast<double>(DEG2RAD));
+  double xData = distance * cos(zenimuth * static_cast<double>(DEG2RAD))*sin(azimuth * static_cast<double>(DEG2RAD));
+  double yData = distance * cos(zenimuth * static_cast<double>(DEG2RAD))*cos(azimuth * static_cast<double>(DEG2RAD));
+  double zData = distance * sin(zenimuth * static_cast<double>(DEG2RAD));
+  Eigen::MatrixXd recievedPoint = MatrixXd::Zero(4,1);
+  recievedPoint << xData * 1000,
+                   yData * 1000,
+                   zData * 1000,
+                    0;
+  return recievedPoint;
+}
+
+void DetectCone::Cartesian2Spherical(double x, double y, double z, opendlv::logic::sensation::Point &pointInSpherical)
+{
+  double distance = sqrt(x*x+y*y+z*z);
+  double azimuthAngle = atan(x/y)*static_cast<double>(RAD2DEG);
+  double zenithAngle = atan(z/sqrt(x*x+y*y))*static_cast<double>(RAD2DEG);
+  pointInSpherical.setDistance(distance);
+  pointInSpherical.setAzimuthAngle(azimuthAngle);
+  pointInSpherical.setZenithAngle(zenithAngle);
+}
+
+void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
+{
+  //Convert to cartesian
+  Eigen::MatrixXd cone;
+  for(int p = 0; p < lidarCones.cols(); p++){
+    cone = Spherical2Cartesian(lidarCones(0,p), lidarCones(1,p), lidarCones(2,p));
+    lidarCones.col(p) = cone;
+  }
+  std::cout << "lidarCones " << std::endl;
+  std::cout << lidarCones << std::endl;
+  m_finalPointCloud = lidarCones;
+  cv::Vec3f point3D;
+  double yShift = 0;//1872mm
+  double zShift = 0;
+  for (int i = 0; i < m_finalPointCloud.cols(); i++){
+    point3D << m_finalPointCloud(0,i), -zShift-m_finalPointCloud(2,i), yShift+m_finalPointCloud(1,i);
+    m_finalPointCloud(3,i) = backwardDetection(m_img, point3D);
+  }
+
+  //std::cout << "matched: " << std::endl;
+  //std::cout << m_finalPointCloud << std::endl;
+  SendMatchedContainer(m_finalPointCloud);
+}
+
+void DetectCone::SendMatchedContainer(Eigen::MatrixXd cones)
+{
+  for(int n = 0; n < cones.cols(); n++){
+
+    opendlv::logic::sensation::Point conePoint;
+    Cartesian2Spherical(cones(0,n), cones(1,n), cones(2,n), conePoint);
+
+    opendlv::logic::perception::ObjectDirection coneDirection;
+    coneDirection.setObjectId(n);
+    coneDirection.setAzimuthAngle(conePoint.getAzimuthAngle());
+    coneDirection.setZenithAngle(conePoint.getZenithAngle());
+    odcore::data::Container c2(coneDirection);
+    c2.setSenderStamp(m_senderStamp);
+    getConference().send(c2);
+
+    opendlv::logic::perception::ObjectDistance coneDistance;
+    coneDistance.setObjectId(n);
+    coneDistance.setDistance(conePoint.getDistance());
+    odcore::data::Container c3(coneDistance);
+    c3.setSenderStamp(m_senderStamp);
+    getConference().send(c3);
+
+    opendlv::logic::perception::ObjectType coneType;
+    coneType.setObjectId(n);
+    coneType.setType(cones(3,n));
+    odcore::data::Container c4(coneType);
+    c3.setSenderStamp(m_senderStamp);
+    getConference().send(c4);
+/*
+    opendlv::logic::sensation::Point conePoint;
+    Cartesian2Spherical(cones(0,n), cones(1,n), cones(2,n), conePoint);
+    odcore::data::Container c1(conePoint);
+    getConference().send(c1);
+    std::cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << std::endl;
+*/
+  }
+}
+
+}
+}
+}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////save image with time stamp
+// void DetectCone::nextContainer(odcore::data::Container &a_container)
+// {
+//   odcore::data::TimeStamp incommingDataTime = a_container.getSampleTimeStamp();
+//   double currentTime = static_cast<double>(incommingDataTime.toMicroseconds())/1000000.0;
+//   std::cout << "Current time: " << currentTime << "s" << std::endl;
+//
+//   if (a_container.getDataType() == odcore::data::image::SharedImage::ID()) {
+//     odcore::data::image::SharedImage sharedImg =
+//         a_container.getData<odcore::data::image::SharedImage>();
+//     if (!ExtractSharedImage(&sharedImg)) {
+//       std::cout << "[" << getName() << "] " << "[Unable to extract shared image."
+//           << std::endl;
+//       return;
+//     }
+//     saveImg(currentTime);
+//   }
+// }
+
+// void DetectCone::testSlidingWindow(const std::string &imgPath){
+//   cv::Mat img = cv::imread(imgPath);
+//   // cv::Vec3f point3D;
+//   // point3D << 1182.67, 166.36, 1750.78;
+//   // backwardDetection(img, point3D);
+//   forwardDetection(img);
+// }
+
 
 // int DetectCone::forwardDetection(cv::Mat img){
 //   //Detect cone in camera frame and then project to 3D world
 //
 //   // manual roi
-//   // (453, 237,	0.96875,	"orange", 319.105, 172.883, 1033.59);
-//   // (585, 211,	0.625,	"orange", 1182.67, 166.36, 1750.78);
-//   // (343, 185,	0.25,	"yellow", 10.183, 75.1519, 3299.55);
-//   // (521, 198,	0.375,	"yellow", 1219.86, 144.365, 2451.1);
-//   // (625,	191,	0.34375,	"blue", 2499.47, 125.34, 3177.35);
-//   // (396,	183,	0.34375,	"blue", 586.295, 67.1457, 3899.47);
+//   // (453, 237,  0.96875,  "orange", 319.105, 172.883, 1033.59);
+//   // (585, 211,  0.625,  "orange", 1182.67, 166.36, 1750.78);
+//   // (343, 185,  0.25, "yellow", 10.183, 75.1519, 3299.55);
+//   // (521, 198,  0.375,  "yellow", 1219.86, 144.365, 2451.1);
+//   // (625, 191,  0.34375,  "blue", 2499.47, 125.34, 3177.35);
+//   // (396, 183,  0.34375,  "blue", 586.295, 67.1457, 3899.47);
 //
 //   // convert imagefile to vec_t
 //   std::cout << "image size: " << img.size() << std::endl;
@@ -772,54 +885,6 @@ void DetectCone::forwardDetection(cv::Mat imgSource) {
 //   }
 // }
 
-Eigen::MatrixXd DetectCone::Spherical2Cartesian(double azimuth, double zenimuth, double distance)
-{
-  //double xyDistance = distance * cos(azimuth * static_cast<double>(DEG2RAD));
-  double xData = distance * cos(zenimuth * static_cast<double>(DEG2RAD))*sin(azimuth * static_cast<double>(DEG2RAD));
-  double yData = distance * cos(zenimuth * static_cast<double>(DEG2RAD))*cos(azimuth * static_cast<double>(DEG2RAD));
-  double zData = distance * sin(zenimuth * static_cast<double>(DEG2RAD));
-  Eigen::MatrixXd recievedPoint = MatrixXd::Zero(4,1);
-  recievedPoint << xData * 1000,
-                   yData * 1000,
-                   zData * 1000,
-                    0;
-  return recievedPoint;
-}
-
-void DetectCone::Cartesian2Spherical(double x, double y, double z, opendlv::logic::sensation::Point &pointInSpherical)
-{
-  double distance = sqrt(x*x+y*y+z*z);
-  double azimuthAngle = atan(x/y)*static_cast<double>(RAD2DEG);
-  double zenithAngle = atan(z/sqrt(x*x+y*y))*static_cast<double>(RAD2DEG);
-  pointInSpherical.setDistance(distance);
-  pointInSpherical.setAzimuthAngle(azimuthAngle);
-  pointInSpherical.setZenithAngle(zenithAngle);
-}
-
-void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
-{
-  //Convert to cartesian
-  Eigen::MatrixXd cone;
-  for(int p = 0; p < lidarCones.cols(); p++){
-    cone = Spherical2Cartesian(lidarCones(0,p), lidarCones(1,p), lidarCones(2,p));
-    lidarCones.col(p) = cone;
-  }
-  std::cout << "lidarCones " << std::endl;
-  std::cout << lidarCones << std::endl;
-  m_finalPointCloud = lidarCones;
-  cv::Vec3f point3D;
-  double yShift = 0;//1872mm
-  double zShift = 0;
-  for (int i = 0; i < m_finalPointCloud.cols(); i++){
-    point3D << m_finalPointCloud(0,i), -zShift-m_finalPointCloud(2,i), yShift+m_finalPointCloud(1,i);
-    m_finalPointCloud(3,i) = backwardDetection(m_img, point3D);
-  }
-
-  //std::cout << "matched: " << std::endl;
-  //std::cout << m_finalPointCloud << std::endl;
-  SendMatchedContainer(m_finalPointCloud);
-}
-
 // void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
 // {
 //   //Convert to cartesian
@@ -843,45 +908,3 @@ void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
 //   SendMatchedContainer(m_finalPointCloud);
 // }
 
-void DetectCone::SendMatchedContainer(Eigen::MatrixXd cones)
-{
-  for(int n = 0; n < cones.cols(); n++){
-
-    opendlv::logic::sensation::Point conePoint;
-    Cartesian2Spherical(cones(0,n), cones(1,n), cones(2,n), conePoint);
-
-    opendlv::logic::perception::ObjectDirection coneDirection;
-    coneDirection.setObjectId(n);
-    coneDirection.setAzimuthAngle(conePoint.getAzimuthAngle());
-    coneDirection.setZenithAngle(conePoint.getZenithAngle());
-    odcore::data::Container c2(coneDirection);
-    c2.setSenderStamp(m_senderStamp);
-    getConference().send(c2);
-
-    opendlv::logic::perception::ObjectDistance coneDistance;
-    coneDistance.setObjectId(n);
-    coneDistance.setDistance(conePoint.getDistance());
-    odcore::data::Container c3(coneDistance);
-    c3.setSenderStamp(m_senderStamp);
-    getConference().send(c3);
-
-    opendlv::logic::perception::ObjectType coneType;
-    coneType.setObjectId(n);
-    coneType.setType(cones(3,n));
-    odcore::data::Container c4(coneType);
-    c3.setSenderStamp(m_senderStamp);
-    getConference().send(c4);
-/*
-    opendlv::logic::sensation::Point conePoint;
-    Cartesian2Spherical(cones(0,n), cones(1,n), cones(2,n), conePoint);
-    odcore::data::Container c1(conePoint);
-    getConference().send(c1);
-    std::cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << std::endl;
-*/
-  }
-}
-
-}
-}
-}
-}

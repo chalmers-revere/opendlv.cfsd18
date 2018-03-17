@@ -70,12 +70,12 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   void xyz2xy(cv::Mat, cv::Vec3f, cv::Vec2f &);
   float_t depth2resizeRate(double, double);
   void convertImage(cv::Mat, int, int, tiny_dnn::vec_t &);
-  void slidingWindow(const std::string &, tiny_dnn::network<tiny_dnn::sequential> &);
+  void slidingWindow(const std::string &);
   int backwardDetection(cv::Mat, cv::Vec3f);
-  void efficientSlidingWindow(const std::string &, tiny_dnn::network<tiny_dnn::sequential> &, int, int);
+  void efficientSlidingWindow(const std::string &, int, int);
   void softmax(cv::Vec4d, cv::Vec4d &);
   std::vector <cv::Point> imRegionalMax(cv::Mat, int, double, int);
-  void forwardDetection(cv::Mat);
+  void forwardDetection();
 
   // void matchPoints(Eigen::MatrixXd, Eigen::MatrixXd);
   // void findMatch(Eigen::MatrixXd, Eigen::MatrixXd);
