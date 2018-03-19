@@ -69,8 +69,7 @@ void DetectCone::setUp()
 
   // slidingWindow("slidingWindow");
 
-  efficientSlidingWindow("efficientSlidingWindow", 640, 120);
-  forwardDetection();
+  efficientSlidingWindow("efficientSlidingWindow", 320, 60);
 }
 
 void DetectCone::tearDown()
@@ -79,6 +78,12 @@ void DetectCone::tearDown()
 
 void DetectCone::nextContainer(odcore::data::Container &a_container)
 {
+  odcore::data::TimeStamp startTime;
+  forwardDetection();
+  odcore::data::TimeStamp endTime;
+  double timeElapsed = abs(static_cast<double>(endTime.toMicroseconds()-startTime.toMicroseconds())/1000000.0);
+  std::cout << "Time elapsed for camera detection: " << timeElapsed << std::endl;
+
   if (a_container.getDataType() == odcore::data::image::SharedImage::ID()) {
     odcore::data::image::SharedImage sharedImg =
     a_container.getData<odcore::data::image::SharedImage>();
@@ -267,6 +272,10 @@ void DetectCone::reconstruction(cv::Mat img, cv::Mat &Q, cv::Mat &disp, cv::Mat 
   //cv::imwrite("2_right.png", imgR);
 
   blockMatching(disp, imgL, imgR);
+  // cv::namedWindow("disp", cv::WINDOW_NORMAL);
+  // cv::imshow("disp", disp);
+  // cv::waitKey(0);
+
   rectified = imgL;
 
   cv::reprojectImageTo3D(disp, XYZ, Q);
@@ -416,6 +425,7 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
     }
        // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
        cv::namedWindow("disp", cv::WINDOW_NORMAL);
+       // cv::setWindowProperty("result", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
        cv::imshow("disp", rectified);
        cv::waitKey(10);
        //cv::destroyAllWindows();
@@ -431,20 +441,27 @@ void DetectCone::efficientSlidingWindow(const std::string &dictionary, int width
   using relu    = tiny_dnn::relu_layer;
   tiny_dnn::core::backend_t backend_type = tiny_dnn::core::backend_t::avx;
 
+  // m_nn << conv(width, height, 7, 3, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+  //    << conv(width-6, height-6, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+  //    // << dropout((input_size-12)*(input_size-12)*16, 0.25)
+  //    << conv(width-12, height-12, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+  //    << conv(width-18, height-18, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+  //    // << dropout((input_size-24)*(input_size-24)*16, 0.25)
+  //    << conv(width-24, height-24, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+  //    << conv(width-28, height-28, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+  //    // << dropout((input_size-32)*(input_size-32)*16, 0.25)
+  //    << conv(width-32, height-32, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+  //    << conv(width-36, height-36, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+  //    // << dropout((input_size-40)*(input_size-40)*16, 0.25)
+  //    << conv(width-40, height-40, 3, 16, 128, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+  //    << conv(width-42, height-42, 3, 128, 4, tiny_dnn::padding::valid, true, 1, 1, backend_type);
+
   m_nn << conv(width, height, 7, 3, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
      << conv(width-6, height-6, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     // << dropout((input_size-12)*(input_size-12)*16, 0.25)
-     << conv(width-12, height-12, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-18, height-18, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     // << dropout((input_size-24)*(input_size-24)*16, 0.25)
-     << conv(width-24, height-24, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-28, height-28, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     // << dropout((input_size-32)*(input_size-32)*16, 0.25)
-     << conv(width-32, height-32, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-36, height-36, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     // << dropout((input_size-40)*(input_size-40)*16, 0.25)
-     << conv(width-40, height-40, 3, 16, 128, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-42, height-42, 3, 128, 4, tiny_dnn::padding::valid, true, 1, 1, backend_type);
+     << conv(width-12, height-12, 5, 16, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+     << conv(width-16, height-16, 5, 32, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+     << conv(width-20, height-20, 3, 32, 64, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+     << conv(width-22, height-22, 3, 64, 4, tiny_dnn::padding::valid, true, 1, 1, backend_type);
 
   // load nets
   std::ifstream ifs(dictionary.c_str());
@@ -467,7 +484,7 @@ std::vector <cv::Point> DetectCone::imRegionalMax(cv::Mat input, int nLocMax, do
 {
     cv::Mat scratch = input.clone();
     // std::cout<<scratch<<std::endl;
-    // cv::GaussianBlur(scratch, scratch, cv::Size(3,3), 0, 0);
+    cv::GaussianBlur(scratch, scratch, cv::Size(3,3), 0, 0);
     std::vector <cv::Point> locations(0);
     locations.reserve(nLocMax); // Reserve place for fast access
     for (int i = 0; i < nLocMax; i++) {
@@ -497,18 +514,16 @@ std::vector <cv::Point> DetectCone::imRegionalMax(cv::Mat input, int nLocMax, do
 }
 
 void DetectCone::forwardDetection() {
-  double threshold = 0.5;
-  int patchSize = 45;
-  int patchRadius = 22;
-  int inputWidth = 640;
-  int heightUp = 170;
-  int heightDown = 290;
+  double threshold = 0.7;
+  int patchSize = 25;
+  int patchRadius = int((patchSize-1)/2);
+  int inputWidth = 320;
+  int heightUp = 85;
+  int heightDown = 145;
   int inputHeight = heightDown-heightUp;
 
   int outputWidth  = inputWidth - (patchSize - 1);
   int outputHeight  = inputHeight - (patchSize - 1);
-
-  // efficientSlidingWindow("efficientSlidingWindow", nn, inputWidth, inputHeight);
 
   cv::Rect roi;
   roi.x = 0;
@@ -519,6 +534,7 @@ void DetectCone::forwardDetection() {
 
   cv::Mat Q, disp, rectified, XYZ;
   reconstruction(imgSource, Q, disp, rectified, XYZ);
+  cv::resize(rectified, rectified, cv::Size (320, 180));
 
   auto patchImg = rectified(roi);
   // cv::namedWindow("roi", cv::WINDOW_NORMAL);
@@ -539,17 +555,69 @@ void DetectCone::forwardDetection() {
          probMap.at<cv::Vec4d>(y, x)[c] = prob[c * outputWidth * outputHeight + y * outputWidth + x];
 
   cv::Vec4d probSoftmax(4);
-  cv::Mat probMapSoftmax = cv::Mat::zeros(outputHeight, outputWidth, CV_64FC3);
-  for (int y = 0; y < outputHeight; ++y)
+  cv::Mat probMapSoftmax = cv::Mat::zeros(outputHeight, outputWidth, CV_64F);
+  cv::Mat probMapIndex = cv::Mat::zeros(outputHeight, outputWidth, CV_16S);
+  for (int y = 0; y < outputHeight; ++y){
     for (int x = 0; x < outputWidth; ++x){
       softmax(probMap.at<cv::Vec4d>(y, x), probSoftmax);
       for (int c = 0; c < 3; ++c)
-        if(probSoftmax[c+1] > threshold)
-          probMapSoftmax.at<cv::Vec3d>(y, x)[c] = probSoftmax[c+1];
+        if(probSoftmax[c+1] > threshold){
+          probMapSoftmax.at<double>(y, x) = probSoftmax[c+1];
+          probMapIndex.at<int>(y, x) = c+1;
+        }
     }
-  cv::Mat probMapSplit[3];
-  cv::split(probMapSoftmax, probMapSplit);
-  std::cout << probMapSplit[0].rows << " " << probMapSplit[0].cols << std::endl;
+  }
+
+  std::vector <cv::Point> cone;
+  cv::Point position, positionShift = cv::Point(patchRadius, patchRadius+heightUp);
+  int label;
+  cone = imRegionalMax(probMapSoftmax, 10, threshold, patchSize);
+  if (cone.size()>0){
+    for(size_t i=0; i<cone.size(); i++){
+      position = cone[i] + positionShift;
+      label = probMapIndex.at<int>(cone[i]);
+      cv::Vec3f point3D = XYZ.at<cv::Vec3f>(position * 2) * 2;
+      if (point3D[2] > 0 && point3D[2] < 20000){
+        if (label == 1){
+          cv::circle(rectified, position, 1, {0, 255, 255}, -1);
+          std::cout << "Find one yellow cone, XYZ positon: "
+          << point3D << "mm, xy position: " << position << "pixel, certainty: " 
+          << probMapSoftmax.at<double>(cone[i]) << std::endl;
+        }
+        if (label == 2){
+          cv::circle(rectified, position, 1, {255, 0, 0}, -1);
+          std::cout << "Find one blue cone, XYZ positon: "
+          << point3D << "mm, xy position: " << position << "pixel, certainty: " 
+          << probMapSoftmax.at<double>(cone[i]) << std::endl;
+        }
+        if (label == 3){
+          cv::circle(rectified, position, 1, {0, 0, 255}, -1);
+          std::cout << "Find one orange cone, XYZ positon: "
+          << point3D << "mm, xy position: " << position << "pixel, certainty: " 
+          << probMapSoftmax.at<double>(cone[i]) << std::endl;
+        }
+
+      }
+    }
+  }
+
+  // cv::namedWindow("result", cv::WINDOW_NORMAL);
+  // cv::imshow("result", rectified);
+  // cv::waitKey(0);
+
+  // cv::Vec4d probSoftmax(4);
+  // cv::Mat probMapSoftmax = cv::Mat::zeros(outputHeight, outputWidth, CV_64FC3);
+  // for (int y = 0; y < outputHeight; ++y){
+  //   for (int x = 0; x < outputWidth; ++x){
+  //     softmax(probMap.at<cv::Vec4d>(y, x), probSoftmax);
+  //     for (int c = 0; c < 3; ++c)
+  //       if(probSoftmax[c+1] > threshold)
+  //         probMapSoftmax.at<cv::Vec3d>(y, x)[c] = probSoftmax[c+1];
+  //   }
+  // }
+
+  // cv::Mat probMapSplit[3];
+  // cv::split(probMapSoftmax, probMapSplit);
 
   // for (int c = 0; c < 3; ++c){
   //   cv::namedWindow("probMap", cv::WINDOW_NORMAL);
@@ -558,48 +626,61 @@ void DetectCone::forwardDetection() {
   //   // cv::destroyAllWindows();
   // }
 
-  std::vector <cv::Point> yellow, blue, orange;
+  // std::vector <cv::Point> yellow, blue, orange;
 
-  int minDistBtwLocMax = 20;
-  yellow = imRegionalMax(probMapSplit[0], 4, threshold, minDistBtwLocMax);
-  blue = imRegionalMax(probMapSplit[1], 4, threshold, minDistBtwLocMax);
-  orange = imRegionalMax(probMapSplit[2], 2, threshold, minDistBtwLocMax);
+  // int minDistBtwLocMax = patchSize;
+  // yellow = imRegionalMax(probMapSplit[0], 4, threshold, minDistBtwLocMax);
+  // blue = imRegionalMax(probMapSplit[1], 4, threshold, minDistBtwLocMax);
+  // orange = imRegionalMax(probMapSplit[2], 2, threshold, minDistBtwLocMax);
 
-  cv::Point position, positionShift = cv::Point(patchRadius, patchRadius+heightUp);
+  // cv::Point position, positionShift = cv::Point(patchRadius, patchRadius+heightUp);
 
-  if (yellow.size()>0){
-    for(size_t i=0; i<yellow.size(); i++){
-      position = yellow[i] + positionShift;
-      cv::circle(rectified, position, 1, {0, 255, 255}, -1);
-      cv::Vec3f point3D = XYZ.at<cv::Vec3f>(position) * 2;
-      std::cout << "Find one yellow cone, XYZ positon: "
-      << point3D << "mm, xy position: " << position << "pixel" << std::endl;
-    }
-  }
-  if (blue.size()>0){
-    for(size_t i=0; i<blue.size(); i++){
-      position = blue[i] + positionShift;
-      cv::circle(rectified, position, 1, {255, 0, 0}, -1);
-      cv::Vec3f point3D = XYZ.at<cv::Vec3f>(position) * 2;
-      std::cout << "Find one blue cone, XYZ positon: "
-      << point3D << "mm, xy position: " << position << "pixel" << std::endl;
-    }
-  }
-  if (orange.size()>0){
-    for(size_t i=0; i<orange.size(); i++){
-      position = orange[i] + positionShift;
-      cv::circle(rectified, position, 1, {0, 165, 255}, -1);
-      cv::Vec3f point3D = XYZ.at<cv::Vec3f>(position) * 2;
-      std::cout << "Find one orange cone, XYZ positon: "
-      << point3D << "mm, xy position: " << position << "pixel" << std::endl;
-    }
-  }
-  // int index = imgPath.find_last_of('/');
-  // std::string savePath(imgPath.substr(index+1));
-  cv::namedWindow("result", cv::WINDOW_NORMAL);
-  cv::imshow("result", rectified);
-  cv::waitKey(0);
-  // cv::imwrite("result/"+savePath, rectified);
+  // if (yellow.size()>0){
+  //   for(size_t i=0; i<yellow.size(); i++){
+  //     position = yellow[i] + positionShift;
+  //     cv::Vec3f point3D = XYZ.at<cv::Vec3f>(position * 2) * 2;
+  //     if (point3D[2] > 0 && point3D[2] < 20000){
+  //       cv::circle(rectified, position, 1, {0, 255, 255}, -1);
+  //       std::cout << "Find one yellow cone, XYZ positon: "
+  //       << point3D << "mm, xy position: " << position << "pixel, certainty: " 
+  //       << probMapSoftmax.at<cv::Vec3d>(yellow[i])[0] << std::endl;
+  //     }
+  //   }
+  // }
+  // if (blue.size()>0){
+  //   for(size_t i=0; i<blue.size(); i++){
+  //     position = blue[i] + positionShift;
+  //     cv::Vec3f point3D = XYZ.at<cv::Vec3f>(position * 2) * 2;
+  //     if (point3D[2] > 0 && point3D[2] < 20000){
+  //       cv::circle(rectified, position, 1, {255, 0, 0}, -1);
+  //       std::cout << "Find one blue cone, XYZ positon: "
+  //       << point3D << "mm, xy position: " << position << "pixel, certainty: " 
+  //       << probMapSoftmax.at<cv::Vec3d>(blue[i])[1] << std::endl;
+  //     }
+  //   }
+  // }
+  // if (orange.size()>0){
+  //   for(size_t i=0; i<orange.size(); i++){
+  //     position = orange[i] + positionShift;
+  //     cv::Vec3f point3D = XYZ.at<cv::Vec3f>(position * 2) * 2;
+  //     if (point3D[2] > 0 && point3D[2] < 20000){
+  //       cv::circle(rectified, position, 1, {0, 0, 255}, -1);
+  //       std::cout << "Find one orange cone, XYZ positon: "
+  //       << point3D << "mm, xy position: " << position << "pixel, certainty: " 
+  //       << probMapSoftmax.at<cv::Vec3d>(orange[i])[2] << std::endl;
+  //     }
+  //   }
+  // }
+
+  
+  // cv::namedWindow("result", cv::WINDOW_NORMAL);
+  // // cv::setWindowProperty("result", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+  // cv::imshow("result", rectified);
+  // cv::waitKey(0);
+
+  // // int index = imgPath.find_last_of('/');
+  // // std::string savePath(imgPath.substr(index+1));
+  // // cv::imwrite("result/"+savePath, rectified);
 }
 
 Eigen::MatrixXd DetectCone::Spherical2Cartesian(double azimuth, double zenimuth, double distance)
