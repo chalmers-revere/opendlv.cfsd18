@@ -44,69 +44,25 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
   void setUp();
   void tearDown();
   float yawModel(opendlv::logic::action::AimPoint, Eigen::ArrayXf);
-  Eigen::ArrayXf calcSteerAngle(float,Eigen::ArrayXf);
-  Eigen::ArrayXf loadTransfer(Eigen::ArrayXf);
-  Eigen::ArrayXf tireModel(Eigen::ArrayXf, Eigen::ArrayXf, Eigen::ArrayXf);
+  Eigen::ArrayXf calcSteerAngle(float,Eigen::ArrayXf, float, float, float);
+  Eigen::ArrayXf loadTransfer(Eigen::ArrayXf, float, float, float, float,
+  float, float);
+  Eigen::ArrayXf tireModel(Eigen::ArrayXf, Eigen::ArrayXf, Eigen::ArrayXf,
+    float, float, float, float, Eigen::VectorXf, Eigen::VectorXf, Eigen::MatrixXf);
   Eigen::ArrayXf atanArr(Eigen::ArrayXf);
-  Eigen::ArrayXf longitudinalControl(Eigen::ArrayXf);
-  Eigen::ArrayXf motion(Eigen::ArrayXf,Eigen::ArrayXf,Eigen::ArrayXf,Eigen::ArrayXf);
-  void sendAccelerationRequest(float);
+  Eigen::ArrayXf longitudinalControl(Eigen::ArrayXf, Eigen::ArrayXf, float,
+    float, float);
+  Eigen::ArrayXf motion(Eigen::ArrayXf,Eigen::ArrayXf,Eigen::ArrayXf,
+    Eigen::ArrayXf, float, float, float, float, float, float, float);
+  void sendAccelerationRequest(float, Eigen::ArrayXf);
   float interp2(Eigen::VectorXf, Eigen::VectorXf, Eigen::MatrixXf, float, float);
 
  private:
    opendlv::logic::action::AimPoint m_aimPoint;
-   float m_mass;
-   float m_mus;
-   float m_ms;
-   float m_Iz;
-   float m_Ix;
-   float m_g;
-   float m_L;
-   float m_lf;
-   float m_lr;
-   float m_wf;
-   float m_wr;
-   float m_mu;
-   float m_wR;
-   float m_Ku;
-   float m_A;
-   float m_rho;
-   float m_Cl;
-   float m_Cd;
-   float m_h0;
-   float m_h1;
-   float m_h2;
-   float m_h;
-   float m_hp;
-   float m_Ca1;
-   float m_Ca2;
-   float m_kPhi;
-   float m_cPhi;
-   float m_kPhi1;
-   float m_cPhi1;
-   float m_kPhi2;
-   float m_cPhi2;
-   float m_kLambda;
-   float m_cLambda;
-   float m_phi;
-   float m_phiDot;
-   float m_wheelLiftOffFlag;
-   Eigen::ArrayXf m_B;
-   float m_C;
-   Eigen::ArrayXf m_D;
-   float m_E;
-   Eigen::ArrayXf m_x;
-   Eigen::ArrayXf m_X;
-   float m_sampleTime;
    float m_torqueRequest1;
    float m_torqueRequest2;
    float m_Fbrake;
-   uint32_t m_leftMotorID;
-   uint32_t m_rightMotorID;
    bool m_brakeEnabled;
-   Eigen::VectorXf m_tireLoad;
-   Eigen::VectorXf m_tireSlip;
-   Eigen::VectorXf m_tireForce;
 };
 
 }
