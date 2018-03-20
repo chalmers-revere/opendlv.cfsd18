@@ -41,8 +41,14 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   virtual void nextContainer(odcore::data::Container &);
 
  private:
+  ArrayXXf m_leftCones;
+  ArrayXXf m_rightCones;
+  ArrayXXf m_smallCones;
+  ArrayXXf m_bigCones;
+
   void setUp();
   void tearDown();
+  void readMap(std::string);
   ArrayXXf simConeDetectorBox(ArrayXXf, ArrayXXf, float, float, float);
 };
 

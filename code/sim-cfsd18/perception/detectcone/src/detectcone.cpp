@@ -18,6 +18,8 @@
 */
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 #include <opendavinci/odcore/data/TimeStamp.h>
 #include <opendavinci/odcore/strings/StringToolbox.h>
@@ -32,6 +34,10 @@ namespace perception {
 
 DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "sim-cfsd18-perception-detectcone")
+, m_leftCones()
+, m_rightCones()
+, m_smallCones()
+, m_bigCones()
 {
 }
 
@@ -43,7 +49,7 @@ DetectCone::~DetectCone()
 
 void DetectCone::nextContainer(odcore::data::Container &a_container)
 {
-
+/*
 //---------JUST A TEST--------------
 ArrayXXf sideLeft(16,2);
 sideLeft << -71.8448,43.4762,
@@ -80,19 +86,24 @@ sideRight << -69.3358,41.8116,
              -58.3856,52.7769,
              -59.4402,50.7850,
              -60.8640,48.8286;
-
+*/
 ArrayXXf location(1,2);
 location << -61,57;
 float heading = 3.14159/6;
 float detectRange = 11.5;
 float detectWidth = 5;
 
-ArrayXXf detectedConesLeft = DetectCone::simConeDetectorBox(sideLeft, location, heading, detectRange, detectWidth);
-ArrayXXf detectedConesRight = DetectCone::simConeDetectorBox(sideRight, location, heading, detectRange, detectWidth);
+ArrayXXf detectedConesLeft = DetectCone::simConeDetectorBox(m_leftCones, location, heading, detectRange, detectWidth);
+ArrayXXf detectedConesRight = DetectCone::simConeDetectorBox(m_rightCones, location, heading, detectRange, detectWidth);
 std::cout << "detectedConesLeft: " << detectedConesLeft << std::endl;
 std::cout << "detectedConesRight: " << detectedConesRight << std::endl;
 
   std::cout << "THIS IS SIM-DETECTCONE SPEAKING" << std::endl;
+
+
+//std::string filename = "trackdrive_cones_dense.csv";
+//DetectCone::readMap(filename);
+
   if (a_container.getDataType() == opendlv::logic::sensation::Attention::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
@@ -104,6 +115,14 @@ std::cout << "detectedConesRight: " << detectedConesRight << std::endl;
 
 void DetectCone::setUp()
 {
+  std::string filename = "trackdrive_cones_dense.csv";
+  DetectCone::readMap(filename);
+  
+  std::cout << "Left: " << m_leftCones << std::endl;
+  std::cout << "Right: " << m_rightCones << std::endl;
+  std::cout << "Small: " << m_smallCones << std::endl;
+  std::cout << "Big: " << m_bigCones << std::endl;
+
   // std::string const exampleConfig = 
   //   getKeyValueConfiguration().getValue<std::string>(
   //     "logic-cfsd18-perception-detectcone.example-config");
@@ -115,6 +134,96 @@ void DetectCone::setUp()
 
 void DetectCone::tearDown()
 {
+}
+
+void DetectCone::readMap(std::string filename)
+{
+  int leftCounter = 0;
+  int rightCounter = 0;
+  int smallCounter = 0;
+  int bigCounter = 0;
+
+  std::string line;
+  std::string word;
+  std::string const HOME = "/opt/opendlv.data/";
+  std::string infile = HOME + filename;
+
+  std::ifstream file(infile, std::ifstream::in);
+
+  if(file.is_open())
+  {
+    while(getline(file,line))
+    {
+      std::stringstream strstr(line);
+    
+      getline(strstr,word,',');
+      getline(strstr,word,',');
+      getline(strstr,word,',');
+
+      if(word.compare("1") == 0){leftCounter = leftCounter+1;}
+      else if(word.compare("2") == 0){rightCounter = rightCounter+1;}
+      else if(word.compare("3") == 0){smallCounter = smallCounter+1;}
+      else if(word.compare("4") == 0){bigCounter = bigCounter+1;}
+      else{std::cout << "ERROR in DetectCone::simDetectCone while counting types. Not a valid cone type." << std::endl;}
+      
+    }
+    file.close();
+  }
+
+  ArrayXXf tmpLeftCones(leftCounter,2);
+  ArrayXXf tmpRightCones(rightCounter,2);
+  ArrayXXf tmpSmallCones(smallCounter,2);
+  ArrayXXf tmpBigCones(bigCounter,2);
+  float x;
+  float y;
+  leftCounter = 0;
+  rightCounter = 0;
+  smallCounter = 0;
+  bigCounter = 0;
+  std::ifstream myFile(infile, std::ifstream::in);
+
+  if(myFile.is_open())
+  {
+    while(getline(myFile,line))
+    {
+      std::stringstream strstr(line);
+
+      getline(strstr,word,',');
+      x = std::stof(word);
+      getline(strstr,word,',');
+      y = std::stof(word);
+
+      getline(strstr,word,',');
+
+      if(word.compare("1") == 0){
+        tmpLeftCones(leftCounter,0) = x;
+        tmpLeftCones(leftCounter,1) = y;
+        leftCounter = leftCounter+1;
+      }
+      else if(word.compare("2") == 0){
+        tmpRightCones(rightCounter,0) = x;
+        tmpRightCones(rightCounter,1) = y;
+        rightCounter = rightCounter+1;
+      }
+      else if(word.compare("3") == 0){
+        tmpSmallCones(smallCounter,0) = x;
+        tmpSmallCones(smallCounter,1) = y;
+        smallCounter = smallCounter+1;
+      }
+      else if(word.compare("4") == 0){
+        tmpBigCones(bigCounter,0) = x;
+        tmpBigCones(bigCounter,1) = y;
+        bigCounter = bigCounter+1;
+      }
+      else{std::cout << "ERROR in DetectCone::simDetectCone while storing cones. Not a valid cone type." << std::endl;}
+    }
+    myFile.close();
+  }
+
+  m_leftCones = tmpLeftCones;
+  m_rightCones = tmpRightCones;
+  m_smallCones = tmpSmallCones;
+  m_bigCones = tmpBigCones;
 }
 
 ArrayXXf DetectCone::simConeDetectorBox(ArrayXXf globalMap, ArrayXXf location, float heading, float detectRange, float detectWidth)
