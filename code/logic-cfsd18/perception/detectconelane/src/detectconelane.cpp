@@ -752,7 +752,7 @@ void DetectConeLane::rebuildLocalMap()
 //location << -81,-5;
 
 // Map with a guess where cones are placed poorly
-/*            
+/*
 ArrayXXf sideLeft(6,2); ArrayXXf sideRight(7,2); ArrayXXf location(1,2);
 sideLeft << -55.3944,58.0601,
             -60.1803,59.7912,
@@ -769,6 +769,7 @@ sideRight << -58.1339,56.8301,
              -58.7363,57.0246;
 location << -61,57;
 */
+
 ArrayXXf location(1,2);
 location << 0,0;
 
@@ -800,9 +801,8 @@ float pathLengthRight = DetectConeLane::findTotalPathLength(orderedConesRight);
 std::cout << "pathLengthLeft: " << pathLengthLeft << std::endl;
 std::cout << "pathLengthRight: " << pathLengthRight << std::endl;
 
-int mostCones = std::max(orderedConesLeft.rows(),orderedConesRight.rows());
-ArrayXXf longSide(mostCones,2);
-ArrayXXf shortSide(2*mostCones-2,2);
+ArrayXXf longSide;
+ArrayXXf shortSide;
 if(pathLengthLeft > pathLengthRight)
 {
 std::cout << "first if: " << std::endl;
