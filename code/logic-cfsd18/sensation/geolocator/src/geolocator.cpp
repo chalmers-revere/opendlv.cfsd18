@@ -55,6 +55,7 @@ Geolocator::Geolocator(int32_t const &a_argc, char **a_argv)
     , m_states()
 
 
+
 {
     m_measurementsTimeStamp = MatrixXd::Zero(7,1);
     m_paramVecR = MatrixXd::Zero(7,1);
@@ -77,7 +78,9 @@ Geolocator::~Geolocator()
 
 void Geolocator::nextContainer(odcore::data::Container &a_container)
 {
+
     //Groundspeed   
+  
   if(a_container.getSenderStamp() == m_imuSenderStamp){//Only accept messages with correct sender stamp
     if (a_container.getDataType() == opendlv::proxy::GroundSpeedReading::ID()){
         odcore::base::Lock l(m_sensorMutex);
@@ -124,8 +127,8 @@ void Geolocator::nextContainer(odcore::data::Container &a_container)
         gpsPos[0] = gpsReading.getLatitude();
         gpsPos[1] = gpsReading.getLongitude();
         std::array<double,2> cartesianPos = wgs84::toCartesian(m_gpsReference,gpsPos);
-        m_gpsReading << cartesianPos[1],
-                        cartesianPos[0];
+        m_gpsReading << cartesianPos[0],
+                        cartesianPos[1];
      }
 
      //Heading
@@ -151,6 +154,8 @@ void Geolocator::nextContainer(odcore::data::Container &a_container)
         m_delta = rackTravelToFrontWheelSteering(rT);
      }
     }
+  
+    m_initialMessagesRecieved = (m_initialMessagesRecieved < 110)?(m_initialMessagesRecieved + 1):(m_initialMessagesRecieved);
 } 
 
 odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Geolocator::body()
@@ -163,31 +168,33 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Geolocator::body()
     odcore::data::TimeStamp currentTime;
     
 
+    if(m_initialMessagesRecieved > 100){
+
     //Check last recieved measurement from each sensor, if longer than 1 sec, start trusting the model more     
-    for(int i = 0; i < 7; i++){
+      for(int i = 0; i < 7; i++){
         
-        if(currentTime.toMicroseconds()-m_measurementsTimeStamp(i,0) > 1000000){
+          if(currentTime.toMicroseconds()-m_measurementsTimeStamp(i,0) > 1000000){
             
-            m_R(i,i) = m_paramVecR(i,0)*1000;
-            std::cout << "Not trusting sensor " << i << std::endl;
+              m_R(i,i) = m_paramVecR(i,0)*1000;
+              std::cout << "Not trusting sensor " << i << std::endl;
 
-        }else
-        {
-            m_R(i,i) = m_paramVecR(i,0);
-        }
+          }else
+          {
+              m_R(i,i) = m_paramVecR(i,0);
+         }
+      }
+    
+      //prediction
+      m_states = UKFPrediction(m_states);
+      //update
+      m_states = UKFUpdate(m_states);
+
+      stateSender(m_states);
+
     }
-    
-    //prediction
-    m_states = UKFPrediction(m_states);
-    //update
-    m_states = UKFUpdate(m_states);
 
-    stateSender(m_states);
-    
-    
 
   }
-
 
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
 }

@@ -77,6 +77,7 @@ class Geolocator : public odcore::base::module::TimeTriggeredConferenceClientMod
   MatrixXd m_states;
   uint32_t m_senderStamp = 114;
   uint32_t m_imuSenderStamp = 112;
+  uint32_t m_initialMessagesRecieved = 0;
   //odcore::base::Mutex m_egoStateMutex;
 
   //void nextContainer(odcore::data::Container &);

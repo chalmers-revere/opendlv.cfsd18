@@ -74,16 +74,16 @@ logic-cfsd18-sensation-geolocator.imuSenderStamp = 112
 
 %%%%%SAMPLE TIME & GPS REFERENCE%%%%%%
 logic-cfsd18-sensation-geolocator.T = 0.05; #Check in docker compose
-logic-cfsd18-sensation-geolocator.GPSreference.latitude = 57.7
-logic-cfsd18-sensation-geolocator.GPSreference.longitude = 11.95
+logic-cfsd18-sensation-geolocator.GPSreference.latitude = 57.7048
+logic-cfsd18-sensation-geolocator.GPSreference.longitude = 11.9222
 
 %%%%%MODEL UNCERTAINTIES%%%%%% 
-logic-cfsd18-sensation-geolocator.Q.X = 1
-logic-cfsd18-sensation-geolocator.Q.Y = 1
-logic-cfsd18-sensation-geolocator.Q.VelX = 2000
+logic-cfsd18-sensation-geolocator.Q.X = 0.1
+logic-cfsd18-sensation-geolocator.Q.Y = 0.1
+logic-cfsd18-sensation-geolocator.Q.VelX = 1
 logic-cfsd18-sensation-geolocator.Q.VelY = 2
 logic-cfsd18-sensation-geolocator.Q.Yaw = 1
-logic-cfsd18-sensation-geolocator.Q.Heading = 1
+logic-cfsd18-sensation-geolocator.Q.Heading = 5
 
 %%%%%MEASUREMENT UNCERTAINTIES%%%%%
 logic-cfsd18-sensation-geolocator.R.X = 1
@@ -102,4 +102,17 @@ logic-cfsd18-sensation-geolocator.vehicle-parameter.l = 1.53 #m
 logic-cfsd18-sensation-geolocator.vehicle-parameter.lf = 0.765 #m (l*0.5)
 logic-cfsd18-sensation-geolocator.vehicle-parameter.lr = 0.765 #m (l*0.5)
 logic-cfsd18-sensation-geolocator.vehicle-parameter.mu = 0.9
+
+# CONFIGURATION FOR ODRECORDER
+#
+#odrecorder.output = file://recorder.rec
+odrecorder.remoteControl = 0 # 0 = no remote control, 1 = allowing remote control (i.e. start and stop recording)
+odrecorder.dumpSharedData = 1 # 0 = do not dump shared images and shared images, 1 = otherwise
+
+#odrecorderh264.output = file://recorder.rec
+odrecorderh264.remoteControl = 0 # 0 = no remote control, 1 = allowing remote control (i.e. start and stop recording)
+odrecorderh264.dumpSharedData = 1 # 0 = do not dump shared images and shared images, 1 = otherwise
+odrecorderh264.lossless = 1 # Set to 1 to enable h264 lossless encoding.
+odrecorderh264.portbaseforchildprocesses = 29000 # Every spawned child processes is connecting to the parent process via TCP using
+odcockpit.directoriesForSharedLibaries = /opt
 

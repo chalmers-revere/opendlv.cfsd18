@@ -40,3 +40,29 @@ services:
 #        devices:
 #            - "/dev/ttyUSB0:/dev/ttyUSB0"
 #        command: "opendlv-proxy-ellipse2n --cid=120 --id=112"
+#    odcockpit:
+#        image: ${IMAGE}
+#        network_mode: host
+#        environment:
+#        - DISPLAY=$DISPLAY
+#        volumes:
+#        - /tmp/.X11-unix:/tmp/.X11-unix
+#        - .:/opt/opendlv.data
+#        - ~/Recordings:/opt/Recordings
+#        ipc: host
+#        user: odv
+#        depends_on:
+#            - odsupercomponent
+#        command: "/opt/od4/bin/odcockpit --cid=${CID}"
+
+#    odrecorderh264:
+#        image: ${IMAGE}
+#        network_mode: host
+#        volumes:
+#        - ~/Recordings:/opt/Recordings
+#        working_dir: "/opt/Recordings"
+#        ipc: host
+#        user: odv
+#        depends_on:
+#            - odsupercomponent
+#        command: "/opt/od4/bin/odrecorderh264 --cid=${CID}"
