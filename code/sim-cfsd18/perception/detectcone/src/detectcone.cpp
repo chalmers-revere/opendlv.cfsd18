@@ -112,9 +112,9 @@ float detectWidth = 5;
 
 odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
 {
-  // These should probably be set in the configuration
-  float detectRange = 11.5;
-  float detectWidth = 5;
+  auto kv = getKeyValueConfiguration();
+  float const detectRange = kv.getValue<float>("sim-cfsd18-perception-detectcone.detectRange");
+  float const detectWidth = kv.getValue<float>("sim-cfsd18-perception-detectcone.detectWidth");
 
   while(getModuleStateAndWaitForRemainingTimeInTimeslice() == odcore::data::dmcp::ModuleStateMessage::RUNNING)
   {
@@ -131,12 +131,17 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
 
 void DetectCone::setUp()
 {
-  // Starting position and heading should probably be set in the configuration
-  m_location.resize(1,2);
-  m_location << -61,57;
-  m_heading = 3.14159/6;
+  // Starting position and heading are set in the configuration
+  auto kv = getKeyValueConfiguration();
 
-  std::string filename = "trackdrive_cones_dense.csv";
+  float const startX = kv.getValue<float>("sim-cfsd18-perception-detectcone.startX");
+  float const startY = kv.getValue<float>("sim-cfsd18-perception-detectcone.startY");
+  float const startHeading = kv.getValue<float>("sim-cfsd18-perception-detectcone.startHeading");
+  m_location.resize(1,2);
+  m_location << startX,startY;
+  m_heading = startHeading;
+
+  std::string const filename = kv.getValue<std::string>("sim-cfsd18-perception-detectcone.mapFilename");
   DetectCone::readMap(filename);
   
   std::cout << "Left: " << m_leftCones << std::endl;
