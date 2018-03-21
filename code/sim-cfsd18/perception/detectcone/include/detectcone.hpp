@@ -20,7 +20,7 @@
 #ifndef OPENDLV_SIM_CFSD18_PERCEPTION_DETECTCONE_HPP
 #define OPENDLV_SIM_CFSD18_PERCEPTION_DETECTCONE_HPP
 
-#include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
+#include <opendavinci/odcore/base/module/TimeTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
 
 //#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
@@ -32,7 +32,7 @@ namespace sim {
 namespace cfsd18 {
 namespace perception {
 
-class DetectCone : public odcore::base::module::DataTriggeredConferenceClientModule {
+class DetectCone : public odcore::base::module::TimeTriggeredConferenceClientModule {
  public:
   DetectCone(int32_t const &, char **);
   DetectCone(DetectCone const &) = delete;
@@ -41,11 +41,14 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   virtual void nextContainer(odcore::data::Container &);
 
  private:
+  float m_heading;
+  ArrayXXf m_location;
   ArrayXXf m_leftCones;
   ArrayXXf m_rightCones;
   ArrayXXf m_smallCones;
   ArrayXXf m_bigCones;
 
+  odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode body();
   void setUp();
   void tearDown();
   void readMap(std::string);

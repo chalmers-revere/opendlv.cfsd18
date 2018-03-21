@@ -35,6 +35,6 @@ services:
             - odsupercomponent
         volumes:
         - .:/opt/opendlv.data
-        command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-perception-detectcone --cid=${CID} --verbose=1 --id=1"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-perception-detectcone --cid=${CID} --verbose=1 --id=1 --freq=20"
 
 

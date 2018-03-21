@@ -33,7 +33,9 @@ namespace cfsd18 {
 namespace perception {
 
 DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
-  DataTriggeredConferenceClientModule(a_argc, a_argv, "sim-cfsd18-perception-detectcone")
+  TimeTriggeredConferenceClientModule(a_argc, a_argv, "sim-cfsd18-perception-detectcone")
+, m_heading()
+, m_location()
 , m_leftCones()
 , m_rightCones()
 , m_smallCones()
@@ -86,19 +88,14 @@ sideRight << -69.3358,41.8116,
              -58.3856,52.7769,
              -59.4402,50.7850,
              -60.8640,48.8286;
-*/
+
 ArrayXXf location(1,2);
 location << -61,57;
 float heading = 3.14159/6;
 float detectRange = 11.5;
 float detectWidth = 5;
+*/
 
-ArrayXXf detectedConesLeft = DetectCone::simConeDetectorBox(m_leftCones, location, heading, detectRange, detectWidth);
-ArrayXXf detectedConesRight = DetectCone::simConeDetectorBox(m_rightCones, location, heading, detectRange, detectWidth);
-std::cout << "detectedConesLeft: " << detectedConesLeft << std::endl;
-std::cout << "detectedConesRight: " << detectedConesRight << std::endl;
-
-  std::cout << "THIS IS SIM-DETECTCONE SPEAKING" << std::endl;
 
 
 //std::string filename = "trackdrive_cones_dense.csv";
@@ -113,8 +110,32 @@ std::cout << "detectedConesRight: " << detectedConesRight << std::endl;
   }
 }
 
+odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
+{
+  // These should probably be set in the configuration
+  float detectRange = 11.5;
+  float detectWidth = 5;
+
+  while(getModuleStateAndWaitForRemainingTimeInTimeslice() == odcore::data::dmcp::ModuleStateMessage::RUNNING)
+  {
+    ArrayXXf detectedConesLeft = DetectCone::simConeDetectorBox(m_leftCones, m_location, m_heading, detectRange, detectWidth);
+    ArrayXXf detectedConesRight = DetectCone::simConeDetectorBox(m_rightCones, m_location, m_heading, detectRange, detectWidth);
+
+    // This is where the messages should be sent
+    std::cout << "detectedConesLeft: " << detectedConesLeft << std::endl;
+    std::cout << "detectedConesRight: " << detectedConesRight << std::endl;
+    std::cout << "THIS IS SIM-DETECTCONE SPEAKING" << std::endl;
+  }
+  return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
+}
+
 void DetectCone::setUp()
 {
+  // Starting position and heading should probably be set in the configuration
+  m_location.resize(1,2);
+  m_location << -61,57;
+  m_heading = 3.14159/6;
+
   std::string filename = "trackdrive_cones_dense.csv";
   DetectCone::readMap(filename);
   
