@@ -35,7 +35,7 @@ services:
           - odsupercomponent
         volumes:
           - .:/opt/opendlv.data
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-vehsim --cid=${CID} --verbose=0 --freq=10 --id=1"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-vehsim --cid=${CID} --verbose=0 --freq=2 --id=1"
 
     # microservice for lynx-steering
     cfsd-motion:
