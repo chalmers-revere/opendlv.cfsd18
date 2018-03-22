@@ -50,8 +50,8 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
   Eigen::ArrayXf tireModel(Eigen::ArrayXf, Eigen::ArrayXf, Eigen::ArrayXf,
     float, float, float, float, Eigen::VectorXf, Eigen::VectorXf, Eigen::MatrixXf);
   Eigen::ArrayXf atanArr(Eigen::ArrayXf);
-  Eigen::ArrayXf longitudinalControl(Eigen::ArrayXf, Eigen::ArrayXf, float,
-    float, float);
+  Eigen::ArrayXf longitudinalControl(Eigen::ArrayXf, Eigen::ArrayXf, Eigen::VectorXf,
+    Eigen::VectorXf, Eigen::MatrixXf, Eigen::ArrayXf*, float);
   Eigen::ArrayXf motion(Eigen::ArrayXf,Eigen::ArrayXf,Eigen::ArrayXf,
     Eigen::ArrayXf, float, float, float, float, float, float, float);
   void sendAccelerationRequest(float, Eigen::ArrayXf);
@@ -61,7 +61,7 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
    opendlv::logic::action::AimPoint m_aimPoint;
    float m_torqueRequest1;
    float m_torqueRequest2;
-   float m_Fbrake;
+   float m_deceleration;
    bool m_brakeEnabled;
 };
 

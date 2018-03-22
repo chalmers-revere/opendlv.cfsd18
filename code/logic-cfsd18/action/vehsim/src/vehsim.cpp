@@ -45,7 +45,7 @@ Vehsim::Vehsim(int32_t const &a_argc, char **a_argv) :
   m_aimPoint(),
   m_torqueRequest1(),
   m_torqueRequest2(),
-  m_Fbrake(),
+  m_deceleration(),
   m_brakeEnabled()
   {
 }
@@ -78,7 +78,7 @@ void Vehsim::nextContainer(odcore::data::Container &a_container)
   if (a_container.getDataType() == opendlv::proxy::GroundDecelerationRequest::ID()) {
     m_brakeEnabled = true;
     auto decelContainer = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
-    m_Fbrake = decelContainer.getGroundDeceleration();
+    m_deceleration = decelContainer.getGroundDeceleration();
   }
 }
 
@@ -109,72 +109,104 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
   float u0 = 5.0f; // initial speed
   Eigen::ArrayXf x(6); x << u0,0,0,0,0,0;
   Eigen::ArrayXf X(6); X << 0,0,0,0,0,0;
-  std::cout << "Initializing states." << std::endl;
+  Eigen::ArrayXf omega(4); omega << 0,0,0,0;
+  omega += u0/0.22f;
 
-  m_aimPoint = opendlv::logic::action::AimPoint(0.0f,0.0f,5.0f);
+  std::cout << "Initializing states." << std::endl;
 
   // Tire data used for tire modelling
   Eigen::VectorXf tireLoad(15);
-  Eigen::VectorXf tireSlip(50);
-  Eigen::MatrixXf tireForce(50,15);
+  Eigen::VectorXf tireSlipY(50);
+  Eigen::MatrixXf tireForceY(50,15);
+  Eigen::VectorXf tireSlipX(20);
+  Eigen::MatrixXf tireForceX(20,15);
 
-  std::ifstream file("/opt/opendlv.data/TireData.txt", std::ifstream::in );
+
+  std::ifstream fileY("/opt/opendlv.data/TireDataY", std::ifstream::in );
+  std::ifstream fileX("/opt/opendlv.data/TireDataX", std::ifstream::in );
   std::string row;
   std::string value;
   int irow = 0;
   int icol;
 
 
-  if (file.is_open()){
-    std::cout << "File open" << std::endl;
-    while(file.good()){
+  if (fileY.is_open()){
+    while(fileY.good()){
       icol = 0;
-      getline ( file, row);
+      getline ( fileY, row);
       std::stringstream ss(row);
       while (ss >> value){
           if (irow == 0 && icol != 0){
             tireLoad(icol-1) = -1*std::stof(value);
           } else if (icol == 0 && irow != 0) {
-            tireSlip(irow-1) = std::stof(value)*PI/180;
+            tireSlipY(irow-1) = std::stof(value)*PI/180;
           } else if (icol != 0 && irow != 0){
-            tireForce(irow-1,icol-1) = -1*std::stof(value);
+            tireForceY(irow-1,icol-1) = -1*std::stof(value);
           }
           icol ++;
       }
       irow ++;
     }
   }
-  std::cout << "File read, data loaded" << std::endl;
+  irow = 0;
 
+  if (fileX.is_open()){
+    while(fileX.good()){
+      icol = 0;
+      getline ( fileX, row);
+      std::stringstream ss(row);
+      while (ss >> value){
+          if (irow == 0 && icol != 0){
+            //tireLoad(icol-1) = -1*std::stof(value);
+          } else if (icol == 0 && irow != 0) {
+            tireSlipX(irow-1) = std::stof(value);
+          } else if (icol != 0 && irow != 0){
+            tireForceX(irow-1,icol-1) = 1*std::stof(value);
+          }
+          icol ++;
+      }
+      irow ++;
+    }
+  }
+
+  float timer = 0.0f;
 
   while (getModuleStateAndWaitForRemainingTimeInTimeslice() ==
       odcore::data::dmcp::ModuleStateMessage::RUNNING) {
+        std::cout << "Time: " << timer << " s" << std::endl;
 
         float yawRef = 0.0f; //yawModel(m_aimPoint, x);
         Eigen::ArrayXf delta = calcSteerAngle(yawRef, x, mass, L, Ku);
         Eigen::ArrayXf Fz = loadTransfer(x, mass, L, lf, lr, wf, wr);
-        Eigen::ArrayXf Fx = longitudinalControl(Fz, x, L, lf, lr);
-        Fx << 0.0f,0.0f,0.0f,0.0f;
+        Eigen::ArrayXf Fx = longitudinalControl(Fz, x, tireLoad, tireSlipX,
+          tireForceX, &omega, sampleTime);
         Eigen::ArrayXf Fy = tireModel(delta,x,Fz, lf, lr, wf, wr, tireLoad,
-          tireSlip, tireForce);
+          tireSlipY, tireForceY);
         Eigen::ArrayXf dx = motion(delta,Fy,Fx,x, mass, Iz, lf, lr, wf, wr,
           sampleTime);
 
         X(2) = X(2) + x(2)*sampleTime + dx(2)*(float)pow(sampleTime,2)/2;
+
+        Eigen::MatrixXf rotMat(2,2);
+        rotMat << std::cos(X(2)), -std::sin(X(2)), //Rotational matrix
+                  std::sin(X(2)), std::cos(X(2));
+
+        Eigen::VectorXf x12 = x.head(2);
+        Eigen::VectorXf dx12 = dx.head(2);
         X(0) = X(0) + (std::cos(X(2))*x(0) - std::sin(X(2))*x(1))*sampleTime + (std::cos(X(2))*dx(0) - std::sin(X(2))*dx(1))*(float)pow(sampleTime,2)/2;
         X(1) = X(1) + (std::sin(X(2))*x(0) + std::cos(X(2))*x(1))*sampleTime + (std::sin(X(2))*dx(0) + std::cos(X(2))*dx(1))*(float)pow(sampleTime,2)/2;
 
-        // std::cout << x.transpose() << std::endl;
+        std::cout << X.transpose() << std::endl;
 
         x += dx*sampleTime;
-
-        std::cout << X.transpose() << std::endl;
 
         opendlv::sim::Frame out1(X(0),X(1),X(2),X(3),X(4),X(5));
         odcore::data::Container c1(out1);
         getConference().send(c1);
 
         sendAccelerationRequest(yawRef, x);
+
+        timer += sampleTime;
     }
 
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
@@ -268,7 +300,7 @@ Eigen::ArrayXf Vehsim::loadTransfer(Eigen::ArrayXf x, float mass, float L,
 
 Eigen::ArrayXf Vehsim::tireModel(Eigen::ArrayXf delta, Eigen::ArrayXf x,
   Eigen::ArrayXf Fz, float lf, float lr, float wf, float wr,
-  Eigen::VectorXf tireLoad, Eigen::VectorXf tireSlip, Eigen::MatrixXf tireForce)
+  Eigen::VectorXf tireLoad, Eigen::VectorXf tireSlipY, Eigen::MatrixXf tireForceY)
 {
   Eigen::ArrayXf Fy(4);
 
@@ -278,6 +310,7 @@ Eigen::ArrayXf Vehsim::tireModel(Eigen::ArrayXf delta, Eigen::ArrayXf x,
 
   float a1, a2, a3, a4;
 
+  // This will cause problems when denominator is 0
   // if(abs(v)>1e-20){
     a1 = -atan2(v+lf*r,u+wf*r/2);
     a2 = -atan2(v+lf*r,u-wf*r/2);
@@ -294,10 +327,10 @@ Eigen::ArrayXf Vehsim::tireModel(Eigen::ArrayXf delta, Eigen::ArrayXf x,
   alpha << a1, a2, a3, a4;
   alpha = alpha + delta;
 
-  float Fy1 = interp2(tireLoad, tireSlip, tireForce, Fz(0), alpha(0));
-  float Fy2 = interp2(tireLoad, tireSlip, tireForce, Fz(1), alpha(1));
-  float Fy3 = interp2(tireLoad, tireSlip, tireForce, Fz(2), alpha(2));
-  float Fy4 = interp2(tireLoad, tireSlip, tireForce, Fz(3), alpha(3));
+  float Fy1 = interp2(tireLoad, tireSlipY, tireForceY, Fz(0), alpha(0));
+  float Fy2 = interp2(tireLoad, tireSlipY, tireForceY, Fz(1), alpha(1));
+  float Fy3 = interp2(tireLoad, tireSlipY, tireForceY, Fz(2), alpha(2));
+  float Fy4 = interp2(tireLoad, tireSlipY, tireForceY, Fz(3), alpha(3));
 
   Fy << Fy1,Fy2,Fy3,Fy4;
 
@@ -305,29 +338,58 @@ Eigen::ArrayXf Vehsim::tireModel(Eigen::ArrayXf delta, Eigen::ArrayXf x,
 }
 
 
-Eigen::ArrayXf Vehsim::longitudinalControl(Eigen::ArrayXf Fz, Eigen::ArrayXf states, float L, float lf, float lr)
-{
-  float u = states(0);
-  (void) u;
-  float const wheelRadius = 0.22f;
+Eigen::ArrayXf Vehsim::longitudinalControl(Eigen::ArrayXf Fz, Eigen::ArrayXf x,
+  Eigen::VectorXf tireLoad, Eigen::VectorXf tireSlipX,
+  Eigen::MatrixXf tireForceX, Eigen::ArrayXf *wheelSpeed, float sampleTime) {
 
+  float u = x(0);
+  float const wheelRadius = 0.22f;
+  float const Iwy = 2.0f;           // Inertia of a wheel
+  Eigen::ArrayXf omega = *wheelSpeed;
+
+
+  Eigen::ArrayXf brakeDist(4);
+  brakeDist << 0.125, 0.125, 0.375, 0.375;
   Eigen::ArrayXf Fx(4);
+  Eigen::ArrayXf wheelSlip(4);
+  Eigen::ArrayXf omegaDot(4);
+
   float tr1 = m_torqueRequest1;
   float tr2 = m_torqueRequest2;
 
-  if (!m_brakeEnabled) {
-    float fx1 = tr1/wheelRadius;
-    float fx2 = tr2/wheelRadius;
+  Eigen::ArrayXf FxBrakes(4); FxBrakes << 0,0,0,0;
+  if (m_brakeEnabled) {
+    FxBrakes = m_deceleration*brakeDist;
+  }
 
-    Fx << 0,0,fx1,fx2;
-  } else if (m_brakeEnabled) {
-    Fx << -lr, -lr, lf, lf;
-    Fx /= L;
-    Fx *= m_Fbrake;
+  if (abs(u) < 1e-10) {
+    for (int i=0; i<wheelSlip.size();i++){
+      if (abs(omega(i))<1e-10){
+        wheelSlip(i) = 0;
+      } else {
+        wheelSlip(i) = std::copysign(tireSlipX(0),omega(i));
+      }
+    }
+  } else {
+    wheelSlip = (omega*wheelRadius-u)/std::abs(u);
   }
 
 
-  (void) (Fz);
+  float Fx1 = interp2(tireLoad,tireSlipX,tireForceX,Fz(0),wheelSlip(0));
+  float Fx2 = interp2(tireLoad,tireSlipX,tireForceX,Fz(1),wheelSlip(1));
+  float Fx3 = interp2(tireLoad,tireSlipX,tireForceX,Fz(2),wheelSlip(2));
+  float Fx4 = interp2(tireLoad,tireSlipX,tireForceX,Fz(3),wheelSlip(3));
+
+  Fx << Fx1,Fx2,Fx3,Fx4;
+
+
+  omegaDot(0) = wheelRadius*(FxBrakes(0)-Fx(0))/Iwy;
+  omegaDot(1) = wheelRadius*(FxBrakes(1)-Fx(1))/Iwy;
+  omegaDot(2) = (tr1 + wheelRadius*(FxBrakes(2)-Fx(2)))/Iwy;
+  omegaDot(3) = (tr2 + wheelRadius*(FxBrakes(3)-Fx(3)))/Iwy;
+
+  *wheelSpeed = omega + omegaDot*sampleTime;
+
   return Fx;
 }
 
@@ -380,7 +442,6 @@ Eigen::ArrayXf Vehsim::atanArr(Eigen::ArrayXf a)
 void Vehsim::sendAccelerationRequest(float yawRef, Eigen::ArrayXf x)
 {
   (void) yawRef;
-
   float u = x(0);
   float v_ref = 5;
   float e = (v_ref - u);
@@ -437,6 +498,9 @@ float Vehsim::interp2(Eigen::VectorXf arg_X, Eigen::VectorXf arg_Y, Eigen::Matri
 void Vehsim::setUp()
 {
   std::cout << "vehsim setup" << std::endl;
+
+  // add aim point infront of the car as initializer
+  m_aimPoint = opendlv::logic::action::AimPoint(0.0f,0.0f,5.0f);
 }
 
 void Vehsim::tearDown()
