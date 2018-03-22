@@ -127,30 +127,23 @@ void Attention::nextContainer(odcore::data::Container &a_container)
   odcore::data::TimeStamp incommingDataTime = a_container.getSampleTimeStamp();
   double timeSinceLastReceive = abs(static_cast<double>(incommingDataTime.toMicroseconds()-m_CPCReceivedLastTime.toMicroseconds())/1000000.0);
   //std::cout << "Time since between 2 incomming messages: " << timeSinceLastReceive << "s" << std::endl;
-  if (timeSinceLastReceive>m_algorithmTime)
-  {
-
-  if(a_container.getDataType() == odcore::data::SharedPointCloud::ID()){
-    m_SPCReceived = true;
-    std::cout << "Error: Don't use SharedPointCloud here!!!" << std::endl;
-}
-  if (a_container.getDataType() == odcore::data::CompactPointCloud::ID()) {
-    m_CPCReceived = true;
-    odcore::data::TimeStamp ts = a_container.getSampleTimeStamp();
+  if (timeSinceLastReceive>m_algorithmTime){
+    if(a_container.getDataType() == odcore::data::CompactPointCloud::ID()) {
+        m_CPCReceived = true;
+        odcore::data::TimeStamp ts = a_container.getSampleTimeStamp();
 
     //double timeBetween2ProcessedMessage = static_cast<double>(ts.toMicroseconds()-m_CPCReceivedLastTime.toMicroseconds())/1000000.0;
 
     //std::cout << "Time between 2 processed messages is: " << timeBetween2ProcessedMessage << "s" << std::endl;
 
-    m_CPCReceivedLastTime = ts;
-
-    m_recordingYear = ts.getYear();
+        m_CPCReceivedLastTime = ts;
+        m_recordingYear = ts.getYear();
 
     if (!m_SPCReceived) {
       Lock lockCPC(m_cpcMutex);
       m_cpc = a_container.getData<CompactPointCloud>();
-      const uint8_t numberOfLayers = m_cpc.getEntriesPerAzimuth();  // Get number of layers
-
+      //const uint8_t numberOfLayers = m_cpc.getEntriesPerAzimuth();  // Get number of layers
+      /*
       if (numberOfLayers == 16) {  // Deal with VLP-16
         std::cout << "Connecting to VLP16" <<  std::endl;
 
@@ -178,11 +171,20 @@ void Attention::nextContainer(odcore::data::Container &a_container)
         }
 
 
-      }
+      }*/
     }
 	odcore::data::TimeStamp TimeBeforeAlgorithm;
   SavePointCloud();
-  ConeDetection();
+
+  if(m_pointCloud.rows() > 20000){
+
+    ConeDetection();
+
+  }else{
+
+    std::cout << "Point cloud size not sufficient, size is: " << m_pointCloud.rows() << std::endl;
+  }
+
 
   odcore::data::TimeStamp TimeAfterAlgorithm;
   double timeForProcessingOneScan = static_cast<double>(TimeAfterAlgorithm.toMicroseconds()-TimeBeforeAlgorithm.toMicroseconds())/1000000.0;
@@ -251,7 +253,7 @@ void Attention::SaveOneCPCPointNoIntensity(const int &pointIndex,const uint16_t 
   m_pointCloud.row(pointIndex) << xData,yData,zData;
 }
 
-void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const double &startAzimuth, const double &endAzimuth, const uint8_t &distanceEncoding)
+/*void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const double &startAzimuth, const double &endAzimuth, const uint8_t &distanceEncoding)
 {
   double azimuth = startAzimuth;
   uint32_t numberOfPoints;
@@ -296,7 +298,7 @@ void Attention::SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entries
     azimuth += azimuthIncrement;
   }
 
-}
+}*/
 
 
 void Attention::SavePointCloud(){
@@ -355,7 +357,7 @@ void Attention::SavePointCloud(){
       std::cout << "number of points are:"<< m_pointCloud.rows() << std::endl;
       //m_pointCloud = Eigen::MatrixXd::Zero(1,3); // Empty the point cloud matrix for this scan
       //std::cout << "One scan complete! " << std::endl;
-    }  else { //A HDL-32E CPC, one of the three parts of a complete scan
+    } /* else { //A HDL-32E CPC, one of the three parts of a complete scan
       if ((m_cpcMask_32 & 0x04) > 0) {//The first part, 12 layers
         if (numberOfBitsForIntensity == 0) {
           std::cout << "The first part, 12 layers, no Intensity" <<  std::endl;
@@ -386,7 +388,7 @@ void Attention::SavePointCloud(){
           //drawCPC32withIntensity(3, numberOfLayers, startAzimuth, endAzimuth, distanceEncoding, numberOfBitsForIntensity, intensityPlacement, tmpMask, intensityMaxValue);
         }
       }
-    }
+    }*/
   }
 }
 
@@ -807,119 +809,6 @@ Eigen::MatrixXd Attention::RemoveDuplicates(Eigen::MatrixXd needSorting)
 
   return needSorting;
 
-}
-
-Eigen::MatrixXd Attention::GenerateTestPointCloud()
-{
-  Eigen::MatrixXd generatedPointCloud = Eigen::MatrixXd::Zero(22000,3);
-
-  for(int i = 0; i < generatedPointCloud.rows(); i++){
-
-
-    if(i < 21000){
-
-    double f = (double)rand() / RAND_MAX;
-    double r1 = 5 + f*(5 - 0);
-
-    double ff = (double)rand() / RAND_MAX;
-    double r2 = 5 + ff*(5 - 0);
-
-    double fff = (double)rand() / RAND_MAX;
-    double r3 =  -0.20 + fff*(-0.15 + 0.20);
-
-    generatedPointCloud.row(i) << r1,r2,r3;
-    }
-    if(i >= 18000 && i < 21000){
-
-      double f = (double)rand() / RAND_MAX;
-      double r1 = 40 + f*(40.2 - 40);
-
-      double ff = (double)rand() / RAND_MAX;
-      double r2 = 0.15 + ff*(1 - 0.15);
-
-      double fff = (double)rand() / RAND_MAX;
-      double r3 =  0.15 + fff*(1 - 0.15);
-
-      generatedPointCloud.row(i) << r1,r2,r3;
-
-    }
-
-    if(i >= 21000 && i < 21050){
-
-      double f = (double)rand() / RAND_MAX;
-      double r1 = 3 + f*(3.2 - 3);
-
-      double ff = (double)rand() / RAND_MAX;
-      double r2 = 3 + ff*(3.2 - 3);
-
-      double fff = (double)rand() / RAND_MAX;
-      double r3 =  -0.15 + fff*(0.1 + 0.15);
-
-      generatedPointCloud.row(i) << r1,r2,r3;
-
-    }
-
-    if(i >= 21050 && i < 21100){
-
-      double f = (double)rand() / RAND_MAX;
-      double r1 = 0 + f*(0.2 - 0);
-
-      double ff = (double)rand() / RAND_MAX;
-      double r2 = 3 + ff*(3.2 - 3);
-
-      double fff = (double)rand() / RAND_MAX;
-      double r3 =  -0.15 + fff*(0.1 + 0.15);
-
-      generatedPointCloud.row(i) << r1,r2,r3;
-
-    }
-    if(i >= 21100 && i < 21130){
-
-       double f = (double)rand() / RAND_MAX;
-      double r1 = 3 + f*(3.2 - 3);
-
-      double ff = (double)rand() / RAND_MAX;
-      double r2 = 4 + ff*(4.2 - 4);
-
-      double fff = (double)rand() / RAND_MAX;
-      double r3 =  -0.15 + fff*(0.1 + 0.15);
-      generatedPointCloud.row(i) << r1,r2,r3;
-    }
-
-      if(i >= 21130 && i < 21160){
-
-      double f = (double)rand() / RAND_MAX;
-      double r1 = 0 + f*(0.2 - 0);
-
-      double ff = (double)rand() / RAND_MAX;
-      double r2 = 4 + ff*(4.2 - 4);
-
-      double fff = (double)rand() / RAND_MAX;
-      double r3 =  -0.15 + fff*(0.1 + 0.15);
-
-      generatedPointCloud.row(i) << r1,r2,r3;
-
-    }
-
-    if(i >= 21160 ){
-
-      double f = (double)rand() / RAND_MAX;
-      double r1 = 0 + f*(5 - 0);
-
-      double ff = (double)rand() / RAND_MAX;
-      double r2 = 0 + ff*(5 - 0);
-
-      double fff = (double)rand() / RAND_MAX;
-      double r3 =  0.15 + fff*(5 - 0.15);
-
-      generatedPointCloud.row(i) << r1,r2,r3;
-
-    }
-
-
-  }
-
-  return generatedPointCloud;
 }
 
 

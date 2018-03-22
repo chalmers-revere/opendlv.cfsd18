@@ -59,7 +59,7 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   void tearDown();
   
   void SaveOneCPCPointNoIntensity(const int &pointIndex,const uint16_t &distance_integer, const double &azimuth, const double &verticalAngle, const uint8_t &distanceEncoding);
-  void SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const double &startAzimuth, const double &endAzimuth, const uint8_t &distanceEncoding);
+  //void SaveCPC32NoIntensity(const uint8_t &part, const uint8_t &entriesPerAzimuth, const double &startAzimuth, const double &endAzimuth, const uint8_t &distanceEncoding);
   void SavePointCloud();
   void ConeDetection();
   vector<vector<uint32_t>> NNSegmentation(MatrixXd &pointCloudConeROI, const double &connectDistanceThreshold);
@@ -72,7 +72,6 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   opendlv::logic::sensation::Point Cartesian2Spherical(double &x, double &y, double &z);
   Eigen::MatrixXd RANSACRemoveGround(MatrixXd);
   Eigen::MatrixXd RemoveDuplicates(MatrixXd);
-  Eigen::MatrixXd GenerateTestPointCloud();
 
 
   // Define constants to decode CPC message
