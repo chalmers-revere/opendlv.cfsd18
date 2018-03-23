@@ -20,7 +20,7 @@
 #ifndef OPENDLV_LOGIC_CFSD18_ACTION_LATERAL_HPP
 #define OPENDLV_LOGIC_CFSD18_ACTION_LATERAL_HPP
 
-#include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
+#include <opendavinci/odcore/base/module/TimeTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
 
 //#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
@@ -31,7 +31,7 @@ namespace logic {
 namespace cfsd18 {
 namespace action {
 
-class Lateral : public odcore::base::module::DataTriggeredConferenceClientModule {
+class Lateral : public odcore::base::module::TimeTriggeredConferenceClientModule {
  public:
   Lateral(int32_t const &, char **);
   Lateral(Lateral const &) = delete;
@@ -42,6 +42,9 @@ class Lateral : public odcore::base::module::DataTriggeredConferenceClientModule
  private:
   void setUp();
   void tearDown();
+  odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode body();
+
+  void sendGroundSteeringRequest(double);
 };
 
 }
