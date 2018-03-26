@@ -25,6 +25,7 @@
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 #include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
+#include <fstream>
 
 namespace opendlv {
 namespace logic {
@@ -64,6 +65,7 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
    float m_deceleration;
    bool m_brakeEnabled;
    float m_delta;
+   std::ofstream m_outputData;
 };
 
 }

@@ -20,7 +20,6 @@
 #include <iostream>
 #include <math.h>
 #include <chrono>
-#include <fstream>
 #include <string>
 #include <sstream>
 
@@ -47,9 +46,10 @@ Vehsim::Vehsim(int32_t const &a_argc, char **a_argv) :
   m_torqueRequest2(),
   m_deceleration(),
   m_brakeEnabled(),
-  m_delta()
+  m_delta(),
+  m_outputData()
   {
-}
+  }
 
 Vehsim::~Vehsim()
 {
@@ -188,11 +188,11 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
 
   while (getModuleStateAndWaitForRemainingTimeInTimeslice() ==
       odcore::data::dmcp::ModuleStateMessage::RUNNING) {
-        std::cout << "Time: " << timer << " s" << std::endl;
         // crate an optimal yawrate based on bicylce model
         float yawRef = 0.0f; // yawModel(m_aimPoint, x);
         // Calculate steering angle based on optimal yawrate
         Eigen::Array4f delta(m_delta,m_delta,0,0);
+        delta << 0.1f,0.1f,0,0;
         // Calculate vertical load on each wheel
         Eigen::ArrayXf Fz = loadTransfer(x, mass, L, lf, lr, wf, wr);
         // Calculate the Fx and the speed of the wheels
@@ -215,9 +215,9 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         // Integrate and rotate positions to global frame
         X(0) = X(0) + (std::cos(X(2))*x(0) - std::sin(X(2))*x(1))*sampleTime + (std::cos(X(2))*dx(0) - std::sin(X(2))*dx(1))*(float)pow(sampleTime,2)/2;
         X(1) = X(1) + (std::sin(X(2))*x(0) + std::cos(X(2))*x(1))*sampleTime + (std::sin(X(2))*dx(0) + std::cos(X(2))*dx(1))*(float)pow(sampleTime,2)/2;
+        X.tail(3) = x.head(3);
 
-        // std::cout << X.transpose() << std::endl;
-
+        std::cout << X.transpose() << std::endl;
         // Integrate velocities
         x += dx*sampleTime;
 
@@ -238,6 +238,11 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         sendAccelerationRequest(yawRef, x);
 
         // update simulation clock
+
+        if (m_outputData.is_open()) {
+          m_outputData << timer << " " << X.transpose() << std::endl;
+          m_outputData.flush();
+        }
         timer += sampleTime;
     }
 
@@ -564,12 +569,19 @@ void Vehsim::setUp()
 {
   std::cout << "vehsim setup" << std::endl;
 
+  m_outputData.open("/opt/opendlv.data/outputData",std::ofstream::out);
+
+  if (m_outputData.is_open()) {
+    m_outputData << "time\t" << "X\t" << "Y\t" << "Psi\t" << "u\t" << "v\t" << "r" << std::endl;
+  }
+
   // add aim point infront of the car as initializer
   m_aimPoint = opendlv::logic::action::AimPoint(0.0f,0.0f,5.0f);
 }
 
 void Vehsim::tearDown()
 {
+  m_outputData.close();
 }
 
 }
