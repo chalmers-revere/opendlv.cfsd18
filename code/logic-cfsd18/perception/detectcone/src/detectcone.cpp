@@ -752,8 +752,8 @@ Eigen::MatrixXd DetectCone::Spherical2Cartesian(double azimuth, double zenimuth,
 void DetectCone::Cartesian2Spherical(double x, double y, double z, opendlv::logic::sensation::Point &pointInSpherical)
 {
   double distance = sqrt(x*x+y*y+z*z);
-  double azimuthAngle = atan(x/y)*static_cast<double>(RAD2DEG);
-  double zenithAngle = atan(z/sqrt(x*x+y*y))*static_cast<double>(RAD2DEG);
+  double azimuthAngle = atan2(x,y)*static_cast<double>(RAD2DEG);
+  double zenithAngle = atan2(z,sqrt(x*x+y*y))*static_cast<double>(RAD2DEG);
   pointInSpherical.setDistance(distance);
   pointInSpherical.setAzimuthAngle(azimuthAngle);
   pointInSpherical.setZenithAngle(zenithAngle);
