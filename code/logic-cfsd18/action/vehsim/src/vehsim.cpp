@@ -104,9 +104,9 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
   float lr = kv.getValue<float>("global.vehicle-parameter.lr");   // Distance from CoG to rear axle
   float wf = kv.getValue<float>("global.vehicle-parameter.wf");   // Track width front
   float wr = kv.getValue<float>("global.vehicle-parameter.wr");   // Track width rear
-  float Ca1 = kv.getValue<float>("global.vehicle-parameter.Ca1"); // Cornering stiffness front
-  float Ca2 = kv.getValue<float>("global.vehicle-parameter.Ca2"); // Cornering stiffness rear
-  float Ku = (Ca2*lr-Ca1*lf)/(Ca1*Ca2*L);                         // Understeercoefficient
+  // float Ca1 = kv.getValue<float>("global.vehicle-parameter.Ca1"); // Cornering stiffness front
+  // float Ca2 = kv.getValue<float>("global.vehicle-parameter.Ca2"); // Cornering stiffness rear
+  // float Ku = (Ca2*lr-Ca1*lf)/(Ca1*Ca2*L);                         // Understeercoefficient
 
 
   // Simulation Specific stuff
@@ -192,7 +192,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         // crate an optimal yawrate based on bicylce model
         float yawRef = 0.0f; // yawModel(m_aimPoint, x);
         // Calculate steering angle based on optimal yawrate
-        Eigen::ArrayXf delta(m_delta,m_delta,0,0);
+        Eigen::Array4f delta(m_delta,m_delta,0,0);
         // Calculate vertical load on each wheel
         Eigen::ArrayXf Fz = loadTransfer(x, mass, L, lf, lr, wf, wr);
         // Calculate the Fx and the speed of the wheels
@@ -222,9 +222,17 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         x += dx*sampleTime;
 
         // send vehicle states
-        opendlv::sim::Frame out1(X(0),X(1),X(2),X(3),X(4),X(5));
-        odcore::data::Container c1(out1);
-        getConference().send(c1);
+        opendlv::logic::sensation::Geolocation outPos(X(1),X(0),0,X(2));
+        opendlv::sim::KinematicState outVel(x(0),x(1),0,0,0,x(2));
+        odcore::data::Container posC(outPos);
+        odcore::data::Container velC(outVel);
+        getConference().send(posC);
+        getConference().send(velC);
+
+        float averageSpeed = (omega(0)+omega(1))/2;
+        opendlv::proxy::GroundSpeedReading outSpeed(averageSpeed);
+        odcore::data::Container speedC(outSpeed);
+        getConference().send(speedC);
 
         // send acceleration requests
         sendAccelerationRequest(yawRef, x);
@@ -251,27 +259,27 @@ float Vehsim::yawModel(opendlv::logic::action::AimPoint aimPoint, Eigen::ArrayXf
   return r;
 }
 
-Eigen::ArrayXf Vehsim::calcSteerAngle(float rRef, Eigen::ArrayXf x, float mass, float L, float Ku)
-{
-  float maxDelta = PI/6;      // Define a maximum steering output
-  float u = x(0);             // Vehicle speed
-  float deltaf = 0.0f;        // pre-allocate delta
-
-  if(u>0.1f){ // if the speed is low, dont try to steer
-      // calculate average steer angle based on bicycle model and the reference yaw rate
-      deltaf = (L+Ku*mass*(float)pow(u,2.0f))*rRef/u;
-  }
-
-  deltaf = 0.1f;    // Overwrite delta to make specific test case, comment this out later
-  // saturate steer angle based on maximum allowed value
-  deltaf = std::max<float>(std::min<float>(deltaf,maxDelta),-maxDelta);
-
-  // Calculate steer angle for each wheel
-  Eigen::ArrayXf delta(4); delta << 1,1,0,0; // decide which wheels steer
-  delta *= deltaf;
-
-  return delta;
-}
+// Eigen::ArrayXf Vehsim::calcSteerAngle(float rRef, Eigen::ArrayXf x, float mass, float L, float Ku)
+// {
+//   float maxDelta = PI/6;      // Define a maximum steering output
+//   float u = x(0);             // Vehicle speed
+//   float deltaf = 0.0f;        // pre-allocate delta
+//
+//   if(u>0.1f){ // if the speed is low, dont try to steer
+//       // calculate average steer angle based on bicycle model and the reference yaw rate
+//       deltaf = (L+Ku*mass*(float)pow(u,2.0f))*rRef/u;
+//   }
+//
+//   deltaf = 0.1f;    // Overwrite delta to make specific test case, comment this out later
+//   // saturate steer angle based on maximum allowed value
+//   deltaf = std::max<float>(std::min<float>(deltaf,maxDelta),-maxDelta);
+//
+//   // Calculate steer angle for each wheel
+//   Eigen::ArrayXf delta(4); delta << 1,1,0,0; // decide which wheels steer
+//   delta *= deltaf;
+//
+//   return delta;
+// }
 
 Eigen::ArrayXf Vehsim::loadTransfer(Eigen::ArrayXf x, float mass, float L,
   float lf, float lr, float wf, float wr)

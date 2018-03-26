@@ -92,9 +92,9 @@ void Motion::nextContainer(odcore::data::Container &a_container)
     }
   }
 
-  if (a_container.getDataType() == opendlv::sim::Frame::ID()) { // change this to whatever container marcus sends out
-    auto vehicleSpeed = a_container.getData<opendlv::sim::Frame>();
-    m_speed = vehicleSpeed.getRoll();
+  if (a_container.getDataType() == opendlv::sim::KinematicState::ID()) { // change this to whatever container marcus sends out
+    auto vehicleSpeed = a_container.getData<opendlv::sim::KinematicState>();
+    m_speed = vehicleSpeed.getVx();
   }
 
   if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
