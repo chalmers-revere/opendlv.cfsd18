@@ -30,16 +30,11 @@ namespace logic {
 namespace cfsd18 {
 namespace action {
 
-using namespace std;
-using namespace odcore::base;
+// using namespace std;
+// using namespace odcore::base;
 
 Steering::Steering(int32_t const &a_argc, char **a_argv) :
-  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-steering"),
-  m_pwmId(),
-  m_stateId1(),
-  m_stateId2(),
-  m_stateId3(),
-  m_Kp()
+  DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-steering")
 {
 }
 
@@ -47,81 +42,42 @@ Steering::~Steering()
 {
 }
 
-
-
 void Steering::nextContainer(odcore::data::Container &a_container)
 {
 // checking for the message id and calcualting pwm request and checking left or right steering
-  if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
-    auto steering = a_container.getData<opendlv::proxy::GroundSteeringRequest>();
-    float groundSteering = steering.getGroundSteering();
-    uint32_t pwmrequest = calcSteering(groundSteering);
-    const int bit = 1;
-// sending pwm request
-    opendlv::proxy::PulseWidthModulationRequest pr(pwmrequest);
-
-
-// For the gpio module, we need to send three containers. One for left steering , second for right steering and thrid for current measurement pin
-
-     if (pwmrequest > 0){
-
-     opendlv::proxy::SwitchStateRequest leftbit;
-     opendlv::proxy::SwitchStateRequest rightbit;
-     opendlv::proxy::SwitchStateRequest thirdbit;
-
-     if (bit > 0) {
-        leftbit.setState(1);
-        rightbit.setState(0);
-        thirdbit.setState(1);
-      } else {
-        leftbit.setState(0);
-        rightbit.setState(1);
-        thirdbit.setState(0);
-      }
-
-
-      odcore::data::Container c1(pr);
-      c1.setSenderStamp(m_pwmId);
-      getConference().send(c1);
-
-
-      odcore::data::Container c2(leftbit);
-      c2.setSenderStamp(m_stateId1);          // Set some ID for left turn
-      getConference().send(c2);
-
-
-      odcore::data::Container c3(rightbit);
-      c3.setSenderStamp(m_stateId2);        // Id for right turn
-      getConference().send(c3);
-
-      odcore::data::Container c4(thirdbit);
-      c4.setSenderStamp(m_stateId3);        // Third bit
-      getConference().send(c4);
-
-    }
+  if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
+    auto steering = a_container.getData<opendlv::logic::action::AimPoint>();
+    float azimuth = steering.getAzimuthAngle();
+    float distance = steering.getDistance();
+    float delta = calcSteering(azimuth, distance);
+    float rackPosition = calcRackPosition(delta);
+    (void) rackPosition; // Ask Dan if we send rack pos or delta
+    opendlv::proxy::GroundSteeringRequest out1(delta);
+    odcore::data::Container c1(out1);
+    getConference().send(c1);
   }
 }
 
-uint32_t Steering::calcSteering(float a_arg) {
+float Steering::calcRackPosition(float delta) {
+  const float a = 1;
+  const float offset = 1;
 
-  float Kp = 2.0f;
-  float pwm = Kp*a_arg;
+  float drt = std::asin(delta)*a;
+  float rackPosition = offset+drt;
 
-  return static_cast<uint32_t>(pwm);
+  return rackPosition;
 }
 
+float Steering::calcSteering(float azimuth, float distance) {
+  float Kp = 2.0f;
+  float delta = Kp*azimuth*distance;
+
+  return delta;
+}
 
 void Steering::setUp()
 {
   std::cout << "steering setup" << std::endl;
-  auto kv = getKeyValueConfiguration();
-
-  m_pwmId = kv.getValue<uint32_t>("global.sender-stamp.steering");
-  m_stateId1 = kv.getValue<uint32_t>("global.sender-stamp.steering-left");
-  m_stateId2 = kv.getValue<uint32_t>("global.sender-stamp.steering-right");
-  m_stateId3 = kv.getValue<uint32_t>("global.sender-stamp.steering-third");
-
-  m_Kp = kv.getValue<float>("opendlv-logic-cfsd18-action-steering.control-parameter.Kp");
 }
 
 void Steering::tearDown()

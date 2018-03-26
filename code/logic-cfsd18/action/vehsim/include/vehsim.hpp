@@ -63,6 +63,7 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
    float m_torqueRequest2;
    float m_deceleration;
    bool m_brakeEnabled;
+   float m_delta;
 };
 
 }

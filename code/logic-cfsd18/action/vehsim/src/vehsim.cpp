@@ -46,7 +46,8 @@ Vehsim::Vehsim(int32_t const &a_argc, char **a_argv) :
   m_torqueRequest1(),
   m_torqueRequest2(),
   m_deceleration(),
-  m_brakeEnabled()
+  m_brakeEnabled(),
+  m_delta()
   {
 }
 
@@ -83,6 +84,11 @@ void Vehsim::nextContainer(odcore::data::Container &a_container)
     // Store the requested deceleration. This will be changed to match brake output
     auto decelContainer = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
     m_deceleration = decelContainer.getGroundDeceleration();
+  }
+
+  if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
+    auto deltaContainer = a_container.getData<opendlv::proxy::GroundSteeringRequest>();
+    m_delta = deltaContainer.getGroundSteering();
   }
 }
 
@@ -186,7 +192,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         // crate an optimal yawrate based on bicylce model
         float yawRef = 0.0f; // yawModel(m_aimPoint, x);
         // Calculate steering angle based on optimal yawrate
-        Eigen::ArrayXf delta = calcSteerAngle(yawRef, x, mass, L, Ku);
+        Eigen::ArrayXf delta(m_delta,m_delta,0,0);
         // Calculate vertical load on each wheel
         Eigen::ArrayXf Fz = loadTransfer(x, mass, L, lf, lr, wf, wr);
         // Calculate the Fx and the speed of the wheels
