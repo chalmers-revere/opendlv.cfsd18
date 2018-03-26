@@ -36,6 +36,7 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_lastTimeStamp()
 , m_coneCollector()
 , m_lastObjectId()
+, m_newFrame(true)
 , m_coneMutex()
 , m_recievedFirstImg(false)
 , m_img()
@@ -79,7 +80,7 @@ void DetectCone::tearDown()
 void DetectCone::nextContainer(odcore::data::Container &a_container)
 {
   odcore::data::TimeStamp startTime;
-  forwardDetection();
+  forwardDetection();     //This probably shouldn't be here or this module will DIE
   odcore::data::TimeStamp endTime;
   double timeElapsed = abs(static_cast<double>(endTime.toMicroseconds()-startTime.toMicroseconds())/1000000.0);
   std::cout << "Time elapsed for camera detection: " << timeElapsed << std::endl;
@@ -108,39 +109,53 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
   }
   bool correctSenderStamp = a_container.getSenderStamp() == m_attentionSenderStamp;
   if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID() && correctSenderStamp) {
-    odcore::base::Lock lockCone(m_coneMutex);
     std::cout << "Recieved Direction" << std::endl;
-    //Retrive data and timestamp
-    odcore::data::TimeStamp timeStamp = a_container.getReceivedTimeStamp();
+    m_lastTimeStamp = a_container.getReceivedTimeStamp();
     auto coneDirection = a_container.getData<opendlv::logic::perception::ObjectDirection>();
-		uint32_t objectId = coneDirection.getObjectId();
-
-    //Check last timestamp if they are from same message
-    //std::cout << "Message Recieved " << std::endl;
-    if (CheckContainer(objectId,timeStamp)){
-      //std::cout << "Test 2 " << std::endl;
-      m_coneCollector(0,objectId) = coneDirection.getAzimuthAngle();
-			m_coneCollector(1,objectId) = coneDirection.getZenithAngle();
+    uint32_t objectId = coneDirection.getObjectId();
+    bool newFrameDist = false;
+    {
+      odcore::base::Lock lockCone(m_coneMutex);
+      m_coneCollector(0,objectId) = -coneDirection.getAzimuthAngle();  //Negative for conversion from car to LIDAR frame
+      m_coneCollector(1,objectId) = coneDirection.getZenithAngle();
+      m_lastObjectId = (m_lastObjectId<objectId)?(objectId):(m_lastObjectId);
+      newFrameDist = m_newFrame;
+      m_newFrame = false;
     }
-
-  }
-  else if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID() && correctSenderStamp){
-    odcore::base::Lock lockCone(m_coneMutex);
-    std::cout << "Recieved Distance" << std::endl;
-		odcore::data::TimeStamp timeStamp = a_container.getReceivedTimeStamp();
-    auto coneDistance = a_container.getData<opendlv::logic::perception::ObjectDistance>();
-		uint32_t objectId = coneDistance.getObjectId();
-
     //Check last timestamp if they are from same message
     //std::cout << "Message Recieved " << std::endl;
-    if (CheckContainer(objectId,timeStamp)){
+    if (newFrameDist){
+       std::thread coneCollector(&DetectCone::initializeCollection, this);
+       coneCollector.detach();
+       //initializeCollection();
+    }
+  }
+
+  else if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID() && correctSenderStamp){
+    std::cout << "Recieved Distance" << std::endl;
+    m_lastTimeStamp = a_container.getReceivedTimeStamp();
+    auto coneDistance = a_container.getData<opendlv::logic::perception::ObjectDistance>();
+    uint32_t objectId = coneDistance.getObjectId();
+    bool newFrameDist = false;
+    {
+      odcore::base::Lock lockCone(m_coneMutex);
       m_coneCollector(2,objectId) = coneDistance.getDistance();
-			m_coneCollector(3,objectId) = 0;
+      m_coneCollector(3,objectId) = 0;
+      m_lastObjectId = (m_lastObjectId<objectId)?(objectId):(m_lastObjectId);
+      newFrameDist = m_newFrame;
+      m_newFrame = false;
+    }
+    //Check last timestamp if they are from same message
+    //std::cout << "Message Recieved " << std::endl;
+    if (newFrameDist){
+       std::thread coneCollector(&DetectCone::initializeCollection, this);
+       coneCollector.detach();
+       //initializeCollection();
     }
 
   }
 }
-
+/*OLD CONE COLLECTOR
 bool DetectCone::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp){
 		if (((timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds()) < m_timeDiffMilliseconds*1000)){
       //std::cout << "Test 2 " << std::endl;
@@ -167,6 +182,43 @@ bool DetectCone::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeS
       m_coneCollector = Eigen::MatrixXd::Zero(4,20);
     }
 		return true;
+}*/
+
+void DetectCone::initializeCollection(){
+  //std::this_thread::sleep_for(std::chrono::duration 1s); //std::chrono::milliseconds(m_timeDiffMilliseconds)
+
+  bool sleep = true;
+  auto start = std::chrono::system_clock::now();
+
+  while(sleep)
+  {
+    auto now = std::chrono::system_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - start);
+    if ( elapsed.count() > m_timeDiffMilliseconds*1000 )
+        sleep = false;
+  }
+
+
+  Eigen::MatrixXd extractedCones;
+  {
+    odcore::base::Lock lockCone(m_coneMutex);
+	  std::cout << "FRAME IN LOCK: " << m_newFrame << std::endl;
+    extractedCones = m_coneCollector.leftCols(m_lastObjectId+1);
+    m_newFrame = true;
+    m_lastObjectId = 0;
+    m_coneCollector = Eigen::MatrixXd::Zero(4,20);
+  }
+  //Initialize for next collection
+  std::cout << "Collection done " << extractedCones.cols() << std::endl;
+  if(extractedCones.cols() > 0){
+    //std::cout << "Extracted Cones " << std::endl;
+    //std::cout << extractedCones << std::endl;
+    std::cout << "Extracted Cones " << std::endl;
+    std::cout << extractedCones << std::endl;
+    if(m_recievedFirstImg){
+      SendCollectedCones(extractedCones);
+    }
+  }
 }
 
 bool DetectCone::ExtractSharedImage(
@@ -740,7 +792,7 @@ void DetectCone::SendMatchedContainer(Eigen::MatrixXd cones)
 
     opendlv::logic::perception::ObjectDirection coneDirection;
     coneDirection.setObjectId(n);
-    coneDirection.setAzimuthAngle(conePoint.getAzimuthAngle());
+    coneDirection.setAzimuthAngle(-conePoint.getAzimuthAngle());  //Negative to convert to car frame from LIDAR
     coneDirection.setZenithAngle(conePoint.getZenithAngle());
     odcore::data::Container c2(coneDirection);
     c2.setSenderStamp(m_senderStamp);
