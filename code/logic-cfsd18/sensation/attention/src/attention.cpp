@@ -622,7 +622,7 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
     //ConeDirection
     opendlv::logic::perception::ObjectDirection coneDirection;
     coneDirection.setObjectId(i);
-    coneDirection.setAzimuthAngle(conePoint.getAzimuthAngle());
+    coneDirection.setAzimuthAngle(-conePoint.getAzimuthAngle());   //Set Negative to make it inline with coordinate system used
     coneDirection.setZenithAngle(conePoint.getZenithAngle());
     odcore::data::Container c2(coneDirection);
     c2.setSenderStamp(m_senderStamp);

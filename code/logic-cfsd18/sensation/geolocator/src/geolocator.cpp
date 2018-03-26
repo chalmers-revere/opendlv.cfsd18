@@ -124,8 +124,8 @@ void Geolocator::nextContainer(odcore::data::Container &a_container)
         gpsPos[0] = gpsReading.getLatitude();
         gpsPos[1] = gpsReading.getLongitude();
         std::array<double,2> cartesianPos = wgs84::toCartesian(m_gpsReference,gpsPos);
-        m_gpsReading << cartesianPos[1],
-                        cartesianPos[0];
+        m_gpsReading << cartesianPos[0],
+                        cartesianPos[1];
      }
 
      //Heading
@@ -511,7 +511,7 @@ double Geolocator::rackTravelToFrontWheelSteering(double &rackTravel)
 void Geolocator::stateSender(MatrixXd &x)
 {
   std::array<double,2> cartesianPos;
-  cartesianPos[0] = x(0);
+  cartesianPos[0] = x(0);   //Flipped to ENU
   cartesianPos[1] = x(1);
   std::array<double,2> sendGps = wgs84::fromCartesian(m_gpsReference, cartesianPos);
 
