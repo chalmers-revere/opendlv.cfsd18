@@ -49,7 +49,6 @@ class Motion : public odcore::base::module::DataTriggeredConferenceClientModule 
  private:
    float m_headingRequest;
    float m_speed;
-   float m_aimTime;
 };
 
 }

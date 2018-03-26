@@ -39,8 +39,7 @@ Motion::Motion(int32_t const &a_argc, char **a_argv) :
   m_headingRequest(),
   m_speed(),
   m_vehicleModelParameters(),
-  m_aimTime()
-{
+  {
 }
 
 Motion::~Motion()
@@ -101,7 +100,6 @@ void Motion::setUp()
 
   m_leftMotorID = kv.getValue<int32_t>("global.sender-stamp.left-motor");
   m_rightMotorID = kv.getValue<int32_t>("global.sender-stamp.right-motor ");
-  m_aimTime = kv.getValue<float>("global.sender-stamp.aim-point-time");
   }
 
 void Motion::tearDown()
@@ -128,8 +126,6 @@ void Motion::calcTorque(float a_arg)
   // Torque distribution
   float torqueLeft = torque*0.5f - dT;
   float torqueRight = torque-torqueLeft;
-  std::cout << "Message 2, left torque:" << torqueLeft << std::endl;
-  std::cout << "Message 3, right torque:" << torqueRight << std::endl;
 
   sendActuationContainer(leftMotorID,torqueLeft);
   sendActuationContainer(rightMotorID,torqueRight);
@@ -138,7 +134,8 @@ void Motion::calcTorque(float a_arg)
 float Motion::calcYawRateRef(opendlv::logic::action::AimPoint aimPoint){
   float headingReq = aimPoint.getAzimuthAngle();  // Angle to the aim point
   float dist  = aimPoint.getDistance();           // Distance to the aim point
-  float u = m_speed;                         awrt(2.0f*(1.0f-(float)cos(2.0f*headingReq))));
+  float u = m_speed;
+  awrt(2.0f*(1.0f-(float)cos(2.0f*headingReq))));
   // Calculate the average yaw rate to turn for that specific curve
   float r = std::copysign(u/R,headingReq);
 
