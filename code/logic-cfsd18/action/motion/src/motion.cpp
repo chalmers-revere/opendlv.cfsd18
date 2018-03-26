@@ -26,6 +26,8 @@
 
 #include "motion.hpp"
 
+#define PI 3.14159265359f
+
 namespace opendlv {
 namespace logic {
 namespace cfsd18 {
@@ -35,15 +37,9 @@ namespace action {
 Motion::Motion(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-motion"),
   m_headingRequest(),
-  m_brakeEnabled(),
-  m_deceleration(),
   m_speed(),
   m_vehicleModelParameters(),
-  m_leftMotorID(),
-  m_rightMotorID(),
-  m_PI(),
-  m_aimTime(),
-  m_dt()
+  m_aimTime()
 {
 }
 
@@ -57,34 +53,19 @@ void Motion::nextContainer(odcore::data::Container &a_container)
 {
   std::cout << "next container" << std::endl;
   (void) a_container;
-/*  if (a_container.getDataType() == opendlv::proxy::GroundAccelerationRequest::ID()) {
+  if (a_container.getDataType() == opendlv::proxy::GroundAccelerationRequest::ID()) {
     auto accelerationRequest = a_container.getData<opendlv::proxy::GroundAccelerationRequest>();
     float acceleration = accelerationRequest.getGroundAcceleration();
-    std::cout << "message 1:" << acceleration << std::endl;
-    calcTorque(acceleration);
 
-    if (m_brakeEnabled)
-    {
-      m_brakeEnabled = false;
-    }
+    calcTorque(acceleration);
   }
 
   if (a_container.getDataType() == opendlv::proxy::GroundDecelerationRequest::ID()) {
     auto decelerationRequest = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
-    m_deceleration = decelerationRequest.getGroundDeceleration();
+    float deceleration = decelerationRequest.getGroundDeceleration();
 
     if (m_speed > float(5/3.6)){
-      calcTorque(m_deceleration);
-    }
-
-
-    if (m_deceleration < 0)
-    {
-      m_brakeEnabled = true;
-    }
-    else
-    {
-      m_brakeEnabled = false;
+      calcTorque(deceleration);
     }
   }
 
@@ -96,7 +77,7 @@ void Motion::nextContainer(odcore::data::Container &a_container)
   if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
     auto headingRequest = a_container.getData<opendlv::logic::action::AimPoint>();
     m_headingRequest = headingRequest.getAzimuthAngle();
-  }*/
+  }
 }
 
 void Motion::setUp()
@@ -120,12 +101,8 @@ void Motion::setUp()
 
   m_leftMotorID = kv.getValue<int32_t>("global.sender-stamp.left-motor");
   m_rightMotorID = kv.getValue<int32_t>("global.sender-stamp.right-motor ");
-
   m_aimTime = kv.getValue<float>("global.sender-stamp.aim-point-time");
-  m_dt = kv.getValue<float>("opendlv-logic-cfsd18-action-motion.torque-parameter");
-
-  m_PI = 3.14159265359f;
-}
+  }
 
 void Motion::tearDown()
 {
@@ -133,7 +110,11 @@ void Motion::tearDown()
 
 void Motion::calcTorque(float a_arg)
 {
-  (void) a_arg;/*
+  uint32_t leftMotorID = kv.getValue<uint32_t>("global.sender-stamp.left-motor");
+  uint32_t rightMotorID = kv.getValue<uint32_t>("global.sender-stamp.right-motor ");
+  float dT = kv.getValue<float>("opendlv-logic-cfsd18-action-motion.torque-parameter");
+
+
   float mass = m_vehicleModelParameters(1);
   float wheelRadius = m_vehicleModelParameters(8);
   float torque = a_arg*mass*wheelRadius;
@@ -143,31 +124,35 @@ void Motion::calcTorque(float a_arg)
 
   float e_yawRate = -yawRateRef; // Add yaw rate here when Marcus is done with message
 
-  float dT = 0.5f/m_dt*e_yawRate*Iz;
+  float dT = 0.5f/dT*e_yawRate*Iz;
   // Torque distribution
   float torqueLeft = torque*0.5f - dT;
   float torqueRight = torque-torqueLeft;
   std::cout << "Message 2, left torque:" << torqueLeft << std::endl;
   std::cout << "Message 3, right torque:" << torqueRight << std::endl;
 
-  sendActuationContainer(m_leftMotorID,torqueLeft);
-  sendActuationContainer(m_rightMotorID,torqueRight);*/
+  sendActuationContainer(leftMotorID,torqueLeft);
+  sendActuationContainer(rightMotorID,torqueRight);
 }
 
-float Motion::calcYawRateRef(float a_arg){
-  return a_arg;/*
-  float t = m_aimTime*m_PI/a_arg;
-  return 2.0f*m_PI/t;*/
+float Motion::calcYawRateRef(opendlv::logic::action::AimPoint aimPoint){
+  float headingReq = aimPoint.getAzimuthAngle();  // Angle to the aim point
+  float dist  = aimPoint.getDistance();           // Distance to the aim point
+  float u = m_speed;                         awrt(2.0f*(1.0f-(float)cos(2.0f*headingReq))));
+  // Calculate the average yaw rate to turn for that specific curve
+  float r = std::copysign(u/R,headingReq);
+
+return r;
 }
 
 void Motion::sendActuationContainer(int32_t a_arg, float torque)
 {(void) a_arg;
-  (void) torque;/*
+  (void) torque;
   opendlv::proxy::TorqueRequest tr(torque);
   odcore::data::Container c(tr);
   c.setSenderStamp(a_arg);
   getConference().send(c);
-  std::cout << "Sent torque request" << std::endl;*/
+  std::cout << "Sent torque request" << std::endl;
 }
 
 
