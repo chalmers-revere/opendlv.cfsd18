@@ -19,131 +19,14 @@ const g_maxFieldChartValues = 10;
 var g_charts = new Map();
 var g_chartConfigs = new Map();
 var g_data = new Map();
-var g_pause = false;
 
-$(document).ready(function(){
-  
+function setupViewer() {
   $('body').on('click', 'tr.dataHeader', function() {
     const idFieldsRow = $(this).attr('id') + '_fields';
     $('#' + idFieldsRow).toggleClass('hidden');
   });
   
-  $('body').on('click', 'button#pause', function() {
-    g_pause = !g_pause;
-    if (g_pause) {
-      $('button#pause').html('Continue');
-    } else {
-      $('button#pause').html('Pause');
-    }
-  });
-  
-  setupViewer();
-});
-
-function setupViewer() {
-  var lc = libcluon();
-
-  if ("WebSocket" in window) {
-    var ws = new WebSocket("ws://" + window.location.host + "/", "data");
-    ws.binaryType = 'arraybuffer';
-
-    ws.onopen = function() {
-      onStreamOpen(lc);
-    }
-
-    ws.onmessage = function(evt) {
-      onMessageReceived(lc, evt.data);
-    };
-
-    ws.onclose = function() {
-      onStreamClosed();
-    };
-
-  } else {
-    console.log("Error: websockets not supported by your browser.");
-  }
-}
-
-function onStreamOpen(lc) {
-  function getResourceFrom(url) {
-    var xmlHttp = new XMLHttpRequest();
-    xmlHttp.open("GET", url, false);
-    xmlHttp.send(null);
-    return xmlHttp.responseText;
-  }
-
-  var odvd = getResourceFrom("opendlv-standard-message-set-v0.9.1.odvd");
-
-  console.log("Connected to stream.");
-  console.log("Loaded " + lc.setMessageSpecification(odvd) + " messages from specification.");
-  
   setInterval(onInterval, Math.round(1000 / g_renderFreq));
-}
-
-function onStreamClosed() {
-  console.log("Disconnected from stream.");
-}
-
-function onMessageReceived(lc, msg) {
-
-  console.log(msg);
-  var z = new Uint8Array(msg);
-  console.log('int arry ' + z);
-
-  if (g_pause) {
-    return;
-  }
-
-  var data_str = lc.decodeEnvelopeToJSON(msg);
-  
-  console.log(data_str);
-
-  if (data_str.length == 2) {
-    return;
-  }
-
-  d = JSON.parse(data_str);
-
-
-  // Translate to nice JSON ..
-  var payloadFields = new Array();
-
-  const payloadName = Object.keys(d)[5];
-  
-  for (const fieldName in d[payloadName]) {
-    const fieldValue = d[payloadName][fieldName];
-    const field = {
-      name : fieldName,
-      value : fieldValue,
-      type : (typeof fieldValue)
-    };
-    payloadFields.push(field);
-  }
-
-  const data = {
-    dataType : d.dataType,
-    payload : {
-      name : payloadName,
-      fields : payloadFields
-    },
-    received : d.received,
-    sampleTimeStamp : d.sampleTimeStamp,
-    senderStamp : d.senderStamp,
-    sent : d.sent
-  };
-  // .. done.
-
-  const sourceKey = data.dataType + '_' + data.senderStamp;
-  const dataSourceIsKnown = g_data.has(sourceKey);
-
-  if (!dataSourceIsKnown) {
-    addTableData(sourceKey, data);
-    addFieldCharts(sourceKey, data);
-    
-    g_data.set(sourceKey, new Array());
-  }
-  
-  storeData(sourceKey, data);
 }
 
 function toTime(t) {
@@ -156,6 +39,20 @@ function cutLongField(type, value) {
     value = value.substr(0, 20) + ' <span class="dots">[...]</span>';
   }
   return value;
+}
+
+function addSignalViewerData(data) {
+  const sourceKey = data.dataType + '_' + data.senderStamp;
+  const dataSourceIsKnown = g_data.has(sourceKey);
+
+  if (!dataSourceIsKnown) {
+    addTableData(sourceKey, data);
+    addFieldCharts(sourceKey, data);
+    
+    g_data.set(sourceKey, new Array());
+  }
+  
+  storeData(sourceKey, data);
 }
 
 function addTableData(sourceKey, data) {

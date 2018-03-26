@@ -24,17 +24,31 @@
         </button>
       </nav>
     </div>
-  
-  
-    <table id="dataView" class="table">
-      <tr>
-        <th class="signal-type">Type</th>
-        <th class="signal-sender">Sender</th>
-        <th class="signal-name">Name</th>
-        <th class="signal-frequency">Frequency</th>
-        <th class="signal-timestamp">Timestamp</th>
-      </tr>
-    </table>
+ 
+    <ul class="nav nav-tabs" id="main-tabs" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="signal-view-tab" data-toggle="tab" href="#signal-view" role="tab" aria-controls="signal-view" aria-selected="true">Signal viewer</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="simulation-tab" data-toggle="tab" href="#simulation" role="tab" aria-controls="simulation" aria-selected="false">Simulation</a>
+      </li>
+    </ul>
+    <div class="tab-content" id="main-tabs-content">
+      <div class="tab-pane fade show active" id="signal-view" role="tabpanel" aria-labelledby="singal-view-tab">
+        <table id="dataView" class="table">
+          <tr>
+            <th class="signal-type">Type</th>
+            <th class="signal-sender">Sender</th>
+            <th class="signal-name">Name</th>
+            <th class="signal-frequency">Frequency</th>
+            <th class="signal-timestamp">Timestamp</th>
+          </tr>
+        </table>
+      </div>
+      <div class="tab-pane fade" id="simulation" role="tabpanel" aria-labelledby="simulation-tab">
+        <canvas id="simulation-canvas" width="1024" height="800" style="border: 1px solid black;"></canvas>
+      </div>
+    </div>
 
     <script type="text/javascript" src="thirdparty/jquery-3.2.1.slim.min.js"></script>
     <script type="text/javascript" src="thirdparty/popper.min.js"></script>
@@ -43,7 +57,9 @@
     <script type="text/javascript" src="thirdparty/bootstrap.min.js"></script>
 
     <script type="text/javascript" src="libcluon-0.0.53.js"></script>
-    <script type="text/javascript" src="signal-viewer-0.01.js"></script>
+    <script type="text/javascript" src="opendlv-ui-default-0.0.1.js"></script>
+    <script type="text/javascript" src="signal-viewer-0.0.1.js"></script>
+    <script type="text/javascript" src="simulation-view-0.0.1.js"></script>
   </body>
 </html>
 

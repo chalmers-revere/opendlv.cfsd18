@@ -110,6 +110,10 @@ message opendlv.proxy.AngleReading [id = 1038] {
   float angle [id = 1];
 }
 
+message opendlv.proxy.DistanceReading [id = 1039] {
+  float distance [id = 1];
+}
+
 message opendlv.proxy.SwitchStateReading [id = 1040] {
   int16 state [id = 1];
 }
@@ -312,20 +316,20 @@ message opendlv.logic.perception.GroundSurfaceProperty [id = 1142] {
 
 message opendlv.logic.perception.GroundSurfaceArea [id = 1143] {
   uint32 surfaceId [id = 1];
-  float leftPerpendicularAngle [id = 2];
-  float leftDistance [id = 3];
-  float rightPerpendicularAngle [id = 4];
-  float rightDistance [id = 5];
-  float nearPerpendicularAngle [id = 6];
-  float nearDistance [id = 7];
-  float farPerpendicularAngle [id = 8];
-  float farDistance [id = 9];
+  float x1 [id = 2];
+  float y1 [id = 3];
+  float x2 [id = 4];
+  float y2 [id = 5];
+  float x3 [id = 6];
+  float y3 [id = 7];
+  float x4 [id = 8];
+  float y4 [id = 9];
 }
 
 
 message opendlv.logic.action.AimDirection [id = 1171] {
   float azimuthAngle [id = 1];
-  float zentihAngle [id = 2];
+  float zenithAngle [id = 2];
 }
 
 message opendlv.logic.action.AimPoint [id = 1172] {
