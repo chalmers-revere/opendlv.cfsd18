@@ -24,6 +24,7 @@
 #include <memory>
 #include <vector>
 #include <cmath>
+#include <thread>
 #include <opendavinci/odcore/data/TimeStamp.h>
 #include <opendavinci/odcore/strings/StringToolbox.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
@@ -61,7 +62,8 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   void setUp();
   void tearDown();
 
-	bool CheckContainer(uint32_t objectId, odcore::data::TimeStamp timestamp);
+	//bool CheckContainer(uint32_t objectId, odcore::data::TimeStamp timestamp);
+  void initializeCollection();
   bool ExtractSharedImage(odcore::data::image::SharedImage *);
   void saveImg(double currentTime);
   void featureBased();
@@ -95,6 +97,7 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   odcore::data::TimeStamp m_lastTimeStamp;
   Eigen::MatrixXd m_coneCollector;
   uint32_t m_lastObjectId;
+  bool m_newFrame;
 
   odcore::base::Mutex m_coneMutex;
   bool m_recievedFirstImg;
