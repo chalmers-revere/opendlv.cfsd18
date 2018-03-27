@@ -28,6 +28,9 @@
 #include <opendavinci/odcore/wrapper/Eigen.h>
 #include <fstream>
 #include <iostream>
+#include <thread>
+#include <opendavinci/odcore/data/TimeStamp.h>
+#include <opendavinci/odcore/base/Lock.h>
 #include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 //#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 
@@ -49,14 +52,23 @@ class DetectConeLane : public odcore::base::module::DataTriggeredConferenceClien
   void setUp();
   void tearDown();
 
-
+  void initializeCollection();
+  void generateSurfaces(ArrayXXf, ArrayXXf, ArrayXXf);
+  //void CheckContainer(uint32_t);
   Eigen::MatrixXd Spherical2Cartesian(double, double, double);
-  void rebuildLocalMap();
-  void CheckContainer(uint32_t);
 
 
+  odcore::data::TimeStamp m_lastTimeStamp;
   Eigen::MatrixXd m_coneCollector;
-  int coneNum;
+  uint32_t m_lastObjectId;
+  odcore::base::Mutex m_coneMutex;
+  bool m_newFrame;
+  int m_timeDiffMilliseconds;
+  int m_nLeft;
+  int m_nRight;
+  int m_nSmall;
+  int m_nBig;
+
   const double DEG2RAD = 0.017453292522222; // PI/180.0
 
   ArrayXXf findSafeLocalPath(ArrayXXf, ArrayXXf, ArrayXXf, float);
@@ -68,6 +80,8 @@ class DetectConeLane : public odcore::base::module::DataTriggeredConferenceClien
   ArrayXXf guessCones(ArrayXXf, ArrayXXf, float, bool, bool, bool);
   float findTotalPathLength(ArrayXXf);
   float findFactorToClosestPoint(ArrayXXf, ArrayXXf, ArrayXXf);
+
+  void sortIntoSideArrays(MatrixXd, int, int, int, int);
 
 };
 
