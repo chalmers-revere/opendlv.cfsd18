@@ -409,17 +409,17 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
       }
     }
 
-    std::string labels[] = {"yellow", "blue", "orange"};
+    std::string labels[] = {"blue", "yellow", "orange"};
     if (maxProb < threshold)
       std::cout << "No cone detected" << std::endl;
     else{
       std::cout << "Find one " << labels[maxIndex-1] << " cone, XYZ positon: " << point3D << "mm, xy position: " << point2D << "pixel, certainty: " << prob[maxIndex] << std::endl;
-      if (labels[maxIndex-1] == "yellow")
-        cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,255,255), CV_FILLED);
-      else if (labels[maxIndex-1] == "blue")
+      if (labels[maxIndex-1] == "blue")
         cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (255,0,0), CV_FILLED);
+      else if (labels[maxIndex-1] == "yellow")
+        cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,255,255), CV_FILLED);
       else if (labels[maxIndex-1] == "orange")
-        cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,165,255), CV_FILLED);
+        cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,0,255), CV_FILLED);
       else
         cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,0,0), CV_FILLED);
     }
@@ -480,11 +480,23 @@ void DetectCone::softmax(cv::Vec4d x, cv::Vec4d &y) {
   }
 }
 
+// float DetectCone::medianVector(std::vector<float> input){    
+//   std::nth_element(input.begin(), input.begin() + input.size() / 2, input.end());
+//   return input[input.size() / 2];
+// }
+int DetectCone::medianVector(std::vector<std::pair<float, int>> input){
+  int n = input.size()/2;
+  std::nth_element(input.begin(), input.begin()+n, input.end());
+
+  // int median = input[n].first;
+  return input[n].second;
+}
+
 std::vector <cv::Point> DetectCone::imRegionalMax(cv::Mat input, int nLocMax, double threshold, int minDistBtwLocMax)
 {
     cv::Mat scratch = input.clone();
     // std::cout<<scratch<<std::endl;
-    cv::GaussianBlur(scratch, scratch, cv::Size(3,3), 0, 0);
+    // cv::GaussianBlur(scratch, scratch, cv::Size(3,3), 0, 0);
     std::vector <cv::Point> locations(0);
     locations.reserve(nLocMax); // Reserve place for fast access
     for (int i = 0; i < nLocMax; i++) {
@@ -517,9 +529,11 @@ void DetectCone::forwardDetection() {
   double threshold = 0.7;
   int patchSize = 25;
   int patchRadius = int((patchSize-1)/2);
-  int inputWidth = 320;
-  int heightUp = 85;
-  int heightDown = 145;
+  int col = 320;
+  int row = 180;
+  int heightUp = 80;
+  int heightDown = 140;
+  int inputWidth = col;
   int inputHeight = heightDown-heightUp;
 
   int outputWidth  = inputWidth - (patchSize - 1);
@@ -534,7 +548,7 @@ void DetectCone::forwardDetection() {
 
   cv::Mat Q, disp, rectified, XYZ;
   reconstruction(imgSource, Q, disp, rectified, XYZ);
-  cv::resize(rectified, rectified, cv::Size (320, 180));
+  cv::resize(rectified, rectified, cv::Size (col, row));
 
   auto patchImg = rectified(roi);
   // cv::namedWindow("roi", cv::WINDOW_NORMAL);
@@ -556,7 +570,7 @@ void DetectCone::forwardDetection() {
 
   cv::Vec4d probSoftmax(4);
   cv::Mat probMapSoftmax = cv::Mat::zeros(outputHeight, outputWidth, CV_64F);
-  cv::Mat probMapIndex = cv::Mat::zeros(outputHeight, outputWidth, CV_16S);
+  cv::Mat probMapIndex = cv::Mat::zeros(outputHeight, outputWidth, CV_32S);
   for (int y = 0; y < outputHeight; ++y){
     for (int x = 0; x < outputWidth; ++x){
       softmax(probMap.at<cv::Vec4d>(y, x), probSoftmax);
@@ -569,24 +583,47 @@ void DetectCone::forwardDetection() {
   }
 
   std::vector <cv::Point> cone;
-  cv::Point position, positionShift = cv::Point(patchRadius, patchRadius+heightUp);
+  cv::Point position, positionResize, positionShift = cv::Point(patchRadius, patchRadius+heightUp);
   int label;
-  cone = imRegionalMax(probMapSoftmax, 10, threshold, patchSize);
+  cone = imRegionalMax(probMapSoftmax, 10, threshold, 20);
+  // std::vector<std::pair<float, int>> coneRegion;
+  // std::vector<cv::Point> coneRegionXY;
+
   if (cone.size()>0){
-    for(size_t i=0; i<cone.size(); i++){
+    for(size_t i = 0; i<cone.size(); i++){
       position = cone[i] + positionShift;
+      positionResize = position * 2;
       label = probMapIndex.at<int>(cone[i]);
-      cv::Vec3f point3D = XYZ.at<cv::Vec3f>(position * 2) * 2;
+      
+      //median rectify
+      // int ith = 0;
+      // for(int x = positionResize.x-5; x <= positionResize.x+5; x++){
+      //   for(int y = positionResize.y-5; y <= positionResize.y+5; y++){
+      //     if (x >= 0 && x < 2*col && y >= 0 && y < 2*row){
+      //       float depth = XYZ.at<cv::Vec3f>(x, y)[2] * 2;
+      //       if(depth > 0 && depth < 20000){
+      //         coneRegion.push_back(std::pair<float, int>(depth, ith++));
+      //         coneRegionXY.push_back(cv::Point(x, y));
+      //       }
+      //     }
+      //   }  
+      // }
+      // if(coneRegion.size()>0){
+      //   int medianIndex = medianVector(coneRegion);
+
+      cv::Vec3f point3D = XYZ.at<cv::Vec3f>(positionResize) * 2;
+      cv::Vec3f point3D2 = XYZ.at<cv::Vec3f>(coneRegionXY[medianIndex]) * 2;
+      // std::cout << point3D2 << " " << point3D << std::endl;
       if (point3D[2] > 0 && point3D[2] < 20000){
         if (label == 1){
-          cv::circle(rectified, position, 1, {0, 255, 255}, -1);
-          std::cout << "Find one yellow cone, XYZ positon: "
+          cv::circle(rectified, position, 1, {255, 0, 0}, -1);
+          std::cout << "Find one blue cone, XYZ positon: "
           << point3D << "mm, xy position: " << position << "pixel, certainty: " 
           << probMapSoftmax.at<double>(cone[i]) << std::endl;
         }
         if (label == 2){
-          cv::circle(rectified, position, 1, {255, 0, 0}, -1);
-          std::cout << "Find one blue cone, XYZ positon: "
+          cv::circle(rectified, position, 1, {0, 255, 255}, -1);
+          std::cout << "Find one yellow cone, XYZ positon: "
           << point3D << "mm, xy position: " << position << "pixel, certainty: " 
           << probMapSoftmax.at<double>(cone[i]) << std::endl;
         }
@@ -596,14 +633,13 @@ void DetectCone::forwardDetection() {
           << point3D << "mm, xy position: " << position << "pixel, certainty: " 
           << probMapSoftmax.at<double>(cone[i]) << std::endl;
         }
-
       }
     }
   }
 
-  // cv::namedWindow("result", cv::WINDOW_NORMAL);
-  // cv::imshow("result", rectified);
-  // cv::waitKey(0);
+  cv::namedWindow("result", cv::WINDOW_NORMAL);
+  cv::imshow("result", rectified);
+  cv::waitKey(0);
 
   // cv::Vec4d probSoftmax(4);
   // cv::Mat probMapSoftmax = cv::Mat::zeros(outputHeight, outputWidth, CV_64FC3);
