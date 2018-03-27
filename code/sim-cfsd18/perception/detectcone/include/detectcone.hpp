@@ -22,8 +22,9 @@
 
 #include <opendavinci/odcore/base/module/TimeTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
+#include <cmath>
 
-//#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
+#include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 #include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
 
@@ -47,12 +48,16 @@ class DetectCone : public odcore::base::module::TimeTriggeredConferenceClientMod
   ArrayXXf m_rightCones;
   ArrayXXf m_smallCones;
   ArrayXXf m_bigCones;
+  uint32_t m_senderStamp = 1;
+  const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD
 
   odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode body();
   void setUp();
   void tearDown();
   void readMap(std::string);
   ArrayXXf simConeDetectorBox(ArrayXXf, ArrayXXf, float, float, float);
+  void sendMatchedContainer(Eigen::MatrixXd, int);
+  void Cartesian2Spherical(double, double, double, opendlv::logic::sensation::Point &);
 };
 
 }

@@ -121,7 +121,15 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
     ArrayXXf detectedConesLeft = DetectCone::simConeDetectorBox(m_leftCones, m_location, m_heading, detectRange, detectWidth);
     ArrayXXf detectedConesRight = DetectCone::simConeDetectorBox(m_rightCones, m_location, m_heading, detectRange, detectWidth);
 
-    // This is where the messages should be sent
+    // This is where the messages are (hopefully) sent
+    MatrixXd detectedConesLeftMat = ((detectedConesLeft.matrix()).transpose()).cast <double> ();
+    MatrixXd detectedConesRightMat = ((detectedConesRight.matrix()).transpose()).cast <double> (); 
+
+    int type = 1;
+    sendMatchedContainer(detectedConesLeftMat, type);
+    type = 2;
+    sendMatchedContainer(detectedConesRightMat, type);
+
     std::cout << "detectedConesLeft: " << detectedConesLeft << std::endl;
     std::cout << "detectedConesRight: " << detectedConesRight << std::endl;
     std::cout << "THIS IS SIM-DETECTCONE SPEAKING" << std::endl;
@@ -295,6 +303,47 @@ ArrayXXf detectedConesFinal = detectedCones.topRows(nFound);
 //std::cout << "detectWidth: " << detectWidth << std::endl;
 
 return detectedConesFinal;
+}
+
+void DetectCone::sendMatchedContainer(Eigen::MatrixXd cones, int type)
+{
+  for(int n = 0; n < cones.cols(); n++){
+
+    opendlv::logic::sensation::Point conePoint;
+    Cartesian2Spherical(cones(0,n), cones(1,n), 0, conePoint);
+
+    opendlv::logic::perception::ObjectDirection coneDirection;
+    coneDirection.setObjectId(n);
+    coneDirection.setAzimuthAngle(conePoint.getAzimuthAngle());
+    coneDirection.setZenithAngle(conePoint.getZenithAngle());
+    odcore::data::Container c2(coneDirection);
+    c2.setSenderStamp(m_senderStamp);
+    getConference().send(c2);
+
+    opendlv::logic::perception::ObjectDistance coneDistance;
+    coneDistance.setObjectId(n);
+    coneDistance.setDistance(conePoint.getDistance());
+    odcore::data::Container c3(coneDistance);
+    c3.setSenderStamp(m_senderStamp);
+    getConference().send(c3);
+
+    opendlv::logic::perception::ObjectType coneType;
+    coneType.setObjectId(n);
+    coneType.setType(type);
+    odcore::data::Container c4(coneType);
+    c3.setSenderStamp(m_senderStamp);
+    getConference().send(c4);
+  }
+}
+
+void DetectCone::Cartesian2Spherical(double x, double y, double z, opendlv::logic::sensation::Point &pointInSpherical)
+{
+  double distance = sqrt(x*x+y*y+z*z);
+  double azimuthAngle = atan2(x,y)*static_cast<double>(RAD2DEG);
+  double zenithAngle = atan2(z,sqrt(x*x+y*y))*static_cast<double>(RAD2DEG);
+  pointInSpherical.setDistance(distance);
+  pointInSpherical.setAzimuthAngle(azimuthAngle);
+  pointInSpherical.setZenithAngle(zenithAngle);
 }
 
 }
