@@ -78,13 +78,16 @@ void DetectConeLane::nextContainer(odcore::data::Container &a_container)
 //ArrayXXf localPath = DetectConeLane::findSafeLocalPath(side1, side2, 0.5);
 //std::cout << "localPath: " << localPath << std::endl;
 
+std::cout << "DETECTCONELANE IS SENDING SURFACE" << std::endl;
+opendlv::logic::perception::GroundSurfaceArea o9;
+    o9.setSurfaceId(12345);
+    odcore::data::Container c9(o9);
+    getConference().send(c9);
 
   if (a_container.getDataType() == opendlv::logic::perception::Object::ID()) {
-    auto object = a_container.getData<opendlv::logic::perception::Object>();
-    auto objectId = object.getObjectId();
-    std::cout << "[cognition] DETECTCONELANE IS RECIEVING OBJECT " << objectId << std::endl;
-    opendlv::logic::perception::Surface o1;
-    o1.setSurfaceId(12345);
+    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
+
+    opendlv::logic::perception::GroundSurfaceArea o1;
     odcore::data::Container c1(o1);
     std::cout << "[cognition] DETECTCONELANE IS SENDING SURFACE 12345 " << std::endl;
     getConference().send(c1);
