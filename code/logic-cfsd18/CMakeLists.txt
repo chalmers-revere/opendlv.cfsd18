@@ -28,11 +28,9 @@ include(CompileFlags)
 include(CheckCxxTestEnvironment)
 
 find_package(OpenCV REQUIRED)
-find_package(Wt REQUIRED)
 
 find_package(OpenDaVINCI REQUIRED)
 find_package(ODVDOpenDLVStandardMessageSet REQUIRED)
-find_package(ODVDcfsd18 REQUIRED)
 
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
@@ -40,11 +38,9 @@ include_directories(SYSTEM ${OPENDAVINCI_INCLUDE_DIRS})
 include_directories(SYSTEM ${ODVDOPENDLVSTANDARDMESSAGESET_INCLUDE_DIRS})
 include_directories(SYSTEM ${ODVDCFSD18_INCLUDE_DIRS})
 
-set(LIBRARIES 
+set(LIBRARIES
   ${OPENDAVINCI_LIBRARIES}
-  ${Wt_LIBRARY} ${Wt_HTTP_LIBRARY} ${Wt_EXT_LIBRARY}  
-  ${ODVDOPENDLVSTANDARDMESSAGESET_LIBRARIES}
-  ${ODVDCFSD18_LIBRARIES})
+  ${ODVDOPENDLVSTANDARDMESSAGESET_LIBRARIES})
 
 ### MICROSERVICE BEGIN ###
 add_subdirectory(action/lateral)
