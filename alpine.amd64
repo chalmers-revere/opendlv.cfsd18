@@ -41,19 +41,19 @@ RUN git clone https://github.com/eigenteam/eigen-git-mirror.git && \
     cmake .. && \
     make install
 
-RUN git clone --branch feature.beaglebone --depth 1 https://github.com/chalmers-revere/opendlv.io.git && \
-    cd opendlv.io/opencv3/ && \
+RUN git clone --branch perception.reconstruction --depth 1 https://github.com/chalmers-revere/opendlv.cfsd18.git && \
+    cd opendlv.cfsd18/ && \
     mkdir build && \
     cd build && \
-    cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/tmp/beaglebone-dest .. && \
-    make && make test && make install && upx -9 /tmp/beaglebone-dest/bin/beaglebone
+    cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/tmp/detectcone-dest .. && \
+    make && make test && make install && upx -9 /tmp/detectcone-dest/bin/detectcone
 
 
-# # # Part to deploy beaglebone.
+# # # Part to deploy detectcone.
 FROM alpine:edge
-MAINTAINER Björnborg Nguyen "bjornborg.nguyen@chalmers.se"
+MAINTAINER Björnborg Nguyen "liweim@student.chalmers.se"
 
 WORKDIR /usr/bin
-COPY --from=builder /tmp/beaglebone-dest/bin/beaglebone .
-CMD ["/usr/bin/beaglebone"]
+COPY --from=builder /tmp/detectcone-dest/bin/detectcone .
+CMD ["/usr/bin/detectcone"]
 

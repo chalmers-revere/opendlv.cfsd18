@@ -1,8 +1,0 @@
-/home/weiming/ubuntu-project/master-thesis/OpenDLV/build/CMakeFiles/install.dir
-/home/weiming/ubuntu-project/master-thesis/OpenDLV/build/CMakeFiles/list_install_components.dir
-/home/weiming/ubuntu-project/master-thesis/OpenDLV/build/CMakeFiles/rebuild_cache.dir
-/home/weiming/ubuntu-project/master-thesis/OpenDLV/build/CMakeFiles/edit_cache.dir
-/home/weiming/ubuntu-project/master-thesis/OpenDLV/build/CMakeFiles/detectcone-core.dir
-/home/weiming/ubuntu-project/master-thesis/OpenDLV/build/CMakeFiles/detectcone.dir
-/home/weiming/ubuntu-project/master-thesis/OpenDLV/build/CMakeFiles/install/strip.dir
-/home/weiming/ubuntu-project/master-thesis/OpenDLV/build/CMakeFiles/install/local.dir
