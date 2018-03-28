@@ -1,0 +1,7 @@
+version: '2'
+
+services:
+    detectcone:
+        image: ${IMAGE}
+        network_mode: "host"
+        command: "detectcone"

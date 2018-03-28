@@ -1,0 +1,59 @@
+# Copyright (C) 2018  Björnborg Nguyen
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+FROM alpine:edge AS builder
+MAINTAINER Björnborg Nguyen "bjornborg.nguyen@chalmers.se"
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+RUN apk update && \
+    apk --no-cache add \
+        ca-certificates \
+        cmake \
+        g++ \
+        git \
+        make \
+        upx \
+        ccache \
+        gfortran \
+        openblas-dev \
+        icu \
+        opencv-dev \
+        opencv-libs \
+        libtbb-dev \
+        opencv 
+
+WORKDIR /tmp
+
+RUN git clone https://github.com/eigenteam/eigen-git-mirror.git && \
+    mkdir -p eigen-git-mirror/build && \
+    cd eigen-git-mirror/build && \
+    cmake .. && \
+    make install
+
+RUN git clone --branch feature.beaglebone --depth 1 https://github.com/chalmers-revere/opendlv.io.git && \
+    cd opendlv.io/opencv3/ && \
+    mkdir build && \
+    cd build && \
+    cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/tmp/beaglebone-dest .. && \
+    make && make test && make install && upx -9 /tmp/beaglebone-dest/bin/beaglebone
+
+
+# # # Part to deploy beaglebone.
+FROM alpine:edge
+MAINTAINER Björnborg Nguyen "bjornborg.nguyen@chalmers.se"
+
+WORKDIR /usr/bin
+COPY --from=builder /tmp/beaglebone-dest/bin/beaglebone .
+CMD ["/usr/bin/beaglebone"]
+

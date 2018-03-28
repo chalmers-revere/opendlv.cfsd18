@@ -1,9 +1,9 @@
-# Copyright (C) 2017 Chalmers Revere
+# Copyright (C) 2018  Christian Berger
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -11,48 +11,112 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.2)
 
-project(opendlv.cfsd18)
+project(detectcone)
 
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake.Modules" ${CMAKE_MODULE_PATH})
-set(CMAKE_MODULE_PATH "${OPENDAVINCI_DIR}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules" ${CMAKE_MODULE_PATH})
+################################################################################
+# Defining the relevant versions of OpenDLV Standard Message Set and libcluon.
+set(OPENDLV_STANDARD_MESSAGE_SET opendlv-standard-message-set-v0.9.1.odvd)
+set(CLUON_COMPLETE cluon-complete-v0.0.52.hpp)
 
-include(ExternalProject)
-include(FindJava REQUIRED)
+################################################################################
+# This project requires C++14 or newer.
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+# Strip unneeded symbols from binaries.
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
+# Build a static binary.
+set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+# Add further warning levels.
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
+    -D_XOPEN_SOURCE=700 \
+    -D_FORTIFY_SOURCE=2 \
+    -O2 \
+    -fstack-protector \
+    -fomit-frame-pointer \
+    -pipe \
+    -pedantic -pedantic-errors \
+    -Werror \
+    -Weffc++ \
+    -Wall -Wextra -Wshadow -Wdeprecated \
+    -Wdiv-by-zero -Wfloat-equal -Wfloat-conversion -Wsign-compare -Wpointer-arith \
+    -Wuninitialized -Wunreachable-code \
+    -Wunused -Wunused-function -Wunused-label -Wunused-parameter -Wunused-but-set-parameter -Wunused-but-set-variable \
+    -Wunused-value -Wunused-variable -Wunused-result \
+    -Wmissing-field-initializers -Wmissing-format-attribute -Wmissing-include-dirs -Wmissing-noreturn")
+# Threads are necessary for linking the resulting binaries as UDPReceiver is running in parallel.
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
-include(FindodDataStructureGenerator REQUIRED)
-include(FindodCANDataStructureGenerator REQUIRED)
+################################################################################
+# OpenCV
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
 
-set(INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
-set(PROJECT_ROOT ${CMAKE_SOURCE_DIR})
+################################################################################
+# Eigen
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+include_directories(${Eigen3_INCLUDE_DIRS})
 
-if(NOT("${DPKG_EXECUTABLE}" STREQUAL "DPKG_EXECUTABLE-NOTFOUND")
-    AND NOT("${RPMBUILD_EXECUTABLE}" STREQUAL "RPMBUILD_EXECUTABLE-NOTFOUND")
-    AND ("${PACKAGING_ENABLED}" STREQUAL "YES") )
-  message(STATUS "Enabling building .deb and .rpm packages.")
-  set(MAKE_PACKAGE package)
-else()
-  # If the platform does not provide dpkg and rpmbuild, make package is
-  # replaced with make help to simply have a no-op.
-  set(MAKE_PACKAGE help)
-endif()
+###############################################################################
+# OpenMP
+OPTION (USE_OpenMP "Use OpenMP" ON)
+IF(USE_OpenMP)
+  FIND_PACKAGE(OpenMP)
+  IF(OPENMP_FOUND)
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  ENDIF()
+ENDIF()
 
-### NAMESPACE BEGIN ###
-ExternalProject_Add (logic-cfsd18
-  DOWNLOAD_COMMAND ""
-  UPDATE_COMMAND ""
-  SOURCE_DIR "${CMAKE_SOURCE_DIR}/code/logic-cfsd18"
-  CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}"
-  CMAKE_ARGS "-DOPENDAVINCI_DIR=${OPENDAVINCI_DIR}"
-  CMAKE_ARGS "-DODVDOPENDLVSTANDARDMESSAGESET_DIR=${ODVDOPENDLVSTANDARDMESSAGESET_DIR}"
-  CMAKE_ARGS "-DODVDCFSD18_DIR=${ODVDCFSD18_DIR}"
-  CMAKE_ARGS "-DCXXTEST_INCLUDE_DIR=${CXXTEST_INCLUDE_DIR}"
-  CMAKE_ARGS "-DEIGEN3_INCLUDE_DIR=${OPENDAVINCI_DIR}/include/opendavinci"
-  TEST_BEFORE_INSTALL 1
-  INSTALL_COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR}/logic-cfsd18-prefix/src/logic-cfsd18-build --target install COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR}/logic-cfsd18-prefix/src/logic-cfsd18-build --target ${MAKE_PACKAGE})
+###############################################################################
+#TinyDnn
+find_package(TinyDNN REQUIRED)
+#include_directories(${TinyDNN_INCLUDE_DIRS})
 
-### NAMESPACE END ###
+###############################################################################
+#TBB
+find_package(TBB REQUIRED)
+include_directories(${TBB_INCLUDE_DIRS})
+add_definitions(${TBB_DEFINITIONS})
+
+################################################################################
+# Extract cluon-msc from cluon-complete.hpp.
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/cluon-msc
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/src/${CLUON_COMPLETE} ${CMAKE_BINARY_DIR}/cluon-complete.hpp
+    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/cluon-complete.hpp ${CMAKE_BINARY_DIR}/cluon-complete.cpp
+    COMMAND ${CMAKE_CXX_COMPILER} -o ${CMAKE_BINARY_DIR}/cluon-msc ${CMAKE_BINARY_DIR}/cluon-complete.cpp -std=c++14 -pthread -D HAVE_CLUON_MSC
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/${CLUON_COMPLETE})
+
+################################################################################
+# Generate opendlv-standard-message-set.{hpp,cpp} from ${OPENDLV_STANDARD_MESSAGE_SET} file.
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/opendlv-standard-message-set.cpp
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMAND ${CMAKE_BINARY_DIR}/cluon-msc --cpp-sources --cpp-add-include-file=opendlv-standard-message-set.hpp --out=${CMAKE_BINARY_DIR}/opendlv-standard-message-set.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/${OPENDLV_STANDARD_MESSAGE_SET}
+    COMMAND ${CMAKE_BINARY_DIR}/cluon-msc --cpp-headers --out=${CMAKE_BINARY_DIR}/opendlv-standard-message-set.hpp ${CMAKE_CURRENT_SOURCE_DIR}/src/${OPENDLV_STANDARD_MESSAGE_SET}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/${OPENDLV_STANDARD_MESSAGE_SET} ${CMAKE_BINARY_DIR}/cluon-msc)
+# Add current build directory as include directory as it contains generated files.
+include_directories(SYSTEM ${CMAKE_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+################################################################################
+# Gather all object code first to avoid double compilation.
+add_library(${PROJECT_NAME}-core OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/src/logic-detectcone.cpp ${CMAKE_BINARY_DIR}/opendlv-standard-message-set.cpp)
+
+###
+# Add custom libs here
+set(LIBRARIES Threads::Threads ${OpenCV_LIBS} ${Eigen3_LIBS} ${TinyDNN_LIBS} ${TBB_LIBRARIES})
+
+################################################################################
+# Create executable.
+add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/detectcone.cpp $<TARGET_OBJECTS:${PROJECT_NAME}-core>)
+target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
+
+################################################################################
+# Install executable.
+install(TARGETS ${PROJECT_NAME} DESTINATION bin COMPONENT ${PROJECT_NAME})
