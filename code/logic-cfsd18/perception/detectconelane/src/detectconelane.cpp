@@ -79,7 +79,7 @@ void DetectConeLane::nextContainer(odcore::data::Container &a_container)
 //std::cout << "localPath: " << localPath << std::endl;
 
 std::cout << "DETECTCONELANE IS SENDING SURFACE" << std::endl;
-opendlv::logic::perception::Surface o9;
+opendlv::logic::perception::GroundSurfaceArea o9;
     o9.setSurfaceId(12345);
     odcore::data::Container c9(o9);
     getConference().send(c9);
@@ -87,7 +87,7 @@ opendlv::logic::perception::Surface o9;
   if (a_container.getDataType() == opendlv::logic::perception::Object::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
-    opendlv::logic::perception::Surface o1;
+    opendlv::logic::perception::GroundSurfaceArea o1;
     odcore::data::Container c1(o1);
     getConference().send(c1);
   }
@@ -95,7 +95,7 @@ opendlv::logic::perception::Surface o9;
 
 void DetectConeLane::setUp()
 {
-  // std::string const exampleConfig = 
+  // std::string const exampleConfig =
   //   getKeyValueConfiguration().getValue<std::string>(
   //     "logic-cfsd18-perception-detectconelane.example-config");
 
@@ -184,7 +184,7 @@ ArrayXXf DetectConeLane::placeEquidistantPoints(ArrayXXf sidePoints, bool nEqPoi
     {
       vec = sidePoints.row(latestConeIndex+1)-latestPointCoords;
       latestPointCoords = latestPointCoords + (eqDistance/remainderOfSeg)*vec;
-    } 
+    }
     else // If you need to go to the next segment, keep in mind which cones you pass and how long distance you have left to go.
     {
       latestConeIndex = latestConeIndex+1;

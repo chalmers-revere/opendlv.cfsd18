@@ -37,10 +37,11 @@ Track::Track(int32_t const &a_argc, char **a_argv) :
   m_groundSpeed{0.0f},
   m_surfaceCollector{},
   m_newFrame{true},
-  m_lastObjectId{0.0f},
+  m_lastObjectId{0},
   m_timeDiffMilliseconds{1},
   m_groundSpeedMutex{},
-  m_surfaceMutex{}
+  m_surfaceMutex{},
+  m_pathMutex{}
 {
   m_surfaceCollector = Eigen::MatrixXf::Zero(1000,2); // TODO: how big?
 }
@@ -67,10 +68,10 @@ void Track::nextContainer(odcore::data::Container &a_container)
       odcore::base::Lock lockSurface(m_surfaceMutex);
       //Check last timestamp if they are from same message
       m_lastObjectId = (m_lastObjectId<objectId)?(objectId):(m_lastObjectId);
-      /*m_surfaceCollector(2*objectId,0) = groundSurfaceArea.getX1();
+      m_surfaceCollector(2*objectId,0) = groundSurfaceArea.getX1();
       m_surfaceCollector(2*objectId,1) = groundSurfaceArea.getY1();
       m_surfaceCollector(2*objectId+1,0) = groundSurfaceArea.getX2();
-      m_surfaceCollector(2*objectId+1,1) = groundSurfaceArea.getY2();*/
+      m_surfaceCollector(2*objectId+1,1) = groundSurfaceArea.getY2();
     }
     if (m_newFrame){
       std::thread surfaceCollector (&Track::collectAndRun,this); //just sleep instead maybe since this is unclear how it works
@@ -119,6 +120,7 @@ void Track::collectAndRun(){
   Eigen::MatrixXf localPath;
   {
     odcore::base::Lock lockSurface(m_surfaceMutex);
+    odcore::base::Lock lockPath(m_pathMutex);
     localPath = m_surfaceCollector.topRows(m_lastObjectId+1);
     m_newFrame = true;
     m_lastObjectId = 0;
@@ -138,8 +140,14 @@ void Track::collectAndRun(){
     float const accelerationLimit = 5; //TODO: dynamic limit?
     float const decelerationLimit = -5;
     float const headingErrorDependency = 0; // > 0 limits desired velocity for heading errors > 0
-    float headingRequest = Track::driverModelSteering(localPath, groundSpeedCopy, previewTime);
-    float accelerationRequest = Track::driverModelVelocity(localPath, groundSpeedCopy, velocityLimit, lateralAccelerationLimit, accelerationLimit, decelerationLimit, headingRequest, headingErrorDependency);
+
+    Eigen::MatrixXf localPathCopy;
+    {
+    odcore::base::Lock lockPath(m_pathMutex);
+    localPathCopy = localPath;
+    }
+    float headingRequest = Track::driverModelSteering(localPathCopy, groundSpeedCopy, previewTime);
+    float accelerationRequest = Track::driverModelVelocity(localPathCopy, groundSpeedCopy, velocityLimit, lateralAccelerationLimit, accelerationLimit, decelerationLimit, headingRequest, headingErrorDependency);
 
     opendlv::logic::action::AimPoint o1;
     o1.setAzimuthAngle(headingRequest);
@@ -223,7 +231,7 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   //vehicle.
   //
   //Input
-  //   LOCALPATH               [n x 2] Local coordinates of the path [x,y]
+  //   LOCALPATH                   [n x 2] Local coordinates of the path [x,y]
   //   GROUNDSPEEDCOPY             [1 x 1] Velocity of the vehicle [m/s]
   //   VELOCITYLIMIT               [1 x 1] Maximum allowed velocity [m/s]
   //   LATERALACCELERATIONLIMIT    [1 x 1] Allowed lateral acceleration [m/s^2]
@@ -287,11 +295,12 @@ Eigen::VectorXf Track::curvature(Eigen::MatrixXf localPath){ //TODO: replace cur
   // - Last radius is calculated at 2nd to last path point
   // Note! 3 points in a row gives infinate radius.
   Eigen::VectorXf curveRadii(localPath.rows()-2,1);
-  for (int k = 0; k < localPath.rows()-2; k++) {
+  int step = 1;
+  for (int k = 0; k < localPath.rows()-(2*step); k++) {
     // Choose three points and make a triangle with sides A(p1p2),B(p2p3),C(p1p3)
-    float A = (localPath.row(k+1)-localPath.row(k)).norm();
-    float B = (localPath.row(k+2)-localPath.row(k+1)).norm();
-    float C = (localPath.row(k+2)-localPath.row(k)).norm();
+    float A = (localPath.row(k+step)-localPath.row(k)).norm();
+    float B = (localPath.row(k+2*step)-localPath.row(k+step)).norm();
+    float C = (localPath.row(k+2*step)-localPath.row(k)).norm();
 
     // sort side lengths as A >= B && B >= C
     if (A < B) {
@@ -304,7 +313,7 @@ Eigen::VectorXf Track::curvature(Eigen::MatrixXf localPath){ //TODO: replace cur
         std::swap(B, C);
     }
 
-    if (C-(A-B) < 0) {
+    if (C-(A-B) <= 0) {
       //std::cout << "WARNING! The data are not side-lengths of a real triangle" << std::endl;
       curveRadii(k) = 10000; // Large radius instead of inf value will reach velocitylimit
     }
