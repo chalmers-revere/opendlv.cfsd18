@@ -217,7 +217,6 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         X(1) = X(1) + (std::sin(X(2))*x(0) + std::cos(X(2))*x(1))*sampleTime + (std::sin(X(2))*dx(0) + std::cos(X(2))*dx(1))*(float)pow(sampleTime,2)/2;
         X.tail(3) = x.head(3);
 
-        std::cout << X.transpose() << std::endl;
         // Integrate velocities
         x += dx*sampleTime;
 
@@ -377,7 +376,7 @@ Eigen::ArrayXf Vehsim::tireModel(Eigen::ArrayXf delta, Eigen::ArrayXf x,
 
   // Calculate forces from look up table. This data has been recorded from the specific tires used.
   // However, the friction in the test environment was extremely high (~2.5-3)
-  float Fy1 = interp2(tireLoad, tireSlipY, tireForceY, Fz(0), alpha(0));
+  float Fy1 = interp2(tireLoad, tireSlipY, tireForceY, Fz(0)+2000, alpha(0));
   float Fy2 = interp2(tireLoad, tireSlipY, tireForceY, Fz(1), alpha(1));
   float Fy3 = interp2(tireLoad, tireSlipY, tireForceY, Fz(2), alpha(2));
   float Fy4 = interp2(tireLoad, tireSlipY, tireForceY, Fz(3), alpha(3));
@@ -528,40 +527,45 @@ float Vehsim::interp2(Eigen::VectorXf arg_X, Eigen::VectorXf arg_Y, Eigen::Matri
     // arg_V is the data with arg_X.size() columns and arg_Y.size() rows.
     // arg_xq and arg_yq is at which point data is requested.
     // Currently no solution if arg_xq and arg_yq are not within arg_X and arg_Y
-  Eigen::RowVectorXf Y(2);
-  Eigen::VectorXf X(2);
-  Eigen::MatrixXf V(2,2);
+  Eigen::VectorXf XY(4);
+  Eigen::VectorXf b(4);
+  Eigen::MatrixXf coeffs(4,4);
+  Eigen::VectorXf V(4);
 
-  int i = 0;
-  int j = 0;
+  int i = 1;
+  int j = 1;
   // Find betweem which two points x lies
-  while (arg_xq < arg_X(i)) {
+  while (arg_xq <= arg_X(i)) {
     if (i >= arg_X.size()-1) {
       // Exception if xq was not found in X
       std::cout << "Interp2: x-value out of bounds. -> " << arg_xq << std::endl;
       std::cout << "X max: " << arg_X(i-1) << std::endl;
       break;
     }
-    i++; // I will decide between which two points in X, xq is.
+    i++; // I will decide between which two points in X, xq is
   }
   // Find betweem which two points y lies
-  while (arg_yq > arg_Y(j)) {
+  while (arg_yq >= arg_Y(j)) {
     if (j >= arg_Y.size()-1) {
       // Exception, same as X.
       std::cout << "Interp2: y-value out of bounds" << std::endl;
-      break;
+      j = 0;
+      arg_yq = std::copysign(arg_Y(j),arg_yq);
     }
     j++; // same as i, but in Y vector
   }
 
   // X and Y are weights. V are the four closest data points to V(xq,yq)
-  X << (arg_X(i)-arg_xq)/(arg_X(i)-arg_X(i-1)), (arg_X(i-1)-arg_xq)/(arg_X(i-1)-arg_X(i));
-  Y << (arg_Y(j)-arg_yq)/(arg_Y(j)-arg_Y(j-1)), (arg_Y(j-1)-arg_yq)/(arg_Y(j-1)-arg_Y(j));
-  V << arg_V(j-1,i-1), arg_V(j-1,i),
-       arg_V(j,i-1), arg_V(j,i);
+  XY << 1, arg_xq, arg_yq, arg_xq*arg_yq;
+  coeffs << 1, arg_X(i-1), arg_Y(j-1), arg_X(i-1)*arg_Y(j-1),
+            1, arg_X(i-1), arg_Y(j), arg_X(i-1)*arg_Y(j),
+            1, arg_X(i), arg_Y(j-1), arg_X(i)*arg_Y(j-1),
+            1, arg_X(i), arg_Y(j), arg_X(i)*arg_Y(j);
 
-  float vq = Y*V*X;
+  V << arg_V(j-1,i-1), arg_V(j,i-1), arg_V(j-1,i), arg_V(j,i);
 
+  b = coeffs.inverse().transpose()*XY;
+  float vq = b.transpose()*V;
   return vq;
 }
 

@@ -51,20 +51,40 @@ void Steering::nextContainer(odcore::data::Container &a_container)
     float distance = steering.getDistance();
     float delta = calcSteering(azimuth, distance);
     float rackPosition = calcRackPosition(delta);
-    (void) rackPosition; // Ask Dan if we send rack pos or delta
-    opendlv::proxy::GroundSteeringRequest out1(delta);
+    opendlv::proxy::GroundSteeringRequest out1(rackPosition);
     odcore::data::Container c1(out1);
     getConference().send(c1);
   }
 }
 
 float Steering::calcRackPosition(float delta) {
-  const float a = 1;
-  const float offset = 1;
+  Eigen::ArrayXf rackTravel;
+  Eigen::ArrayXf deltaLeft;
+  Eigen::ArrayXf deltaRight;
 
-  float drt = std::asin(delta)*a;
-  float rackPosition = offset+drt;
+  rackTravel << -20.188,-18.169,-16.15,-14.131,-12.113,-10.094,-8.075,
+  -6.056,-4.038,-2.019,1.51e-15,2.019,4.038,6.056,8.075,10.094,12.113,
+  14.131,16.15,18.169,20.188;
 
+  deltaLeft << 26.383,23.404,20.539,17.769,15.078,12.452,9.883,7.36,4.876,
+  2.424,9.12e-06,-2.403,-4.789,-7.163,-9.528,-11.89,-14.251,-16.615,-18.987,
+  -21.37,-23.767;
+
+  deltaRight << 23.767,21.37,18.987,16.615,14.251,11.89,9.528,7.163,4.789,
+  2.403,8.31e-06,-2.424,-4.876,-7.36,-9.883,-12.452,-15.078,-17.769,-20.539,
+  -23.404,-26.383;
+
+  Eigen::ArrayXf deltaAvg = (deltaRight + deltaLeft)/2;
+  float rackPosition = 0;
+
+  for (int i=1;i < deltaAvg.size();i++){
+    if (delta > deltaAvg(i)){
+      // Calc dRackTravel/dDelta and do rackTravel(i-1) + dRT/dD*(delta-deltaAvg(i-1))
+      float dRTdD = (rackTravel(i)-rackTravel(i-1))/(deltaAvg(i)-deltaAvg(i-1));
+      rackPosition = rackTravel(i-1) + dRTdD*(delta-deltaAvg(i-1));
+      break;
+    }
+  }
   return rackPosition;
 }
 
