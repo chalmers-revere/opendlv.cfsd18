@@ -76,13 +76,6 @@ ENDIF()
 ###############################################################################
 #TinyDnn
 find_package(TinyDNN REQUIRED)
-#include_directories(${TinyDNN_INCLUDE_DIRS})
-
-###############################################################################
-#TBB
-find_package(TBB REQUIRED)
-include_directories(${TBB_INCLUDE_DIRS})
-add_definitions(${TBB_DEFINITIONS})
 
 ################################################################################
 # Extract cluon-msc from cluon-complete.hpp.
@@ -110,7 +103,7 @@ add_library(${PROJECT_NAME}-core OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/src/logic-de
 
 ###
 # Add custom libs here
-set(LIBRARIES Threads::Threads ${OpenCV_LIBS} ${Eigen3_LIBS} ${TinyDNN_LIBS} ${TBB_LIBRARIES})
+set(LIBRARIES Threads::Threads ${OpenCV_LIBS} ${Eigen3_LIBS} ${TinyDNN_LIBS})
 
 ################################################################################
 # Create executable.

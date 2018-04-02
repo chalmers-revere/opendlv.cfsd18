@@ -148,8 +148,8 @@ void DetectCone::forwardDetection(tiny_dnn::network<tiny_dnn::sequential> nn) {
   auto startTime = std::chrono::system_clock::now();
   auto prob = nn.predict(data);
   auto endTime = std::chrono::system_clock::now();
-    std::chrono::duration<double> diff = endTime-startTime;
-    std::cout << "Time: " << diff.count() << " s\n";
+  std::chrono::duration<double> diff = endTime-startTime;
+  std::cout << "Time: " << diff.count() << " s\n";
 
   cv::Mat probMap = cv::Mat::zeros(outputHeight, outputWidth, CV_64FC4);
   for (int c = 0; c < 4; ++c)

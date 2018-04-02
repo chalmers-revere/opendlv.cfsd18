@@ -17,43 +17,49 @@ FROM alpine:edge AS builder
 MAINTAINER Björnborg Nguyen "bjornborg.nguyen@chalmers.se"
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
 RUN apk update && \
-    apk --no-cache add \
-        ca-certificates \
-        cmake \
-        g++ \
-        git \
-        make \
-        upx \
-        ccache \
-        gfortran \
-        openblas-dev \
-        icu \
-        opencv-dev \
-        opencv-libs \
-        libtbb-dev \
-        opencv 
+   apk --no-cache add \
+       ca-certificates \
+       bash \
+       cmake \
+       g++ \
+       git \
+       make \
+       upx \
+       ccache \
+       gfortran \
+       openblas-dev \
+       icu \
+       opencv-dev \
+       opencv-libs \
+       libtbb-dev \
+       libtbb \
+       opencv
 
 WORKDIR /tmp
 
+ADD . /tmp/sources
+
+RUN git clone https://github.com/justusc/FindTBB.git && \
+   cp FindTBB/FindTBB.cmake /usr/share/cmake/Modules/ && \
+   cd FindTBB && \
+   ./test.sh
+
 RUN git clone https://github.com/eigenteam/eigen-git-mirror.git && \
-    mkdir -p eigen-git-mirror/build && \
-    cd eigen-git-mirror/build && \
-    cmake .. && \
-    make install
+   mkdir -p eigen-git-mirror/build && \
+   cd eigen-git-mirror/build && \
+   cmake .. && \
+   make install
 
-RUN git clone --branch perception.reconstruction --depth 1 https://github.com/chalmers-revere/opendlv.cfsd18.git && \
-    cd opendlv.cfsd18/ && \
-    mkdir build && \
-    cd build && \
-    cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/tmp/detectcone-dest .. && \
-    make && make test && make install && upx -9 /tmp/detectcone-dest/bin/detectcone
+RUN git clone https://github.com/tiny-dnn/tiny-dnn.git && \
+  mkdir -p tiny-dnn/build && \
+  cd tiny-dnn/build && \
+  cmake .. && \
+  make install
 
 
-# # # Part to deploy detectcone.
-FROM alpine:edge
-MAINTAINER Björnborg Nguyen "liweim@student.chalmers.se"
-
-WORKDIR /usr/bin
-COPY --from=builder /tmp/detectcone-dest/bin/detectcone .
-CMD ["/usr/bin/detectcone"]
-
+RUN cd sources && \
+   rm -rf build && \
+   mkdir build && \
+   cd build && \
+   cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/tmp/detectcone-dest .. && \
+   make && make install && upx -9 /tmp/detectcone-dest/bin/detectcone
