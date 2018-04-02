@@ -63,3 +63,17 @@ RUN cd sources && \
    cd build && \
    cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/tmp/detectcone-dest .. && \
    make && make install && upx -9 /tmp/detectcone-dest/bin/detectcone
+
+# # # Part to deploy beaglebone.
+FROM alpine:edge
+MAINTAINER Björnborg Nguyen "bjornborg.nguyen@chalmers.se"
+
+WORKDIR /usr/bin
+COPY --from=builder /tmp/detectcone-dest/bin/detectcone .
+#COPY --from=builder /usr/lib/libopencv_imgcodecs.so* /usr/lib/
+#COPY --from=builder /usr/lib/libopencv_imgproc.so* /usr/lib/
+#COPY --from=builder /usr/lib/libopencv_core.so* /usr/lib/
+COPY --from=builder /usr/local/include/ /usr/include/
+COPY --from=builder /usr/local/lib/ /usr/lib/
+COPY --from=builder /usr/lib/ /usr/lib/
+CMD ["/usr/bin/detectcone"]

@@ -1,7 +1,15 @@
 version: '2'
 
 services:
+# microservice for perception-detectcone
     detectcone:
         image: ${IMAGE}
-        network_mode: "host"
-        command: "detectcone"
+        working_dir: /opt/tmp
+        ipc: host
+        network_mode: host
+        environment:
+            - DISPLAY=$DISPLAY
+        volumes:
+           - /tmp/.X11-unix:/tmp/.X11-unix
+           - /media/weiming/Ny volym/ubuntu-project/perception.reconstruction/opendlv.cfsd18/usecase:/opt/tmp
+        command: "detectcone --cid=${CID} --id=1"
