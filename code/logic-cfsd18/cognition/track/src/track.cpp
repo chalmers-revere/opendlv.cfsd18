@@ -243,18 +243,19 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   //   ACCELERATIONREQUEST         [1 x 1] Signed desired acceleration
 
   // Caluclate curvature of path
-  Eigen::VectorXf curveRadii = curvature(localPath);
+  int step = 5;
+  Eigen::VectorXf curveRadii = curvature(localPath,step);
   // Set velocity candidate based on expected lateral acceleration limit
-  Eigen::VectorXf speedProfile(localPath.rows()-2,1);
-  for (int k = 0; k < localPath.rows()-2; k++){
+  Eigen::VectorXf speedProfile(curveRadii.size());
+  for (int k = 0; k < curveRadii.size(); k++){
   speedProfile(k) = std::min(sqrtf(lateralAccelerationLimit*curveRadii(k)),velocityLimit);
   }
 
   // Back propagate the whole path and lower velocities if deceleration cannot
   // be achieved.
-  for (int k = speedProfile.rows()-1; k > 0 ; k-=1) {
+  for (int k = speedProfile.size()-1; k > 0 ; k-=1) {
     // Distance between considered path points
-    float pointDistance = (localPath.row(k+1)-localPath.row(k)).norm();
+    float pointDistance = (localPath.row(k+step)-localPath.row(k+step-1)).norm();
     // Time between points if using averaged velocity
     float timeBetweenPoints = pointDistance/((speedProfile(k)+speedProfile(k-1))/2); //Using the highest velocity is safer?
     // Requiered acceleration to achieve velocity of following point from previous point
@@ -273,7 +274,7 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   // Limit it dependent on the heading request (heading error)
   float desiredVelocity = speedProfile(0)/(1.0f + headingErrorDependency*abs(headingRequest));
   // Calculate time to desired velocity
-  float timeToVelocity = (localPath.row(1)).norm()/((groundSpeedCopy+desiredVelocity)/2);
+  float timeToVelocity = (localPath.row(step)).norm()/((groundSpeedCopy+desiredVelocity)/2);
   // Transform into acceleration
   float accelerationRequest = (desiredVelocity-groundSpeedCopy)/timeToVelocity;
   // Limit acceleration request for positive acceleration
@@ -288,13 +289,12 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   return accelerationRequest;
 }
 
-Eigen::VectorXf Track::curvature(Eigen::MatrixXf localPath){ //TODO: replace curvature estimation
+Eigen::VectorXf Track::curvature(Eigen::MatrixXf localPath, int step){ //TODO: replace curvature estimation
   // Segmentize the path and calculate radius of segments
   // - First radius is calculated at 2nd path point
   // - Last radius is calculated at 2nd to last path point
   // Note! 3 points in a row gives infinate radius.
-  Eigen::VectorXf curveRadii(localPath.rows()-2,1);
-  int step = 1;
+  Eigen::VectorXf curveRadii(localPath.rows()-(2*step));
   for (int k = 0; k < localPath.rows()-(2*step); k++) {
     // Choose three points and make a triangle with sides A(p1p2),B(p2p3),C(p1p3)
     float A = (localPath.row(k+step)-localPath.row(k)).norm();

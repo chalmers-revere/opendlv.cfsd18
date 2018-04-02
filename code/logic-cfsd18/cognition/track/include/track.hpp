@@ -48,7 +48,7 @@ class Track : public odcore::base::module::DataTriggeredConferenceClientModule {
   void collectAndRun();
   float driverModelSteering(Eigen::MatrixXf, float, float);
   float driverModelVelocity(Eigen::MatrixXf, float, float, float, float, float, float, float);
-  Eigen::VectorXf curvature(Eigen::MatrixXf);
+  Eigen::VectorXf curvature(Eigen::MatrixXf, int);
 
   /* Member variables */
   float m_groundSpeed;
