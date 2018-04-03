@@ -20,6 +20,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <thread>
 
 #include <opendavinci/odcore/data/TimeStamp.h>
 #include <opendavinci/odcore/strings/StringToolbox.h>
@@ -129,9 +130,13 @@ std::cout << "Exited detectors" << std::endl;
     MatrixXd detectedConesRightMat = ((detectedConesRight.matrix()).transpose()).cast <double> (); 
 
     int type = 1;
+    auto startLeft = std::chrono::system_clock::now();
     sendMatchedContainer(detectedConesLeftMat, type, 0);
     type = 2;
     sendMatchedContainer(detectedConesRightMat, type, detectedConesLeftMat.cols());
+    auto finishRight = std::chrono::system_clock::now();
+    auto timeSend = std::chrono::duration_cast<std::chrono::microseconds>(finishRight - startLeft);
+    std::cout << "sendTIme:" << timeSend.count() << std::endl;
 
     std::cout << "detectedConesLeftMat: " << detectedConesLeftMat.transpose() << std::endl;
     std::cout << "detectedConesRightMat: " << detectedConesRightMat.transpose() << std::endl;
