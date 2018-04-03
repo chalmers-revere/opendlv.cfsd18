@@ -101,7 +101,7 @@ float detectWidth = 5;
 //std::string filename = "trackdrive_cones_dense.csv";
 //DetectCone::readMap(filename);
 
-  if (a_container.getDataType() == opendlv::logic::sensation::Attention::ID()) {
+  if (a_container.getDataType() == opendlv::sim::Frame::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
     opendlv::logic::perception::Object o1;
@@ -112,6 +112,7 @@ float detectWidth = 5;
 
 odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
 {
+std::cout << "DetectCone body" << std::endl;
   auto kv = getKeyValueConfiguration();
   float const detectRange = kv.getValue<float>("sim-cfsd18-perception-detectcone.detectRange");
   float const detectWidth = kv.getValue<float>("sim-cfsd18-perception-detectcone.detectWidth");
@@ -121,17 +122,19 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
     ArrayXXf detectedConesLeft = DetectCone::simConeDetectorBox(m_leftCones, m_location, m_heading, detectRange, detectWidth);
     ArrayXXf detectedConesRight = DetectCone::simConeDetectorBox(m_rightCones, m_location, m_heading, detectRange, detectWidth);
 
+std::cout << "Exited detectors" << std::endl;
+
     // This is where the messages are (hopefully) sent
     MatrixXd detectedConesLeftMat = ((detectedConesLeft.matrix()).transpose()).cast <double> ();
     MatrixXd detectedConesRightMat = ((detectedConesRight.matrix()).transpose()).cast <double> (); 
 
     int type = 1;
-    sendMatchedContainer(detectedConesLeftMat, type);
+    sendMatchedContainer(detectedConesLeftMat, type, 0);
     type = 2;
-    sendMatchedContainer(detectedConesRightMat, type);
+    sendMatchedContainer(detectedConesRightMat, type, detectedConesLeftMat.cols());
 
-    std::cout << "detectedConesLeft: " << detectedConesLeft << std::endl;
-    std::cout << "detectedConesRight: " << detectedConesRight << std::endl;
+    std::cout << "detectedConesLeftMat: " << detectedConesLeftMat.transpose() << std::endl;
+    std::cout << "detectedConesRightMat: " << detectedConesRightMat.transpose() << std::endl;
     std::cout << "THIS IS SIM-DETECTCONE SPEAKING" << std::endl;
   }
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
@@ -152,8 +155,8 @@ void DetectCone::setUp()
   std::string const filename = kv.getValue<std::string>("sim-cfsd18-perception-detectcone.mapFilename");
   DetectCone::readMap(filename);
   
-  std::cout << "Left: " << m_leftCones << std::endl;
-  std::cout << "Right: " << m_rightCones << std::endl;
+  //std::cout << "Left: " << m_leftCones << std::endl;
+  //std::cout << "Right: " << m_rightCones << std::endl;
   std::cout << "Small: " << m_smallCones << std::endl;
   std::cout << "Big: " << m_bigCones << std::endl;
 
@@ -305,15 +308,16 @@ ArrayXXf detectedConesFinal = detectedCones.topRows(nFound);
 return detectedConesFinal;
 }
 
-void DetectCone::sendMatchedContainer(Eigen::MatrixXd cones, int type)
+void DetectCone::sendMatchedContainer(Eigen::MatrixXd cones, int type, int startID)
 {
+std::cout << "Sending " << cones.cols() << " of type " << type << std::endl;
+  opendlv::logic::sensation::Point conePoint;
   for(int n = 0; n < cones.cols(); n++){
 
-    opendlv::logic::sensation::Point conePoint;
     Cartesian2Spherical(cones(0,n), cones(1,n), 0, conePoint);
 
     opendlv::logic::perception::ObjectDirection coneDirection;
-    coneDirection.setObjectId(n);
+    coneDirection.setObjectId(n+startID);
     coneDirection.setAzimuthAngle(conePoint.getAzimuthAngle());
     coneDirection.setZenithAngle(conePoint.getZenithAngle());
     odcore::data::Container c2(coneDirection);
@@ -321,14 +325,14 @@ void DetectCone::sendMatchedContainer(Eigen::MatrixXd cones, int type)
     getConference().send(c2);
 
     opendlv::logic::perception::ObjectDistance coneDistance;
-    coneDistance.setObjectId(n);
+    coneDistance.setObjectId(n+startID);
     coneDistance.setDistance(conePoint.getDistance());
     odcore::data::Container c3(coneDistance);
     c3.setSenderStamp(m_senderStamp);
     getConference().send(c3);
 
     opendlv::logic::perception::ObjectType coneType;
-    coneType.setObjectId(n);
+    coneType.setObjectId(n+startID);
     coneType.setType(type);
     odcore::data::Container c4(coneType);
     c3.setSenderStamp(m_senderStamp);

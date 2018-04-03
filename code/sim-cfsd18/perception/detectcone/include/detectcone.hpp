@@ -25,7 +25,7 @@
 #include <cmath>
 
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
-#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
+//#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
 
 namespace opendlv {
@@ -56,7 +56,7 @@ class DetectCone : public odcore::base::module::TimeTriggeredConferenceClientMod
   void tearDown();
   void readMap(std::string);
   ArrayXXf simConeDetectorBox(ArrayXXf, ArrayXXf, float, float, float);
-  void sendMatchedContainer(Eigen::MatrixXd, int);
+  void sendMatchedContainer(Eigen::MatrixXd, int, int);
   void Cartesian2Spherical(double, double, double, opendlv::logic::sensation::Point &);
 };
 
