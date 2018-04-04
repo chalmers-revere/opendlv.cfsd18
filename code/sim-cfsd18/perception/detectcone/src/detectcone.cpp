@@ -129,6 +129,12 @@ std::cout << "Exited detectors" << std::endl;
     MatrixXd detectedConesLeftMat = ((detectedConesLeft.matrix()).transpose()).cast <double> ();
     MatrixXd detectedConesRightMat = ((detectedConesRight.matrix()).transpose()).cast <double> (); 
 
+    opendlv::logic::perception::Object numberOfCones;
+    numberOfCones.setObjectId(detectedConesLeftMat.cols()+detectedConesRightMat.cols());
+    odcore::data::Container c0(numberOfCones);
+    c0.setSenderStamp(m_senderStamp);
+    getConference().send(c0);    
+
     int type = 1;
     auto startLeft = std::chrono::system_clock::now();
     sendMatchedContainer(detectedConesLeftMat, type, 0);
@@ -138,9 +144,9 @@ std::cout << "Exited detectors" << std::endl;
     auto timeSend = std::chrono::duration_cast<std::chrono::microseconds>(finishRight - startLeft);
     std::cout << "sendTIme:" << timeSend.count() << std::endl;
 
-    std::cout << "detectedConesLeftMat: " << detectedConesLeftMat.transpose() << std::endl;
-    std::cout << "detectedConesRightMat: " << detectedConesRightMat.transpose() << std::endl;
-    std::cout << "THIS IS SIM-DETECTCONE SPEAKING" << std::endl;
+    //std::cout << "detectedConesLeftMat: " << detectedConesLeftMat.transpose() << std::endl;
+    //std::cout << "detectedConesRightMat: " << detectedConesRightMat.transpose() << std::endl;
+    //std::cout << "THIS IS SIM-DETECTCONE SPEAKING" << std::endl;
   }
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
 }
