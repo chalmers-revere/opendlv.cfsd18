@@ -324,6 +324,7 @@ void DetectCone::reconstruction(cv::Mat img, cv::Mat &Q, cv::Mat &disp, cv::Mat 
   //cv::imwrite("2_right.png", imgR);
 
   blockMatching(disp, imgL, imgR);
+  
   // cv::namedWindow("disp", cv::WINDOW_NORMAL);
   // cv::imshow("disp", disp);
   // cv::waitKey(0);
@@ -354,15 +355,16 @@ float_t DetectCone::depth2resizeRate(double x, double y){
 
 
 void DetectCone::convertImage(cv::Mat img, int w, int h, tiny_dnn::vec_t &data){
-  cv::Mat resized;
+  cv::Mat resized, hsv[3];
   cv::resize(img, resized, cv::Size(w, h));
+  cv::cvtColor(resized, resized, CV_RGB2HSV);
+ 
   data.resize(w * h * 3);
-  for (int c = 0; c < 3; ++c) {
-    for (int y = 0; y < h; ++y) {
-      for (int x = 0; x < w; ++x) {
-       data[c * w * h + y * w + x] =
-         resized.at<cv::Vec3b>(y, x)[c] / 255.0;
-      }
+  for (size_t y = 0; y < h; ++y) {
+    for (size_t x = 0; x < w; ++x) {
+      data[y * w + x] = (resized.at<cv::Vec3b>(y, x)[0]-75) / 179.0;
+      data[1 * w * h + y * w + x] = (resized.at<cv::Vec3b>(y, x)[1]-46) / 255.0;
+      data[2 * w * h + y * w + x] = (resized.at<cv::Vec3b>(y, x)[2]-107) / 255.0;
     }
   }
 }
@@ -374,26 +376,15 @@ void DetectCone::slidingWindow(const std::string &dictionary) {
   using relu    = tiny_dnn::relu_layer;
   using softmax = tiny_dnn::softmax_layer;
 
-  const int n_fmaps  = 32;  // number of feature maps for upper layer
-  const int n_fmaps2 = 64;  // number of feature maps for lower layer
-  const int n_fc     = 64;  // number of hidden units in fc layer
   tiny_dnn::core::backend_t backend_type = tiny_dnn::core::default_engine();
 
-  m_nn << conv(32, 32, 5, 3, n_fmaps, tiny_dnn::padding::same, true, 1, 1,
-             backend_type)                      // C1
-     << pool(32, 32, n_fmaps, 2, backend_type)  // P2
-     << relu()                                  // activation
-     << conv(16, 16, 5, n_fmaps, n_fmaps, tiny_dnn::padding::same, true, 1, 1,
-             backend_type)                      // C3
-     << pool(16, 16, n_fmaps, 2, backend_type)  // P4
-     << relu()                                  // activation
-     << conv(8, 8, 5, n_fmaps, n_fmaps2, tiny_dnn::padding::same, true, 1, 1,
-             backend_type)                                // C5
-     << pool(8, 8, n_fmaps2, 2, backend_type)             // P6
-     << relu()                                            // activation
-     << fc(4 * 4 * n_fmaps2, n_fc, true, backend_type)    // FC7
-     << relu()                                            // activation
-     << fc(n_fc, 4, true, backend_type) << softmax(4);  // FC10
+  m_nn << conv(25, 25, 4, 3, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()                     
+     << pool(22, 22, 16, 2, backend_type)                               
+     << conv(11, 11, 4, 16, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()                     
+     << pool(8, 8, 32, 2, backend_type)
+     << conv(4, 4, 3, 32, 64, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()                                                                        
+     << fc(2 * 2 * 64, 128, true, backend_type) << relu()    
+     << fc(128, 4, true, backend_type) << softmax(4);
 
   // load nets
   std::ifstream ifs(dictionary.c_str());
@@ -426,7 +417,7 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
   float_t ratio = depth2resizeRate(point3D[0], point3D[2]);
   int maxIndex = 1;
   if (ratio > 0) {
-    int length = ratio * 32;
+    int length = ratio * 25;
     int radius = (length-1)/2;
     // std::cout << "radius: " << radius << std::endl;
 
@@ -449,7 +440,7 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
     auto patchImg = rectified(roi);
 
     tiny_dnn::vec_t data;
-    convertImage(patchImg, 32, 32, data);
+    convertImage(patchImg, 25, 25, data);
     auto prob = m_nn.predict(data);
     float_t threshold = 0.1;
     // std::cout << prob[0] << " " << prob[1] << " " << prob[2] << " " << prob[3] << std::endl;
@@ -476,10 +467,10 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
         cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,0,0), CV_FILLED);
     }
        // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
-       cv::namedWindow("disp", cv::WINDOW_NORMAL);
-       // cv::setWindowProperty("result", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
-       cv::imshow("disp", rectified);
-       cv::waitKey(10);
+       // cv::namedWindow("disp", cv::WINDOW_NORMAL);
+       // // cv::setWindowProperty("result", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+       // cv::imshow("disp", rectified);
+       // cv::waitKey(10);
        //cv::destroyAllWindows();
   }
   else{
@@ -663,8 +654,8 @@ void DetectCone::forwardDetection() {
       // if(coneRegion.size()>0){
       //   int medianIndex = medianVector(coneRegion);
 
-      cv::Vec3f point3D = XYZ.at<cv::Vec3f>(positionResize) * 2;
-      cv::Vec3f point3D2 = XYZ.at<cv::Vec3f>(coneRegionXY[medianIndex]) * 2;
+      cv::Vec3f point3D = XYZ.at<cv::Vec3f>(positionResize);
+      // cv::Vec3f point3D2 = XYZ.at<cv::Vec3f>(coneRegionXY[medianIndex]) * 2;
       // std::cout << point3D2 << " " << point3D << std::endl;
       if (point3D[2] > 0 && point3D[2] < 20000){
         if (label == 1){
@@ -689,9 +680,9 @@ void DetectCone::forwardDetection() {
     }
   }
 
-  cv::namedWindow("result", cv::WINDOW_NORMAL);
-  cv::imshow("result", rectified);
-  cv::waitKey(0);
+  // cv::namedWindow("result", cv::WINDOW_NORMAL);
+  // cv::imshow("result", rectified);
+  // cv::waitKey(0);
 
   // cv::Vec4d probSoftmax(4);
   // cv::Mat probMapSoftmax = cv::Mat::zeros(outputHeight, outputWidth, CV_64FC3);
@@ -821,6 +812,12 @@ void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
 
 void DetectCone::SendMatchedContainer(Eigen::MatrixXd cones)
 {
+  opendlv::logic::perception::Object object;
+  object.setObjectId(cones.cols());
+  odcore::data::Container c1(object);
+  c1.setSenderStamp(m_senderStamp);
+  getConference().send(c1);
+
   for(int n = 0; n < cones.cols(); n++){
 
     opendlv::logic::sensation::Point conePoint;
