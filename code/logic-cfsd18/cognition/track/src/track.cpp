@@ -244,12 +244,22 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   //   ACCELERATIONREQUEST         [1 x 1] Signed desired acceleration
 
   // Caluclate curvature of path
-  int step = 5;
-  Eigen::VectorXf curveRadii = curvature(localPath,step);
+  bool polyFit = false; // TODO add as config
+  int step;
+  std::vector<float> curveRadii;
+  if (polyFit){
+    step = 0;
+    curveRadii = curvaturePolyFit(localPath);
+  }
+  else{
+    step = 5; //TODO add as config
+    curveRadii = curvatureTriCircle(localPath,step);
+  }
+
   // Set velocity candidate based on expected lateral acceleration limit
   Eigen::VectorXf speedProfile(curveRadii.size());
-  for (int k = 0; k < curveRadii.size(); k++){
-  speedProfile(k) = std::min(sqrtf(lateralAccelerationLimit*curveRadii(k)),velocityLimit);
+  for (uint32_t k = 0; k < curveRadii.size(); k++){
+  speedProfile(k) = std::min(sqrtf(lateralAccelerationLimit*curveRadii[k]),velocityLimit);
   }
 
   // Back propagate the whole path and lower velocities if deceleration cannot
@@ -290,12 +300,12 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   return accelerationRequest;
 }
 
-Eigen::VectorXf Track::curvature(Eigen::MatrixXf localPath, int step){ //TODO: replace curvature estimation
+std::vector<float> Track::curvatureTriCircle(Eigen::MatrixXf localPath, int step){
   // Segmentize the path and calculate radius of segments
   // - First radius is calculated at 2nd path point
   // - Last radius is calculated at 2nd to last path point
   // Note! 3 points in a row gives infinate radius.
-  Eigen::VectorXf curveRadii(localPath.rows()-(2*step));
+  std::vector<float>  curveRadii(localPath.rows()-(2*step));
   for (int k = 0; k < localPath.rows()-(2*step); k++) {
     // Choose three points and make a triangle with sides A(p1p2),B(p2p3),C(p1p3)
     float A = (localPath.row(k+step)-localPath.row(k)).norm();
@@ -315,25 +325,145 @@ Eigen::VectorXf Track::curvature(Eigen::MatrixXf localPath, int step){ //TODO: r
 
     if (C-(A-B) <= 0) {
       //std::cout << "WARNING! The data are not side-lengths of a real triangle" << std::endl;
-      curveRadii(k) = 10000; // Large radius instead of inf value will reach velocitylimit
+      curveRadii[k] = 10000; // Large radius instead of inf value will reach velocitylimit
     }
     else {
       // https://people.eecs.berkeley.edu/~wkahan/Triangle.pdf
       // Calculate triangle area
       float triangleArea = 0.25f*sqrtf((A+(B+C))*(C-(A-B))*(C+(A-B))*(A+(B-C)));
       // Calculate the radius of the circle that matches the points
-      curveRadii(k) = (A*B*C)/(4*triangleArea);
+      curveRadii[k] = (A*B*C)/(4*triangleArea);
     }
   }
   return curveRadii;
 }
 
+std::vector<float> Track::curvaturePolyFit(Eigen::MatrixXf localPath){ // TODO: double check coordinate system, maybe switch x/y
+  int polynomialDegree = 3; //TODO: add as config
+  int pointsPerSegment = 15; //TODO: add as config
+  int i,j,n,segments,N;
+  int k=0;
+  uint32_t l=0;
+  Eigen::VectorXf dividedPathX(localPath.rows()); // TODO: This is now maximum possible size, which in some cases is unneccesary
+  Eigen::VectorXf dividedPathY(localPath.rows());
+  std::vector<Eigen::VectorXf> dividedPathsX;
+  std::vector<Eigen::VectorXf> dividedPathsY;
+      //curveRadii.insert(curveRadii.end(), R.begin(), R.end() );
+  while (l < localPath.rows()-2){ //TODO improve this section
+    while ((localPath(l,0) >= localPath(l+1,0)) && l < localPath.rows()-2){ // While X decreasing
+      dividedPathX(k) = localPath(l,0);
+      dividedPathY(k) = localPath(l,1);
+      l++;
+      k++;
+        if (!((localPath(l,0) >= localPath(l+1,0)) && l < localPath.rows()-2)){ //If not decreasing, save this part of path
+          dividedPathsX.push_back(dividedPathX.segment(0,k));
+          dividedPathsY.push_back(dividedPathY.segment(0,k));
+          k=0;
+        }
+    }
+    while ((localPath(l,0) < localPath(l+1,0)) && l < localPath.rows()-2){ //While X increasing
+      dividedPathX(k) = localPath(l,0);
+      dividedPathY(k) = localPath(l,1);
+      l++;
+      k++;
+        if (!((localPath(l,0) < localPath(l+1,0)) && l < localPath.rows()-2)){ // If not increasing, save this part of path
+          dividedPathsX.push_back(dividedPathX.segment(0,k));
+          dividedPathsY.push_back(dividedPathY.segment(0,k));;
+          k=0;
+        }
+    }
+  }
+
+  std::vector<float> curveRadii;
+  std::vector<float> R;
+  Eigen::VectorXf pathx;
+  Eigen::VectorXf pathy;
+  Eigen::VectorXf x;
+  Eigen::VectorXf y;
+  Eigen::VectorXf a(polynomialDegree+1);
+  int segmentBegin;
+  int segmentLength;
+
+  for (uint32_t P=0; P<dividedPathsX.size(); P++) {
+    pathx = dividedPathsX[P];
+    pathy = dividedPathsY[P];
+    N = pointsPerSegment; // number of path points per segment TODO: add as config
+    if (pathx.size()<N) {
+      N = pathx.size();
+    }
+    segments = floor(pathx.size()/N); //number of segments
+
+    for (int p=0; p<segments; p++){
+      n = polynomialDegree;
+      if ((p<segments-1) || (!(segments*N<pathx.size())) ){
+      segmentBegin = p*N;
+      segmentLength = N;
+      }
+      if (segments*N<pathx.size() && p+1>=segments){ // Use all points in last segment, N+rest
+       segmentBegin = p*N;
+       segmentLength = N+pathx.size()-N*segments;
+       N = segmentLength;
+      }
+      x = pathx.segment(segmentBegin,segmentLength).array()-x(0);
+      y = pathy.segment(segmentBegin,segmentLength).array()-y(0);
+
+      Eigen::VectorXf X(2*n+1);                        //Array that will store the values of sigma(xi),sigma(xi^2),sigma(xi^3)....sigma(xi^2n)
+      for (i=0;i<2*n+1;i++){
+        X(i)=0;
+        for (j=0;j<N;j++)
+            X(i)=X(i)+powf(x(j),i);        //consecutive positions of the array will store N,sigma(xi),sigma(xi^2),sigma(xi^3)....sigma(xi^2n)
+      }
+      //B is the Normal matrix(augmented) that will store the equations, 'a' is for value of the final coefficients
+      Eigen::MatrixXf B(n+1,n+2);
+      for (i=0;i<=n;i++)
+        for (j=0;j<=n;j++)
+            B(i,j)=X(i+j);            //Build the Normal matrix by storing the corresponding coefficients at the right positions except the last column of the matrix
+      Eigen::VectorXf Y(n+1);                    //Array to store the values of sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
+      for (i=0;i<n+1;i++){
+        Y(i)=0;
+        for (j=0;j<N;j++)
+        Y(i)=Y(i)+powf(x(j),i)*y(j);        //consecutive positions will store sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
+      }
+      for (i=0;i<=n;i++)
+        B(i,n+1)=Y(i);                //load the values of Y as the last column of B(Normal Matrix but augmented)
+      n=n+1;                //n is made n+1 because the Gaussian Elimination part below was for n equations, but here n is the degree of polynomial and for n degree we get n+1 equations
+
+      for (i=0;i<n;i++)                    //From now Gaussian Elimination starts(can be ignored) to solve the set of linear equations (Pivotisation)
+        for (k=i+1;k<n;k++)
+            if (B(i,i)<B(k,i))
+                for (j=0;j<=n;j++){
+                    float temp=B(i,j);
+                    B(i,j)=B(k,j);
+                    B(k,j)=temp;
+                }
+
+      for (i=0;i<n-1;i++)            //loop to perform the gauss elimination
+        for (k=i+1;k<n;k++){
+                float t=B(k,i)/B(i,i);
+                for (j=0;j<=n;j++)
+                    B(k,j)=B(k,j)-t*B(i,j);    //make the elements below the pivot elements equal to zero or elimnate the variables
+            }
+      for (i=n-1;i>=0;i--){                //back-substitution
+                                    //x is an array whose values correspond to the values of x,y,z..
+        a(i)=B(i,n);                //make the variable to be calculated equal to the rhs of the last equation
+        for (j=0;j<n;j++)
+            if (j!=i)            //then subtract all the lhs values except the coefficient of the variable whose value                                   is being calculated
+                a(i)=a(i)-B(i,j)*a(j);
+        a(i)=a(i)/B(i,i);            //now finally divide the rhs by the coefficient of the variable to be calculated
+      }
+
+      R.resize(x.size()); // stores curvatures
+      for(uint32_t m=0; m<R.size();m++){
+        R[m] = 1/std::abs(2*a(2)+6*a(3)*x(m))/powf(1+powf(a(1)+2*a(2)*x(m)+3*a(3)*powf(x(m),2),2),1.5);
+      }
+      curveRadii.insert(curveRadii.end(), R.begin(), R.end());
+    } // end p-loop
+  } // end P-loop
+  return curveRadii;
+} // end curvaturePolyFit
 
 
-
-
-
-}
+} // end namespace
 }
 }
 }
