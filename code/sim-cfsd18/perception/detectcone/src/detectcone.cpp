@@ -103,11 +103,13 @@ float detectWidth = 5;
 //DetectCone::readMap(filename);
 
   if (a_container.getDataType() == opendlv::sim::Frame::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
-
-    opendlv::logic::perception::Object o1;
-    odcore::data::Container c1(o1);
-    getConference().send(c1);
+    std::cout << "RECIEVED NEW COORDINATES" << std::endl;
+    auto frame = a_container.getData<opendlv::sim::Frame>();
+    float x = frame.getX();
+    float y = frame.getY();
+    float yaw = frame.getYaw();
+    m_location << x,y;
+    m_heading = yaw;
   }
 }
 
