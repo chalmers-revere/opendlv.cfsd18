@@ -222,7 +222,8 @@ std::cout << "Recieved Type " << type << std::endl;
 
 void DetectConeLane::initializeCollection(){
   //std::this_thread::sleep_for(std::chrono::duration 1s); //std::chrono::milliseconds(m_timeDiffMilliseconds)
-
+  uint32_t conesInFrame = m_conesInFrame;
+  m_conesInFrame = 0;
   bool sleep = true;
   //auto start = std::chrono::system_clock::now();
 
@@ -233,7 +234,7 @@ void DetectConeLane::initializeCollection(){
     if ( elapsed.count() > m_timeDiffMilliseconds*1000 )
         sleep = false;
   */
-    if (m_lastTypeId == m_conesInFrame-1)
+    if (m_lastTypeId == conesInFrame-1)
         sleep = false;
   }
 
@@ -262,7 +263,6 @@ std::cout << "members: " << m_nLeft << " " << m_nRight << " " << m_nSmall << " "
     m_nRight = 0;
     m_nSmall = 0;
     m_nBig = 0;
-    m_conesInFrame = 0;
     m_lastTypeId = -1;
   }
   //Initialize for next collection
