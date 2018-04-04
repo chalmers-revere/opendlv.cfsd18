@@ -360,8 +360,8 @@ void DetectCone::convertImage(cv::Mat img, int w, int h, tiny_dnn::vec_t &data){
   cv::cvtColor(resized, resized, CV_RGB2HSV);
  
   data.resize(w * h * 3);
-  for (size_t y = 0; y < h; ++y) {
-    for (size_t x = 0; x < w; ++x) {
+  for (int y = 0; y < h; ++y) {
+    for (int x = 0; x < w; ++x) {
       data[y * w + x] = (resized.at<cv::Vec3b>(y, x)[0]-75) / 179.0;
       data[1 * w * h + y * w + x] = (resized.at<cv::Vec3b>(y, x)[1]-46) / 255.0;
       data[2 * w * h + y * w + x] = (resized.at<cv::Vec3b>(y, x)[2]-107) / 255.0;
