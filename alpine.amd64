@@ -50,9 +50,10 @@ RUN git clone https://github.com/eigenteam/eigen-git-mirror.git && \
    cmake .. && \
    make install
 
-RUN git clone https://github.com/tiny-dnn/tiny-dnn.git && \
-  mkdir -p tiny-dnn/build && \
-  cd tiny-dnn/build && \
+#RUN git clone https://github.com/tiny-dnn/tiny-dnn.git && \
+#  mkdir -p tiny-dnn/build && \
+#  cd tiny-dnn/build && \
+RUN cd sources/tiny-dnn/build && \
   cmake .. && \
   make install
 

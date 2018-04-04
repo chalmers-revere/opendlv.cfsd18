@@ -11,5 +11,5 @@ services:
             - DISPLAY=$DISPLAY
         volumes:
            - /tmp/.X11-unix:/tmp/.X11-unix
-           - /media/weiming/Ny volym/ubuntu-project/perception.reconstruction/opendlv.cfsd18/usecase:/opt/tmp
+           - .:/opt/tmp
         command: "detectcone --cid=${CID} --id=1"
