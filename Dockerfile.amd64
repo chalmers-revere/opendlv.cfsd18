@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-FROM chalmersrevere/opendlv-ui-server-amd64:v0.0.2
+FROM chalmersrevere/opendlv-ui-server-amd64:v0.0.3
 MAINTAINER Ola Benderius "ola.benderius@chalmers.se"
 
 COPY ./http/ /srv/http
