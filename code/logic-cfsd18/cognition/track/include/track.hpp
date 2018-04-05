@@ -22,10 +22,11 @@
 
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
+#include <opendavinci/odcore/wrapper/Eigen.h>
+#include <opendavinci/odcore/base/Lock.h>
 
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
-//#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
-#include <opendavinci/odcore/wrapper/Eigen.h>
+
 
 namespace opendlv {
 namespace logic {
@@ -44,10 +45,20 @@ class Track : public odcore::base::module::DataTriggeredConferenceClientModule {
   void setUp();
   void tearDown();
 
-  float driverModelSteering(float, float);
-  float driverModelVelocity(float, float, float, float);
-  ArrayXXf curvature();
-  ArrayXXf m_localPath;
+  void collectAndRun();
+  float driverModelSteering(Eigen::MatrixXf, float, float);
+  float driverModelVelocity(Eigen::MatrixXf, float, float, float, float, float, float, float);
+  Eigen::VectorXf curvature(Eigen::MatrixXf, int);
+
+  /* Member variables */
+  float m_groundSpeed;
+  Eigen::MatrixXf m_surfaceCollector;
+  bool m_newFrame;
+  uint32_t m_lastObjectId;
+  float m_timeDiffMilliseconds;
+  odcore::base::Mutex m_groundSpeedMutex;
+  odcore::base::Mutex m_surfaceMutex;
+  odcore::base::Mutex m_pathMutex;
 };
 
 }

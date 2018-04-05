@@ -118,6 +118,7 @@ if(a_container.getDataType() == opendlv::logic::perception::Object::ID()){
        coneCollector.detach();
        //initializeCollection();
     }
+
   }
 
 

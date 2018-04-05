@@ -47,15 +47,13 @@ void Attention::nextContainer(odcore::data::Container &a_container)
   if (a_container.getDataType() == odcore::data::CompactPointCloud::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
-    opendlv::logic::sensation::Attention o1;
-    odcore::data::Container c1(o1);
-    getConference().send(c1);
+  
   }
 }
 
 void Attention::setUp()
 {
-  // std::string const exampleConfig = 
+  // std::string const exampleConfig =
   //   getKeyValueConfiguration().getValue<std::string>(
   //     "logic-cfsd18-sensation-attention.example-config");
 

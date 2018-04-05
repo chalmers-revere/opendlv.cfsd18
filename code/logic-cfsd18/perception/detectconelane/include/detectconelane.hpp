@@ -23,7 +23,6 @@
 #include <opendavinci/odcore/base/module/DataTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
 
-
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
 #include <fstream>
