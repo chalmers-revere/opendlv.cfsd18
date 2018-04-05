@@ -26,6 +26,11 @@ services:
         - .:/opt/opendlv.data
         command: "/opt/od4/bin/odsupercomponent --cid=${CID} --verbose=1 --configuration=/opt/opendlv.data/configuration"
 
+    sim-global:
+        image: chalmersrevere/opendlv-sim-global-amd64:v0.0.3
+        network_mode: "host"
+        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=1 --frame-id=0 --x=-72.0 --y=38.0 --yaw=1.047197551"
+
 
     # microservice for ...
     logic-cfsd18-perception-detectconelane:

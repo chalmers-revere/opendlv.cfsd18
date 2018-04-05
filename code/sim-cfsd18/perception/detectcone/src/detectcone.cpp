@@ -110,6 +110,8 @@ float detectWidth = 5;
     float yaw = frame.getYaw();
     m_location << x,y;
     m_heading = yaw;
+    std::cout << "New location: " << m_location << std::endl;
+    std::cout << "New heading: " << m_heading << std::endl;
   }
 }
 
