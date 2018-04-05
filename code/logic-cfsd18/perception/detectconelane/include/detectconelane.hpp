@@ -73,7 +73,7 @@ class DetectConeLane : public odcore::base::module::DataTriggeredConferenceClien
 
   const double DEG2RAD = 0.017453292522222; // PI/180.0
 
-  ArrayXXf findSafeLocalPath(ArrayXXf, ArrayXXf, ArrayXXf, float);
+  void findSafeLocalPath(ArrayXXf, ArrayXXf);
   ArrayXXf placeEquidistantPoints(ArrayXXf, bool, int, float);
   ArrayXXf traceBackToClosestPoint(ArrayXXf, ArrayXXf, ArrayXXf);
   ArrayXXf orderCones(ArrayXXf, ArrayXXf);
@@ -84,6 +84,7 @@ class DetectConeLane : public odcore::base::module::DataTriggeredConferenceClien
   float findFactorToClosestPoint(ArrayXXf, ArrayXXf, ArrayXXf);
 
   void sortIntoSideArrays(MatrixXd, int, int, int, int);
+  void sendMatchedContainer(Eigen::ArrayXXf, Eigen::ArrayXXf);
 
 };
 

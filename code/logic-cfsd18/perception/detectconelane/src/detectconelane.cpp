@@ -355,19 +355,23 @@ std::cout << "Short size after guessing: " << shortSide.rows() << " " << shortSi
 //std::cout << "shortSide: " << shortSide << std::endl;
 
 
-  ArrayXXf localPath;
+  //ArrayXXf localPath;
 
 
   if(longSide.rows() > 1)
   {
-      localPath = DetectConeLane::findSafeLocalPath(longSide, shortSide, location, 0.5);
+      // findSafeLocalPath ends with sending surfaces
+      //DetectConeLane::findSafeLocalPath(longSide, shortSide, location, 0.5);
+      DetectConeLane::findSafeLocalPath(longSide, shortSide);
       //std::cout << "localPath: " << localPath << std::endl;
-std::cout << "localPath MADE " << localPath.rows() << std::endl;
+//std::cout << "localPath MADE " << localPath.rows() << std::endl;
   }
   else
   {
+    //In here a special case surface should be sent
+
 	// only for dummy test
-    localPath.resize(0,2);
+    //localPath.resize(0,2);
   }
 }
 
@@ -394,7 +398,8 @@ Eigen::MatrixXd DetectConeLane::Spherical2Cartesian(double azimuth, double zenim
   return recievedPoint;
 }
 
-ArrayXXf DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePointsRight, ArrayXXf vehicleLocation, float distanceBetweenPoints)
+//void DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePointsRight, ArrayXXf vehicleLocation, float distanceBetweenPoints)
+void DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePointsRight)
 {
 
 ArrayXXf longSide;
@@ -498,6 +503,39 @@ for(int i = 0; i < nMidPoints; i = i+1)
 //std::cout << "factor: " << factor << std::endl;
 } // End of for
 
+ArrayXXf virtualPointsLongFinal;
+ArrayXXf virtualPointsShortFinal;
+if(virtualPointsLong.rows() % 2 == 0)
+{
+  // Number of points is even. Accepted.
+  virtualPointsLongFinal = virtualPointsLong;
+  virtualPointsShortFinal = virtualPointsShort;
+}
+else
+{
+  // Number of points is odd. Add another point with tiny extrapolation in the end.
+  int nLong = virtualPointsLong.rows();
+  int nShort = virtualPointsShort.rows();
+  virtualPointsLongFinal.resize(nLong+1,2);
+  virtualPointsShortFinal.resize(nShort+1,2);
+
+  virtualPointsLongFinal.topRows(nLong) = virtualPointsLong;
+  virtualPointsShortFinal.topRows(nShort) = virtualPointsShort;
+
+  ArrayXXf lastVecLong = virtualPointsLong.row(nLong-1)-virtualPointsLong.row(nLong-2);
+  lastVecLong = lastVecLong / ((lastVecLong.matrix()).norm());
+  ArrayXXf lastVecShort = virtualPointsShort.row(nLong-1)-virtualPointsShort.row(nLong-2);
+  lastVecShort = lastVecShort / ((lastVecShort.matrix()).norm());
+
+  virtualPointsLongFinal.bottomRows(1) = virtualPointsLong.row(nLong-1) + 0.01*lastVecLong;
+  virtualPointsShortFinal.bottomRows(1) = virtualPointsShort.row(nShort-1) + 0.01*lastVecShort;
+}
+
+DetectConeLane::sendMatchedContainer(virtualPointsLongFinal, virtualPointsShortFinal);
+
+
+/* // All of this should be taken care of in Linus' module
+
 // Match the virtual points from each side into pairs, and find the center of every pair
 ArrayXXf midX = (virtualPointsLong.col(0)+virtualPointsShort.col(0))/2;
 ArrayXXf midY = (virtualPointsLong.col(1)+virtualPointsShort.col(1))/2;
@@ -512,12 +550,14 @@ localPath.row(0) = firstPoint;
 localPath.block(1,0,nMidPoints,2) = tmpLocalPath;
 localPath = DetectConeLane::placeEquidistantPoints(localPath,false,-1,distanceBetweenPoints);
 
+*/
+
 //ArrayXXf localPath = tmpLocalPath;
 //std::cout << "unused vl:  " << vehicleLocation << std::endl;
 //std::cout << "unused dbp:  " << distanceBetweenPoints << std::endl;
 
 
-return localPath;
+//return localPath;
 }
 
 ArrayXXf DetectConeLane::placeEquidistantPoints(ArrayXXf sidePoints, bool nEqPointsIsKnown, int nEqPoints, float eqDistance)
@@ -1114,7 +1154,34 @@ generateSurfaces(sideLeft, sideRight, location);
     
 }    
 
-    
+void DetectConeLane::sendMatchedContainer(Eigen::ArrayXXf virtualPointsLong, Eigen::ArrayXXf virtualPointsShort)
+{
+int nSurfaces = virtualPointsLong.rows()/2;
+
+std::cout << "Sending " << nSurfaces << " surfaces" << std::endl;
+
+opendlv::logic::perception::GroundSurface surface;
+surface.setSurfaceId(nSurfaces);
+odcore::data::Container c0(surface);
+getConference().send(c0);
+
+for(int n = 0; n < nSurfaces; n++){
+
+  opendlv::logic::perception::GroundSurfaceArea surfaceArea;
+  surfaceArea.setSurfaceId(n);
+  surfaceArea.setX1(virtualPointsLong(2*n,0));
+  surfaceArea.setY1(virtualPointsLong(2*n,1));
+  surfaceArea.setX2(virtualPointsShort(2*n,0));
+  surfaceArea.setY2(virtualPointsShort(2*n,1));
+  surfaceArea.setX3(virtualPointsLong(2*n+1,0));
+  surfaceArea.setY3(virtualPointsLong(2*n+1,1));
+  surfaceArea.setX4(virtualPointsShort(2*n+1,0));
+  surfaceArea.setY4(virtualPointsShort(2*n+1,1));
+  odcore::data::Container c1(surfaceArea);
+  getConference().send(c1);
+
+  }
+}
 
 
 
