@@ -4,3 +4,12 @@ sim-cfsd18-perception-detectcone.mapFilename = trackdrive_cones_dense.csv
 sim-cfsd18-perception-detectcone.startX = -61.0
 sim-cfsd18-perception-detectcone.startY = 57.0
 sim-cfsd18-perception-detectcone.startHeading = 0.523598333
+
+sim-lynx-bicyclemodel.mass = 188.0
+sim-lynx-bicyclemodel.momentOfInertiaZ = 105.0
+sim-lynx-bicyclemodel.length = 1.53
+sim-lynx-bicyclemodel.frontToCog = 0.765
+sim-lynx-bicyclemodel.frictionCoefficient = 0.9
+sim-lynx-bicyclemodel.magicFormulaCAlpha = 25229.0
+sim-lynx-bicyclemodel.magicFormulaC = 1.0
+sim-lynx-bicyclemodel.magicFormulaE = -2.0

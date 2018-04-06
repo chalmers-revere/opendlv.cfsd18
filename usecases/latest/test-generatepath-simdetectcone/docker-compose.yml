@@ -57,3 +57,17 @@ services:
         depends_on:
             - odsupercomponent
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-cognition-track --cid=${CID} --verbose=1 --id=1"
+
+    sim-lynx-vehicle:
+        image: seresearch/opendlv-lynx-on-opendlv-core-on-opendavinci-on-base
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.lynx/bin/opendlv-sim-lynx-bicyclemodel --cid=${CID} --freq=1"
+
+#    ui-default:
+#        image: chalmersrevere/opendlv-ui-default-amd64
+#        network_mode: "host"
+#        volumes:
+#        - ./simulation-map.txt:/srv/http/simulation-map.txt
+#        command: "--cid=${CID}"
