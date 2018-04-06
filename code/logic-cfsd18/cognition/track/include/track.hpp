@@ -59,6 +59,7 @@ class Track : public odcore::base::module::DataTriggeredConferenceClientModule {
   odcore::base::Mutex m_groundSpeedMutex;
   odcore::base::Mutex m_surfaceMutex;
   odcore::base::Mutex m_pathMutex;
+  uint32_t m_surfacesInFrame;
 };
 
 }

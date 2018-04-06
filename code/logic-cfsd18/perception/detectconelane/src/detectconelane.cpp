@@ -112,8 +112,9 @@ if(a_container.getDataType() == opendlv::logic::perception::Object::ID()){
     //std::cout << "FRAME: " << m_newFrame << std::endl;
     //Check last timestamp if they are from same message
     //std::cout << "Message Recieved " << std::endl;
-    if (newFrameDist){
+    if (newFrameDist && m_newFrame){
        newFrameDist = false;
+       m_newFrame = false;
        std::thread coneCollector(&DetectConeLane::initializeCollection, this);
        coneCollector.detach();
        //initializeCollection();
@@ -228,7 +229,7 @@ void DetectConeLane::initializeCollection(){
   bool sleep = true;
   //auto start = std::chrono::system_clock::now();
 
-  while(sleep)
+  while(sleep) // Can probably be rewritten nicer
   {
   /*  auto now = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - start);

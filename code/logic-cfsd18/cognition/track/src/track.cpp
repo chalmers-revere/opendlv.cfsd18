@@ -41,7 +41,8 @@ Track::Track(int32_t const &a_argc, char **a_argv) :
   m_timeDiffMilliseconds{1},
   m_groundSpeedMutex{},
   m_surfaceMutex{},
-  m_pathMutex{}
+  m_pathMutex{},
+  m_surfacesInFrame{0}
 {
   m_surfaceCollector = Eigen::MatrixXf::Zero(1000,2); // TODO: how big?
 }
@@ -59,6 +60,28 @@ void Track::nextContainer(odcore::data::Container &a_container)
 
   }
 
+if(a_container.getDataType() == opendlv::logic::perception::GroundSurface::ID()){
+    std::cout << "RECIEVED A SURFACE!" << std::endl;
+//    m_lastTimeStamp = a_container.getSampleTimeStamp();
+    auto surface = a_container.getData<opendlv::logic::perception::GroundSurface>();
+    uint32_t surfaceId = surface.getSurfaceId();
+std::cout << "There should be " << surfaceId << " surface messages (" << 2*surfaceId << " path points before traceback)" << std::endl;
+    m_surfacesInFrame = surfaceId;
+    bool newFrameDist = true;
+
+    //std::cout << "FRAME: " << m_newFrame << std::endl;
+    //Check last timestamp if they are from same message
+    //std::cout << "Message Recieved " << std::endl;
+    if (newFrameDist && m_newFrame){
+       newFrameDist = false;
+       m_newFrame = false;
+       std::thread surfaceCollector(&Track::collectAndRun, this);
+       surfaceCollector.detach();
+       //initializeCollection();
+    }
+
+  }
+
   if (a_container.getDataType() == opendlv::logic::perception::GroundSurfaceArea::ID()) { //TODO: New message + path collector
 
     auto groundSurfaceArea = a_container.getData<opendlv::logic::perception::GroundSurfaceArea>();
@@ -68,16 +91,34 @@ void Track::nextContainer(odcore::data::Container &a_container)
       odcore::base::Lock lockSurface(m_surfaceMutex);
       //Check last timestamp if they are from same message
       m_lastObjectId = (m_lastObjectId<objectId)?(objectId):(m_lastObjectId);
+      float x1 = groundSurfaceArea.getX1();
+      float y1 = groundSurfaceArea.getY1();
+      float x2 = groundSurfaceArea.getX2();
+      float y2 = groundSurfaceArea.getY2();
+      float x3 = groundSurfaceArea.getX3();
+      float y3 = groundSurfaceArea.getY3();
+      float x4 = groundSurfaceArea.getX4();
+      float y4 = groundSurfaceArea.getY4();
+
+      m_surfaceCollector(2*objectId,0) = (x1+x2)/2;
+      m_surfaceCollector(2*objectId,1) = (y1+y2)/2;
+      m_surfaceCollector(2*objectId+1,0) = (x3+x4)/2;
+      m_surfaceCollector(2*objectId+1,1) = (y3+y4)/2;
+
+/*
       m_surfaceCollector(2*objectId,0) = groundSurfaceArea.getX1();
       m_surfaceCollector(2*objectId,1) = groundSurfaceArea.getY1();
       m_surfaceCollector(2*objectId+1,0) = groundSurfaceArea.getX2();
       m_surfaceCollector(2*objectId+1,1) = groundSurfaceArea.getY2();
+*/
     }
+/*
     if (m_newFrame){
       std::thread surfaceCollector (&Track::collectAndRun,this); //just sleep instead maybe since this is unclear how it works
       surfaceCollector.detach();
       m_newFrame = false;
     }
+*/
   }
   // TODO: logic for different states, start and stop
   /*
@@ -105,6 +146,18 @@ void Track::tearDown()
 void Track::collectAndRun(){
   //std::this_thread::sleep_for(std::chrono::duration 1s); //std::chrono::milliseconds(m_timeDiffMilliseconds)
 
+  uint32_t surfacesInFrame = m_surfacesInFrame;
+  m_surfacesInFrame = 0;
+  bool sleep = true;
+  //auto start = std::chrono::system_clock::now();
+
+  while(sleep) // Can probably be rewritten nicer
+  {
+    if (m_lastObjectId == surfacesInFrame-1)
+        sleep = false;
+  }
+
+/*
   bool sleep = true;
   auto start = std::chrono::system_clock::now();
 
@@ -115,12 +168,15 @@ void Track::collectAndRun(){
     if ( elapsed.count() > m_timeDiffMilliseconds*1000 )
         sleep = false;
   }
+*/
 
   Eigen::MatrixXf localPath;
   {
     odcore::base::Lock lockSurface(m_surfaceMutex);
     odcore::base::Lock lockPath(m_pathMutex);
-    localPath = m_surfaceCollector.topRows(m_lastObjectId+1);
+    localPath = m_surfaceCollector.topRows(2*surfacesInFrame);
+std::cout << "localPath rows: " << localPath.rows() << std::endl;
+std::cout << localPath << std::endl;
     m_newFrame = true;
     m_lastObjectId = 0;
     m_surfaceCollector = Eigen::MatrixXf::Zero(1000,2); // TODO: how big?
@@ -145,6 +201,17 @@ void Track::collectAndRun(){
     odcore::base::Lock lockPath(m_pathMutex);
     localPathCopy = localPath;
     }
+
+/* // ------- POSSIBLE ADDITION -------
+// Do the traceback to the vehicle and then go through the midpoint path again to place path points with equal distances between them.
+// If you want this, the variable names must be fixed and we need to add two functions to this module.
+ArrayXXf firstPoint = DetectConeLane::traceBackToClosestPoint(tmpLocalPath.row(0), tmpLocalPath.row(1), vehicleLocation);
+ArrayXXf localPath(nMidPoints+1,2);
+localPath.row(0) = firstPoint;
+localPath.block(1,0,nMidPoints,2) = tmpLocalPath;
+localPath = DetectConeLane::placeEquidistantPoints(localPath,false,-1,distanceBetweenPoints);
+*/
+
     float headingRequest = Track::driverModelSteering(localPathCopy, groundSpeedCopy, previewTime);
     float accelerationRequest = Track::driverModelVelocity(localPathCopy, groundSpeedCopy, velocityLimit, lateralAccelerationLimit, accelerationLimit, decelerationLimit, headingRequest, headingErrorDependency);
 
