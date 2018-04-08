@@ -36,7 +36,7 @@ function setupUi() {
     ws.binaryType = 'arraybuffer';
 
     ws.onopen = function() {
-      onStreamOpen(lc);
+      onStreamOpen(ws, lc);
     }
 
     ws.onmessage = function(evt) {
@@ -53,7 +53,7 @@ function setupUi() {
 
 }
 
-function onStreamOpen(lc) {
+function onStreamOpen(ws, lc) {
   function getResourceFrom(url) {
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.open("GET", url, false);
@@ -65,7 +65,16 @@ function onStreamOpen(lc) {
 
   console.log("Connected to stream.");
   console.log("Loaded " + lc.setMessageSpecification(odvd) + " messages from specification.");
+  
+  function sendMessage(dataType, senderStamp, messageJson) {
+    const message = lc.encodeEnvelopeFromJSONWithoutTimeStamps(messageJson, dataType, senderStamp);
+    strToAb = str =>
+      new Uint8Array(str.split('')
+        .map(c => c.charCodeAt(0))).buffer;
+    ws.send(strToAb(message), { binary: true });
+  }
  
+  setupControllerView(sendMessage);
   setupSimulationView();
   setupViewer();
 }

@@ -6,6 +6,7 @@
     <meta name="author" content="Ola Benderius">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <link rel="stylesheet" href="thirdparty/jquery-ui.css">
     <link rel="stylesheet" href="thirdparty/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
   </head>
@@ -16,6 +17,11 @@
         <div class="bg-dark p-4">
           <h4 class="text-white">The opendlv user interface</h4>
           <button id="pause" type="button" class="btn btn-primary">Pause</button>
+          <div style="width: 500px;">
+            <div id="pedal-position-request-slider" style="margin: 10px;"></div>
+
+            <div id="ground-steering-request-slider" style="margin: 10px;"></div>
+          </div>
         </div>
       </div>
       <nav class="navbar navbar-dark bg-dark">
@@ -50,16 +56,18 @@
       </div>
     </div>
 
-    <script type="text/javascript" src="thirdparty/jquery-3.2.1.slim.min.js"></script>
+    <script type="text/javascript" src="thirdparty/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="thirdparty/jquery-ui.js"></script>
     <script type="text/javascript" src="thirdparty/popper.min.js"></script>
     <script type="text/javascript" src="thirdparty/moment-with-locales.min.js"></script>
     <script type="text/javascript" src="thirdparty/Chart.js"></script>
     <script type="text/javascript" src="thirdparty/bootstrap.min.js"></script>
 
-    <script type="text/javascript" src="libcluon-0.0.63.js"></script>
+    <script type="text/javascript" src="libcluon-0.0.65.js"></script>
     <script type="text/javascript" src="opendlv-ui-default-0.0.1.js"></script>
     <script type="text/javascript" src="signal-viewer-0.0.1.js"></script>
     <script type="text/javascript" src="simulation-view-0.0.1.js"></script>
+    <script type="text/javascript" src="controller-view-0.0.1.js"></script>
   </body>
 </html>
 

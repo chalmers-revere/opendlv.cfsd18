@@ -82,8 +82,8 @@ function addSimulationViewData(data) {
     const y = data["opendlv_sim_Frame"]["y"];
     const yaw = data["opendlv_sim_Frame"]["yaw"];
 
-    const width = 0.2;
-    const length = 0.4;
+    const width = 0.16;
+    const length = 0.36;
     
     var canvas = document.getElementById("simulation-canvas");
     var context = canvas.getContext("2d");
