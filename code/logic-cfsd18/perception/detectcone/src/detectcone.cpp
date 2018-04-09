@@ -353,18 +353,16 @@ float_t DetectCone::depth2resizeRate(double x, double y){
   return 2*(1.6078-0.4785*std::sqrt(std::sqrt(x*x+y*y)/1000));
 }
 
-
 void DetectCone::convertImage(cv::Mat img, int w, int h, tiny_dnn::vec_t &data){
-  cv::Mat resized, hsv[3];
+  cv::Mat resized;
   cv::resize(img, resized, cv::Size(w, h));
-  cv::cvtColor(resized, resized, CV_RGB2HSV);
- 
   data.resize(w * h * 3);
-  for (int y = 0; y < h; ++y) {
-    for (int x = 0; x < w; ++x) {
-      data[y * w + x] = (resized.at<cv::Vec3b>(y, x)[0]-75) / 179.0;
-      data[1 * w * h + y * w + x] = (resized.at<cv::Vec3b>(y, x)[1]-46) / 255.0;
-      data[2 * w * h + y * w + x] = (resized.at<cv::Vec3b>(y, x)[2]-107) / 255.0;
+  for (int c = 0; c < 3; ++c) {
+    for (int y = 0; y < h; ++y) {
+      for (int x = 0; x < w; ++x) {
+       data[c * w * h + y * w + x] =
+         float((resized.at<cv::Vec3b>(y, x)[c]-50) / 255.0);
+      }
     }
   }
 }
@@ -373,17 +371,19 @@ void DetectCone::slidingWindow(const std::string &dictionary) {
   using conv    = tiny_dnn::convolutional_layer;
   using pool    = tiny_dnn::max_pooling_layer;
   using fc      = tiny_dnn::fully_connected_layer;
-  using relu    = tiny_dnn::relu_layer;
+  using tanh    = tiny_dnn::tanh_layer;
+  using leaky_relu    = tiny_dnn::leaky_relu_layer;
   using softmax = tiny_dnn::softmax_layer;
 
   tiny_dnn::core::backend_t backend_type = tiny_dnn::core::default_engine();
 
-  m_nn << conv(25, 25, 4, 3, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()                     
+  m_nn << conv(25, 25, 4, 3, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh() 
+     // << dropout(22*22*16, 0.25)                    
      << pool(22, 22, 16, 2, backend_type)                               
-     << conv(11, 11, 4, 16, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()                     
-     << pool(8, 8, 32, 2, backend_type)
-     << conv(4, 4, 3, 32, 64, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()                                                                        
-     << fc(2 * 2 * 64, 128, true, backend_type) << relu()    
+     << conv(11, 11, 4, 16, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh() 
+     // << dropout(8*8*32, 0.25)                    
+     << pool(8, 8, 32, 2, backend_type) 
+     << fc(4 * 4 * 32, 128, true, backend_type) << leaky_relu()  
      << fc(128, 4, true, backend_type) << softmax(4);
 
   // load nets
@@ -481,29 +481,16 @@ int DetectCone::backwardDetection(cv::Mat img, cv::Vec3f point3D){
 
 void DetectCone::efficientSlidingWindow(const std::string &dictionary, int width, int height) {
   using conv    = tiny_dnn::convolutional_layer;
-  using relu    = tiny_dnn::relu_layer;
-  tiny_dnn::core::backend_t backend_type = tiny_dnn::core::backend_t::avx;
+  using tanh    = tiny_dnn::tanh_layer;
+  tiny_dnn::core::backend_t backend_type = tiny_dnn::core::backend_t::internal;
 
-  // m_nn << conv(width, height, 7, 3, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    << conv(width-6, height-6, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    // << dropout((input_size-12)*(input_size-12)*16, 0.25)
-  //    << conv(width-12, height-12, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    << conv(width-18, height-18, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    // << dropout((input_size-24)*(input_size-24)*16, 0.25)
-  //    << conv(width-24, height-24, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    << conv(width-28, height-28, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    // << dropout((input_size-32)*(input_size-32)*16, 0.25)
-  //    << conv(width-32, height-32, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    << conv(width-36, height-36, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    // << dropout((input_size-40)*(input_size-40)*16, 0.25)
-  //    << conv(width-40, height-40, 3, 16, 128, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    << conv(width-42, height-42, 3, 128, 4, tiny_dnn::padding::valid, true, 1, 1, backend_type);
-
-  m_nn << conv(width, height, 7, 3, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-6, height-6, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-12, height-12, 5, 16, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-16, height-16, 5, 32, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-20, height-20, 3, 32, 64, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+  m_nn << conv(width, height, 5, 3, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+     << conv(width-4, height-4, 5, 8, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+     << conv(width-8, height-8, 5, 8, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+     << conv(width-12, height-12, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+     << conv(width-16, height-16, 3, 16, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+     << conv(width-18, height-18, 3, 32, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+     << conv(width-20, height-20, 3, 32, 64, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
      << conv(width-22, height-22, 3, 64, 4, tiny_dnn::padding::valid, true, 1, 1, backend_type);
 
   // load nets

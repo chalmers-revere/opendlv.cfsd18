@@ -527,6 +527,7 @@ vector<vector<uint32_t>> Attention::FindConesFromObjects(Eigen::MatrixXd &pointC
     if (condition1 || (condition2 && condition3))
     {
       coneIndexList.push_back(selectedObjectIndex);
+      cout << "Cone size: " << coneRadius << endl;
     }
 
   }
