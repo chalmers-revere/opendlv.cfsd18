@@ -216,8 +216,10 @@ localPath = DetectConeLane::placeEquidistantPoints(localPath,false,-1,distanceBe
     float accelerationRequest = Track::driverModelVelocity(localPathCopy, groundSpeedCopy, velocityLimit, lateralAccelerationLimit, accelerationLimit, decelerationLimit, headingRequest, headingErrorDependency);
 
 std::cout << "Sending headingRequest: " << headingRequest << std::endl;
-    opendlv::logic::action::AimPoint o1;
-    o1.setAzimuthAngle(headingRequest);
+    //opendlv::logic::action::AimPoint o1;
+    opendlv::proxy::GroundSteeringRequest o1;
+    //o1.setAzimuthAngle(headingRequest);
+    o1.setGroundSteering(headingRequest);
     odcore::data::Container c1(o1);
     getConference().send(c1);
 
@@ -231,7 +233,7 @@ std::cout << "Sending accelerationRequest: " << accelerationRequest << std::endl
     else if(accelerationRequest < 0.0f){
 std::cout << "Sending decelerationRequest: " << accelerationRequest << std::endl;
       opendlv::proxy::GroundDecelerationRequest o3;
-      o3.setGroundDeceleration(accelerationRequest);
+      o3.setGroundDeceleration(-accelerationRequest);
       odcore::data::Container c3(o3);
       getConference().send(c3);
     }
