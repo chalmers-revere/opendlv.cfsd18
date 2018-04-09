@@ -126,15 +126,18 @@ std::cout << "DetectCone body" << std::endl;
   {
     ArrayXXf detectedConesLeft = DetectCone::simConeDetectorBox(m_leftCones, m_location, m_heading, detectRange, detectWidth);
     ArrayXXf detectedConesRight = DetectCone::simConeDetectorBox(m_rightCones, m_location, m_heading, detectRange, detectWidth);
+// -- TODO: Add detection of orange cones --
 
 std::cout << "Exited detectors" << std::endl;
 
     // This is where the messages are (hopefully) sent
     MatrixXd detectedConesLeftMat = ((detectedConesLeft.matrix()).transpose()).cast <double> ();
     MatrixXd detectedConesRightMat = ((detectedConesRight.matrix()).transpose()).cast <double> (); 
+// -- TODO: Add support for orange cones --
 
     opendlv::logic::perception::Object numberOfCones;
     numberOfCones.setObjectId(detectedConesLeftMat.cols()+detectedConesRightMat.cols());
+// -- TODO: Add support for orange cones --
     odcore::data::Container c0(numberOfCones);
     c0.setSenderStamp(m_senderStamp);
     getConference().send(c0);    
@@ -144,6 +147,7 @@ std::cout << "Exited detectors" << std::endl;
     sendMatchedContainer(detectedConesLeftMat, type, 0);
     type = 2;
     sendMatchedContainer(detectedConesRightMat, type, detectedConesLeftMat.cols());
+// -- TODO: Send messages for orange cones --
     auto finishRight = std::chrono::system_clock::now();
     auto timeSend = std::chrono::duration_cast<std::chrono::microseconds>(finishRight - startLeft);
     std::cout << "sendTIme:" << timeSend.count() << std::endl;

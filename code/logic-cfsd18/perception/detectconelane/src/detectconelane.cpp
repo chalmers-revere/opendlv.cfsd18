@@ -1123,6 +1123,7 @@ MatrixXf coneRight_f = coneRight.cast <float> ();
 ArrayXXf sideLeft = coneLeft_f.transpose().array();
 ArrayXXf sideRight = coneRight_f.transpose().array();
 
+// -- TODO: Add sending messages for orange cones --
 generateSurfaces(sideLeft, sideRight, location);
 
 
