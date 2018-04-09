@@ -27,37 +27,39 @@ void DetectCone::convertImage(cv::Mat img, int w, int h, tiny_dnn::vec_t &data){
     for (int y = 0; y < h; ++y) {
       for (int x = 0; x < w; ++x) {
        data[c * w * h + y * w + x] =
-         float(resized.at<cv::Vec3b>(y, x)[c] / 255.0);
+         float((resized.at<cv::Vec3b>(y, x)[c]-50) / 255.0);
       }
     }
   }
 }
 
+// void DetectCone::convertImage(cv::Mat img, int w, int h, tiny_dnn::vec_t &data){
+//   cv::Mat resized, hsv[3];
+//   cv::resize(img, resized, cv::Size(w, h));
+//   cv::cvtColor(resized, resized, CV_RGB2HSV);
+ 
+//   data.resize(w * h * 3);
+//   for (int y = 0; y < h; ++y) {
+//     for (int x = 0; x < w; ++x) {
+//       data[y * w + x] = float(float(resized.at<cv::Vec3b>(y, x)[0]-56) / 179.0);
+//       data[1 * w * h + y * w + x] = float(float(resized.at<cv::Vec3b>(y, x)[1]-52) / 255.0);
+//       data[2 * w * h + y * w + x] = float(float(resized.at<cv::Vec3b>(y, x)[2]-101) / 255.0);
+//     }
+//   }
+// }
+
 void DetectCone::efficientSlidingWindow(const std::string &dictionary, tiny_dnn::network<tiny_dnn::sequential> &nn, int width, int height) {
   using conv    = tiny_dnn::convolutional_layer;
-  using relu    = tiny_dnn::relu_layer;
-  tiny_dnn::core::backend_t backend_type = tiny_dnn::core::backend_t::avx;
+  using tanh    = tiny_dnn::tanh_layer;
+  tiny_dnn::core::backend_t backend_type = tiny_dnn::core::backend_t::internal;
 
-  // nn << conv(width, height, 7, 3, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    << conv(width-6, height-6, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    // << dropout((input_size-12)*(input_size-12)*16, 0.25)
-  //    << conv(width-12, height-12, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    << conv(width-18, height-18, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    // << dropout((input_size-24)*(input_size-24)*16, 0.25)
-  //    << conv(width-24, height-24, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    << conv(width-28, height-28, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    // << dropout((input_size-32)*(input_size-32)*16, 0.25)
-  //    << conv(width-32, height-32, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    << conv(width-36, height-36, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    // << dropout((input_size-40)*(input_size-40)*16, 0.25)
-  //    << conv(width-40, height-40, 3, 16, 128, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-  //    << conv(width-42, height-42, 3, 128, 4, tiny_dnn::padding::valid, true, 1, 1, backend_type);
-
-  nn << conv(width, height, 7, 3, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-6, height-6, 7, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-12, height-12, 5, 16, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-16, height-16, 5, 32, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
-     << conv(width-20, height-20, 3, 32, 64, tiny_dnn::padding::valid, true, 1, 1, backend_type) << relu()
+  nn << conv(width, height, 5, 3, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+     << conv(width-4, height-4, 5, 8, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+     << conv(width-8, height-8, 5, 8, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+     << conv(width-12, height-12, 5, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+     << conv(width-16, height-16, 3, 16, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+     << conv(width-18, height-18, 3, 32, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+     << conv(width-20, height-20, 3, 32, 64, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
      << conv(width-22, height-22, 3, 64, 4, tiny_dnn::padding::valid, true, 1, 1, backend_type);
 
   // load nets
