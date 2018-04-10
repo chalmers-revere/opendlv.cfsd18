@@ -127,6 +127,5 @@ function onMessageReceived(lc, msg) {
 
   addSignalViewerData(data);
   addSimulationViewData(d);
-  // data or d ?
-  addSimulationConeViewData(d);
+  addSimulationConeViewData(d, data);
 }

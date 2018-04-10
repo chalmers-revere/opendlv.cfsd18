@@ -51,7 +51,6 @@ function addSignalViewerData(data) {
     
     g_data.set(sourceKey, new Array());
   }
-  
   storeData(sourceKey, data);
 }
 
