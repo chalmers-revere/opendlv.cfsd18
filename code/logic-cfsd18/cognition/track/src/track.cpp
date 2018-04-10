@@ -136,9 +136,9 @@ void Track::collectAndRun(){
     }
     float const previewTime = 1;
     float const velocityLimit = 10;
-    float const lateralAccelerationLimit = 2*9.81;
-    float const accelerationLimit = 5; //TODO: dynamic limit?
-    float const decelerationLimit = -5;
+    float const ayLimit = 2*9.81;
+    float const axLimitPositive = 5; //TODO: dynamic limit?
+    float const axLimitNegative = -5;
     float const headingErrorDependency = 0; // > 0 limits desired velocity for heading errors > 0
 
     Eigen::MatrixXf localPathCopy;
@@ -147,7 +147,7 @@ void Track::collectAndRun(){
     localPathCopy = localPath;
     }
     float headingRequest = Track::driverModelSteering(localPathCopy, groundSpeedCopy, previewTime);
-    float accelerationRequest = Track::driverModelVelocity(localPathCopy, groundSpeedCopy, velocityLimit, lateralAccelerationLimit, accelerationLimit, decelerationLimit, headingRequest, headingErrorDependency);
+    float accelerationRequest = Track::driverModelVelocity(localPathCopy, groundSpeedCopy, velocityLimit, ayLimit, axLimitPositive, axLimitNegative, headingRequest, headingErrorDependency);
 
     opendlv::logic::action::AimPoint o1;
     o1.setAzimuthAngle(headingRequest);
@@ -226,7 +226,7 @@ float Track::driverModelSteering(Eigen::MatrixXf localPath, float groundSpeedCop
   return headingRequest;
 }
 
-float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCopy, float velocityLimit, float lateralAccelerationLimit, float accelerationLimit, float decelerationLimit, float headingRequest, float headingErrorDependency){
+float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCopy, float velocityLimit, float axLimitPositive, float axLimitNegative, float headingRequest, float headingErrorDependency, float mu){
   //driverModelVelocity calculates the desired acceleration of the CFSD18
   //vehicle.
   //
@@ -234,11 +234,12 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   //   LOCALPATH                   [n x 2] Local coordinates of the path [x,y]
   //   GROUNDSPEEDCOPY             [1 x 1] Velocity of the vehicle [m/s]
   //   VELOCITYLIMIT               [1 x 1] Maximum allowed velocity [m/s]
-  //   LATERALACCELERATIONLIMIT    [1 x 1] Allowed lateral acceleration [m/s^2]
-  //   ACCELERATIONLIMIT           [1 x 1] Allowed longitudinal acceleration (positive) [m/s^2]
-  //   DECELERATIONLIMIT           [1 x 1] Allowed longitudinal acceleration (negative) [m/s^2]
+  //   (AYLIMIT                     [1 x 1] Allowed lateral acceleration [m/s^2])
+  //   AXLIMITPOITIVE              [1 x 1] Allowed longitudinal acceleration (positive) [m/s^2]
+  //   AXLIMITNEGATIVE             [1 x 1] Allowed longitudinal acceleration (negative) [m/s^2]
   //   HEADINGREQUEST              [1 x 1] Heading error to aimpoint [rad]
   //   HEADINGERRORDEPENDENCY      [1 x 1] Constant
+  //   MU                          [1 x 1] Friction coefficient
   //
   //Output
   //   ACCELERATIONREQUEST         [1 x 1] Signed desired acceleration
@@ -255,11 +256,12 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
     step = 5; //TODO add as config
     curveRadii = curvatureTriCircle(localPath,step);
   }
-
+  float g = 9.81f;
+  float ayLimit = mu*g*0.9f;
   // Set velocity candidate based on expected lateral acceleration limit
   Eigen::VectorXf speedProfile(curveRadii.size());
   for (uint32_t k = 0; k < curveRadii.size(); k++){
-  speedProfile(k) = std::min(sqrtf(lateralAccelerationLimit*curveRadii[k]),velocityLimit);
+  speedProfile(k) = std::min(sqrtf(ayLimit*curveRadii[k]),velocityLimit);
   }
 
   // Back propagate the whole path and lower velocities if deceleration cannot
@@ -267,34 +269,33 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   for (int k = speedProfile.size()-1; k > 0 ; k-=1) {
     // Distance between considered path points
     float pointDistance = (localPath.row(k+step)-localPath.row(k+step-1)).norm();
-    // Time between points if using averaged velocity
-    float timeBetweenPoints = pointDistance/((speedProfile(k)+speedProfile(k-1))/2); //Using the highest velocity is safer?
     // Requiered acceleration to achieve velocity of following point from previous point
-    float requieredAcceleration = (speedProfile(k)-speedProfile(k-1))/timeBetweenPoints;
+    float ax = (speedProfile(k)-speedProfile(k-1))/(2.0f*pointDistance);
+    // Lateral acceleration at k
+    float ay = powf(speedProfile(k),2)/curveRadii[k];
     // If deceleration is needed
-    if (requieredAcceleration < 0.0f) {
-      // If deceleration can't be achieved by braking...
-      if (requieredAcceleration < decelerationLimit) {
-        // Set deceleration to max achivable deceleration (vehicle specific)
-        // Calculate new velocity
-        speedProfile(k-1) = sqrtf(powf(speedProfile(k),2)-2.0f*decelerationLimit*pointDistance); // time based on average(v2-v1)/2
+    if (ax < 0.0f) {
+      // If deceleration is too high for point k, or higher than vehicle specific limit
+      if (sqrtf(powf(ay,2)+powf(ax,2)) >= powf(g*mu,2) || ax < axLimitNegative) {
+        ax = std::max((-sqrtf(powf(g*mu,2)-powf(powf(speedProfile(k),2)/curveRadii[k],2)))*0.9f,axLimitNegative); //0.9 is a safetyfactor since ax must be less than rhs
+        speedProfile(k-1) = sqrtf(powf(speedProfile(k),2)-2.0f*ax*pointDistance);
       }
     }
   }
   // Choose velocity to achieve
   // Limit it dependent on the heading request (heading error)
   float desiredVelocity = speedProfile(0)/(1.0f + headingErrorDependency*abs(headingRequest));
-  // Calculate time to desired velocity
-  float timeToVelocity = (localPath.row(step)).norm()/((groundSpeedCopy+desiredVelocity)/2);
+  // Calculate distance to desired velocity
+  float distanceToAimVelocity = (localPath.row(step)).norm();
   // Transform into acceleration
-  float accelerationRequest = (desiredVelocity-groundSpeedCopy)/timeToVelocity;
+  float accelerationRequest = (desiredVelocity-groundSpeedCopy)/(2.0f*distanceToAimVelocity); // TODO use ax directly?
   // Limit acceleration request for positive acceleration
-  if (accelerationRequest > 0.0f && accelerationRequest > accelerationLimit) {
-    accelerationRequest = accelerationLimit;
+  if (accelerationRequest > 0.0f && (sqrtf(powf(powf(speedProfile(0),2)/curveRadii[0],2)+powf(accelerationRequest,2)) >= powf(g*mu,2) || accelerationRequest > axLimitPositive)) {
+    accelerationRequest = std::min((sqrtf(powf(g*mu,2)-powf(powf(speedProfile(0),2)/curveRadii[0],2)))*0.9,axLimitPositive); //0.9 is a safetyfactor since ax must be less than rhs
   }
   // Limit acceleration request for negative acceleration
-  if (accelerationRequest < 0.0f && accelerationRequest < decelerationLimit) {
-    accelerationRequest = decelerationLimit;
+  if (accelerationRequest < 0.0f && (sqrtf(powf(powf(speedProfile(0),2)/curveRadii[0],2)+powf(accelerationRequest,2)) >= powf(g*mu,2) || accelerationRequest < axLimitNegative)) {
+    accelerationRequest = std::max((-sqrtf(powf(g*mu,2)-powf(powf(speedProfile(0),2)/curveRadii[0],2)))*0.9f,axLimitNegative); //0.9 is a safetyfactor since ax must be less than rhs
   }
 
   return accelerationRequest;
