@@ -18,6 +18,12 @@ var g_scrollX = 0;
 var g_scrollY = 0;
 var g_walls = [];
 
+
+var g_scaleSim = 7;
+var g_scrollXSim = -880;
+var g_scrollYSim = -480;
+
+
 function setupSimulationView() {
   function getResourceFrom(url) {
     var xmlHttp = new XMLHttpRequest();
@@ -26,6 +32,15 @@ function setupSimulationView() {
     return xmlHttp.responseText;
   }
 
+var map = getResourceFrom("simulation-map.txt");
+map.trim().split("\n").forEach(function(wall) {
+  const wallArray = wall.trim().split(",");
+  if (wallArray.length == 3) {
+    g_walls.push(wallArray);
+  }
+});
+
+  /*
   var map = getResourceFrom("simulation-map.txt");
   map.trim().split(";").forEach(function(wall) {
     const wallArray = wall.trim().split(",");
@@ -33,6 +48,7 @@ function setupSimulationView() {
       g_walls.push(wallArray);
     }
   });
+  */
 
   var clicked = false;
   var clickX;
@@ -116,9 +132,13 @@ function addSimulationViewData(data) {
     context.lineTo(hslength, 0);
     context.moveTo(fslength, -hswidth);
     context.lineTo(hslength, 0);
+
+    context.strokeStyle = "red";
+    
     context.stroke();
     context.restore();
-
+    
+    /*
     for (const wallKey in g_walls) {
       const sx1 = g_scale * g_walls[wallKey][0] - g_scrollX;
       const sy1 = -g_scale * g_walls[wallKey][1] - g_scrollY;
@@ -130,6 +150,25 @@ function addSimulationViewData(data) {
       context.lineWidth = 5;
       context.moveTo(sx1, sy1);
       context.lineTo(sx2, sy2);
+      context.stroke();
+      context.restore();
+    }
+    */
+    for (const wallKey in g_walls) {
+      const sx1 = g_scaleSim * g_walls[wallKey][0] - g_scrollXSim;
+      const sy1 = -g_scaleSim * g_walls[wallKey][1] - g_scrollYSim;
+      const type = g_walls[wallKey][2];
+    
+      //context.lineWidth = "0.1";
+      context.beginPath();
+      if(type == 1){
+        context.strokeStyle = "blue";
+      }
+      if(type == 2){
+        context.strokeStyle = "yellow";
+      }
+      context.save();
+      context.rect(sx1, sy1, 6, 6);
       context.stroke();
       context.restore();
     }

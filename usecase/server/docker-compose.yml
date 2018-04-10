@@ -1,0 +1,8 @@
+version: '2'
+
+services:
+
+    ui-server:
+      image: chalmersrevere/opendlv-ui-server-amd64:v0.0.4
+      network_mode: "host"
+      command: "/usr/bin/opendlv-ui-server --http-root=/srv/http --port=8000 --cid=111"

@@ -1,0 +1,14 @@
+version: '2'
+
+services:
+    sim-global:
+        image: chalmersrevere/opendlv-sim-global-amd64:v0.0.5
+        network_mode: "host"
+        command: "/usr/bin/opendlv-sim-global --cid=111 --freq=10 --frame-id=0 --x=1.5 --y=-1.8 --yaw=-3.14"
+
+    ui-default:
+        image: ziwei000/opendlv-ui-default:v0.0.1
+        network_mode: "host"
+        volumes:
+          - ./simulation-map.txt:/srv/http/simulation-map.txt
+        command: "--cid=111"
