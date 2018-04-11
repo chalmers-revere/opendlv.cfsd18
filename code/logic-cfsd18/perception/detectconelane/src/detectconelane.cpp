@@ -282,115 +282,56 @@ std::cout << "extractedCones: " << extractedCones.transpose() << std::endl;
 
 void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, ArrayXXf location){
 
-  float distanceThreshold = 3.5;
+  float distanceThreshold = 3.5; // TODO: Set in configuration
   float guessDistance = 3.0;
-
-
-  // Actual test
-  //std::cout << "SideLeft: " << sideLeft << std::endl;
-  //std::cout << "SideRight: " << sideRight << std::endl;
-  //std::cout << "Location: " << location << std::endl;
 
   ArrayXXf orderedConesLeft = DetectConeLane::orderAndFilterCones(sideLeft,location);
   ArrayXXf orderedConesRight = DetectConeLane::orderAndFilterCones(sideRight,location);
-  //std::cout << "orderedConesLeft: " << orderedConesLeft << std::endl;
-  //std::cout << "orderedConesRight: " << orderedConesRight << std::endl;
 
   float pathLengthLeft = DetectConeLane::findTotalPathLength(orderedConesLeft);
   float pathLengthRight = DetectConeLane::findTotalPathLength(orderedConesRight);
-  //std::cout << "pathLengthLeft: " << pathLengthLeft << std::endl;
-  //std::cout << "pathLengthRight: " << pathLengthRight << std::endl;
 
   ArrayXXf longSide;
   ArrayXXf shortSide;
   if(pathLengthLeft > pathLengthRight)
   {
-//std::cout << "first if: " << std::endl;
     ArrayXXf tmpLongSide = orderedConesLeft;
     ArrayXXf tmpShortSide = DetectConeLane::insertNeededGuessedCones(orderedConesLeft, orderedConesRight, location, distanceThreshold,  guessDistance, false);
 
-    //if(tmpLongSide.rows() != longSide.rows())
-    //{
-//std::cout << "Long size before: " << longSide.rows() << " " << longSide.cols() << std::endl;
     longSide.resize(tmpLongSide.rows(),tmpLongSide.cols());
-std::cout << "Long size after guessing: " << longSide.rows() << " " << longSide.cols() << std::endl;
-  //} // End of if
-
     longSide = tmpLongSide;
 
-  //if(tmpShortSide.rows() != shortSide.rows())
-  //{
-//std::cout << "Short size before: " << shortSide.rows() << " " << shortSide.cols() << std::endl;
     shortSide.resize(tmpShortSide.rows(),tmpShortSide.cols());
-std::cout << "Short size after guessing: " << shortSide.rows() << " " << shortSide.cols() << std::endl;
-  //} // End of if
-
     shortSide = tmpShortSide;
   }
   else
   {
-//std::cout << "second if: " << std::endl;
     ArrayXXf tmpLongSide = orderedConesRight;
     ArrayXXf tmpShortSide = DetectConeLane::insertNeededGuessedCones(orderedConesRight, orderedConesLeft, location, distanceThreshold,  guessDistance, true);
-//std::cout << "got through first bit " << std::endl;
 
-  //if(tmpLongSide.rows() != longSide.rows())
-  //{
-//std::cout << "Long size before: " << longSide.rows() << " " << longSide.cols() << std::endl;
     longSide.resize(tmpLongSide.rows(),tmpLongSide.cols());
-std::cout << "Long size after guessing: " << longSide.rows() << " " << longSide.cols() << std::endl;
-  //} // End of if
-
     longSide = tmpLongSide;
 
-  //if(tmpShortSide.rows() != shortSide.rows())
-  //{
-//std::cout << "Short size before: " << shortSide.rows() << " " << shortSide.cols() << std::endl;
     shortSide.resize(tmpShortSide.rows(),tmpShortSide.cols());
-std::cout << "Short size after guessing: " << shortSide.rows() << " " << shortSide.cols() << std::endl;
-  //} // End of if
-
     shortSide = tmpShortSide;
   } // End of else
-//std::cout << "longSide: " << longSide << std::endl;
-//std::cout << "shortSide: " << shortSide << std::endl;
-
-
-  //ArrayXXf localPath;
-
 
   if(longSide.rows() > 1)
   {
-      // findSafeLocalPath ends with sending surfaces
-      //DetectConeLane::findSafeLocalPath(longSide, shortSide, location, 0.5);
-      DetectConeLane::findSafeLocalPath(longSide, shortSide);
-      //std::cout << "localPath: " << localPath << std::endl;
-//std::cout << "localPath MADE " << localPath.rows() << std::endl;
+    // findSafeLocalPath ends with sending surfaces
+    DetectConeLane::findSafeLocalPath(longSide, shortSide);
   }
   else
   {
-    //In here a special case surface should be sent
+    // TODO: In here a special case surface should be sent
 
-	// only for dummy test
-    //localPath.resize(0,2);
-  }
-}
+  } // End of else
+} // End of generateSurfaces
 
-/*
-void DetectConeLane::CheckContainer(uint32_t objectId)
-{
-	if (objectId == 0){
-		rebuildLocalMap();
-		m_coneCollector = Eigen::MatrixXd::Zero(4,20);
-	    coneNum = 0;
-	}
-}
-*/
 
 // copy from perception-detectcone
 Eigen::MatrixXd DetectConeLane::Spherical2Cartesian(double azimuth, double zenimuth, double distance)
 {
-  //double xyDistance = distance * cos(azimuth * static_cast<double>(DEG2RAD));
   double xData = distance * cos(zenimuth * static_cast<double>(DEG2RAD))*sin(azimuth * static_cast<double>(DEG2RAD));
   double yData = distance * cos(zenimuth * static_cast<double>(DEG2RAD))*cos(azimuth * static_cast<double>(DEG2RAD));
   Eigen::MatrixXd recievedPoint = MatrixXd::Zero(2,1);
@@ -399,142 +340,134 @@ Eigen::MatrixXd DetectConeLane::Spherical2Cartesian(double azimuth, double zenim
   return recievedPoint;
 }
 
-//void DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePointsRight, ArrayXXf vehicleLocation, float distanceBetweenPoints)
+
 void DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePointsRight)
 {
 
-ArrayXXf longSide;
-ArrayXXf shortSide;
+  ArrayXXf longSide, shortSide;
 
-// Identify the longest side
-float pathLengthLeft = findTotalPathLength(sidePointsLeft);
-float pathLengthRight = findTotalPathLength(sidePointsRight);
-if(pathLengthLeft > pathLengthRight)
-{
-  longSide = sidePointsLeft;
-  shortSide = sidePointsRight;
-}
-else
-{
-  longSide = sidePointsRight;
-  shortSide = sidePointsLeft;
-} // End of else
-
-int nMidPoints = longSide.rows()*3; // We might have to choose this more carefully
-int nConesShort = shortSide.rows();
-
-// Divide the longest side into segments of equal length
-ArrayXXf virtualPointsLong = placeEquidistantPoints(longSide,true,nMidPoints,-1);
-ArrayXXf virtualPointsShort(nMidPoints,2);
-
-float shortestDist;
-float tmpDist;
-int closestConeIndex;
-float factor;
-
-// Every virtual point on the long side should get one corresponding point on the short side
-for(int i = 0; i < nMidPoints; i = i+1)
-{
-  // Find short side cone that is closest to the current long side point
-  shortestDist = std::numeric_limits<float>::infinity();
-  for(int j = 0; j < nConesShort; j = j+1)
+  // Identify the longest side
+  float pathLengthLeft = findTotalPathLength(sidePointsLeft);
+  float pathLengthRight = findTotalPathLength(sidePointsRight);
+  if(pathLengthLeft > pathLengthRight)
   {
-    tmpDist = ((shortSide.row(j)-virtualPointsLong.row(i)).matrix()).norm();
-    if(tmpDist < shortestDist)
-    {
-      shortestDist = tmpDist;
-      closestConeIndex = j;
-    } // End of if
-  } // End of for
-
-  // Check if one of the two segments next to the cone has a perpendicular line to the long side point. If so, place the short side point
-  // on that place of the segment. If not, place the point on the cone. If it's the first or last cone there is only one segment to check
-  if(closestConeIndex == 0)
-  {
-
-    if(shortSide.rows() > 1)
-    {
-      factor = findFactorToClosestPoint(shortSide.row(0),shortSide.row(1),virtualPointsLong.row(i));
-    }
-
-
-
-    if(shortSide.rows() > 1 && factor > 0 && factor <= 1)
-    {
-      virtualPointsShort.row(i) = shortSide.row(0)+factor*(shortSide.row(1)-shortSide.row(0));
-
-    }
-    else
-    {
-      virtualPointsShort.row(i) = shortSide.row(0);
-    } // End of else
-  }
-  else if(closestConeIndex == nConesShort-1)
-  {
-    factor = findFactorToClosestPoint(shortSide.row(nConesShort-2),shortSide.row(nConesShort-1),virtualPointsLong.row(i));
-    if(factor > 0 && factor <= 1)
-    {
-      virtualPointsShort.row(i) = shortSide.row(nConesShort-2)+factor*(shortSide.row(nConesShort-1)-shortSide.row(nConesShort-2));
-    }
-    else
-    {
-      virtualPointsShort.row(i) = shortSide.row(nConesShort-1);
-    } // End of else
+    longSide = sidePointsLeft;
+    shortSide = sidePointsRight;
   }
   else
   {
-    factor = findFactorToClosestPoint(shortSide.row(closestConeIndex-1),shortSide.row(closestConeIndex),virtualPointsLong.row(i));
-    if(factor > 0 && factor <= 1)
+    longSide = sidePointsRight;
+    shortSide = sidePointsLeft;
+  } // End of else
+
+  int nMidPoints = longSide.rows()*3; // TODO: We might have to choose this more carefully
+  int nConesShort = shortSide.rows();
+
+  // Divide the longest side into segments of equal length
+  ArrayXXf virtualPointsLong = placeEquidistantPoints(longSide,true,nMidPoints,-1);
+  ArrayXXf virtualPointsShort(nMidPoints,2);
+
+  float shortestDist, tmpDist, factor;
+  int closestConeIndex;
+
+  // Every virtual point on the long side should get one corresponding point on the short side
+  for(int i = 0; i < nMidPoints; i = i+1)
+  {
+    // Find short side cone that is closest to the current long side point
+    shortestDist = std::numeric_limits<float>::infinity();
+    for(int j = 0; j < nConesShort; j = j+1)
     {
-      virtualPointsShort.row(i) = shortSide.row(closestConeIndex-1)+factor*(shortSide.row(closestConeIndex)-shortSide.row(closestConeIndex-1));
-    }
-    else
-    {
-      factor = findFactorToClosestPoint(shortSide.row(closestConeIndex),shortSide.row(closestConeIndex+1),virtualPointsLong.row(i));
-      if(factor > 0 && factor <= 1)
+      tmpDist = ((shortSide.row(j)-virtualPointsLong.row(i)).matrix()).norm();
+      if(tmpDist < shortestDist)
       {
-        virtualPointsShort.row(i) = shortSide.row(closestConeIndex)+factor*(shortSide.row(closestConeIndex+1)-shortSide.row(closestConeIndex));
+        shortestDist = tmpDist;
+        closestConeIndex = j;
+      } // End of if
+    } // End of for
+
+    // Check if one of the two segments next to the cone has a perpendicular line to the long side point. If so, place the short side point
+    // on that place of the segment. If not, place the point on the cone. If it's the first or last cone there is only one segment to check
+    if(closestConeIndex == 0)
+    {
+
+      if(shortSide.rows() > 1)
+      {
+        factor = findFactorToClosestPoint(shortSide.row(0),shortSide.row(1),virtualPointsLong.row(i));
+      }
+
+      if(shortSide.rows() > 1 && factor > 0 && factor <= 1)
+      {
+        virtualPointsShort.row(i) = shortSide.row(0)+factor*(shortSide.row(1)-shortSide.row(0));
       }
       else
       {
-        virtualPointsShort.row(i) = shortSide.row(closestConeIndex);
+        virtualPointsShort.row(i) = shortSide.row(0);
+      } // End of else
+    }
+    else if(closestConeIndex == nConesShort-1)
+    {
+      factor = findFactorToClosestPoint(shortSide.row(nConesShort-2),shortSide.row(nConesShort-1),virtualPointsLong.row(i));
+      if(factor > 0 && factor <= 1)
+      {
+        virtualPointsShort.row(i) = shortSide.row(nConesShort-2)+factor*(shortSide.row(nConesShort-1)-shortSide.row(nConesShort-2));
+      }
+      else
+      {
+        virtualPointsShort.row(i) = shortSide.row(nConesShort-1);
+      } // End of else
+    }
+    else
+    {
+      factor = findFactorToClosestPoint(shortSide.row(closestConeIndex-1),shortSide.row(closestConeIndex),virtualPointsLong.row(i));
+      if(factor > 0 && factor <= 1)
+      {
+        virtualPointsShort.row(i) = shortSide.row(closestConeIndex-1)+factor*(shortSide.row(closestConeIndex)-shortSide.row(closestConeIndex-1));
+      }
+      else
+      {
+        factor = findFactorToClosestPoint(shortSide.row(closestConeIndex),shortSide.row(closestConeIndex+1),virtualPointsLong.row(i));
+        if(factor > 0 && factor <= 1)
+        {
+          virtualPointsShort.row(i) = shortSide.row(closestConeIndex)+factor*(shortSide.row(closestConeIndex+1)-shortSide.row(closestConeIndex));
+        }
+        else
+        {
+          virtualPointsShort.row(i) = shortSide.row(closestConeIndex);
+        } // End of else
       } // End of else
     } // End of else
+  } // End of for
+
+  ArrayXXf virtualPointsLongFinal, virtualPointsShortFinal;
+  if(virtualPointsLong.rows() % 2 == 0)
+  {
+    // Number of points is even. Accepted.
+    virtualPointsLongFinal = virtualPointsLong;
+    virtualPointsShortFinal = virtualPointsShort;
+  }
+  else
+  {
+    // Number of points is odd. Add another point with tiny extrapolation in the end.
+    int nLong = virtualPointsLong.rows();
+    int nShort = virtualPointsShort.rows();
+    virtualPointsLongFinal.resize(nLong+1,2);
+    virtualPointsShortFinal.resize(nShort+1,2);
+
+    virtualPointsLongFinal.topRows(nLong) = virtualPointsLong;
+    virtualPointsShortFinal.topRows(nShort) = virtualPointsShort;
+
+    ArrayXXf lastVecLong = virtualPointsLong.row(nLong-1)-virtualPointsLong.row(nLong-2);
+    lastVecLong = lastVecLong / ((lastVecLong.matrix()).norm());
+    ArrayXXf lastVecShort = virtualPointsShort.row(nLong-1)-virtualPointsShort.row(nLong-2);
+    lastVecShort = lastVecShort / ((lastVecShort.matrix()).norm());
+
+    virtualPointsLongFinal.bottomRows(1) = virtualPointsLong.row(nLong-1) + 0.01*lastVecLong;
+    virtualPointsShortFinal.bottomRows(1) = virtualPointsShort.row(nShort-1) + 0.01*lastVecShort;
+    std::cout<<"virtualPointsLongFinal.bottomRows(1) =" << virtualPointsLongFinal.bottomRows(1)<<"\n";
+    std::cout<<"virtualPointsShortFinal.bottomRows(1) =" << virtualPointsShortFinal.bottomRows(1)<<"\n";
   } // End of else
-//std::cout << "factor: " << factor << std::endl;
-} // End of for
 
-ArrayXXf virtualPointsLongFinal;
-ArrayXXf virtualPointsShortFinal;
-if(virtualPointsLong.rows() % 2 == 0)
-{
-  // Number of points is even. Accepted.
-  virtualPointsLongFinal = virtualPointsLong;
-  virtualPointsShortFinal = virtualPointsShort;
-}
-else
-{
-  // Number of points is odd. Add another point with tiny extrapolation in the end.
-  int nLong = virtualPointsLong.rows();
-  int nShort = virtualPointsShort.rows();
-  virtualPointsLongFinal.resize(nLong+1,2);
-  virtualPointsShortFinal.resize(nShort+1,2);
-
-  virtualPointsLongFinal.topRows(nLong) = virtualPointsLong;
-  virtualPointsShortFinal.topRows(nShort) = virtualPointsShort;
-
-  ArrayXXf lastVecLong = virtualPointsLong.row(nLong-1)-virtualPointsLong.row(nLong-2);
-  lastVecLong = lastVecLong / ((lastVecLong.matrix()).norm());
-  ArrayXXf lastVecShort = virtualPointsShort.row(nLong-1)-virtualPointsShort.row(nLong-2);
-  lastVecShort = lastVecShort / ((lastVecShort.matrix()).norm());
-
-  virtualPointsLongFinal.bottomRows(1) = virtualPointsLong.row(nLong-1) + 0.01*lastVecLong;
-  virtualPointsShortFinal.bottomRows(1) = virtualPointsShort.row(nShort-1) + 0.01*lastVecShort;
-  std::cout<<"virtualPointsLongFinal.bottomRows(1) =" << virtualPointsLongFinal.bottomRows(1)<<"\n";
-  std::cout<<"virtualPointsShortFinal.bottomRows(1) =" << virtualPointsShortFinal.bottomRows(1)<<"\n";
-}
-
-DetectConeLane::sendMatchedContainer(virtualPointsLongFinal, virtualPointsShortFinal);
+  DetectConeLane::sendMatchedContainer(virtualPointsLongFinal, virtualPointsShortFinal);
 
 
 /* // All of this should be taken care of in Linus' module
@@ -555,13 +488,8 @@ localPath = DetectConeLane::placeEquidistantPoints(localPath,false,-1,distanceBe
 
 */
 
-//ArrayXXf localPath = tmpLocalPath;
-//std::cout << "unused vl:  " << vehicleLocation << std::endl;
-//std::cout << "unused dbp:  " << distanceBetweenPoints << std::endl;
+} // End of findSafeLocalPath
 
-
-//return localPath;
-}
 
 ArrayXXf DetectConeLane::placeEquidistantPoints(ArrayXXf sidePoints, bool nEqPointsIsKnown, int nEqPoints, float eqDistance)
 {
@@ -641,11 +569,9 @@ ArrayXXf DetectConeLane::placeEquidistantPoints(ArrayXXf sidePoints, bool nEqPoi
   // The last point should be at the same place as the last cone.
   newSidePoints.row(nEqPoints-1) = sidePoints.row(nCones-1);
 
-  //std::cout << "eqDistance:  " << eqDistance << std::endl;
-  //std::cout << "latestConeIndex:  " << latestConeIndex << std::endl;
-  //std::cout << "remainderOfSeg:  " << remainderOfSeg << std::endl;
   return newSidePoints;
-}
+} // End of placeEquidistantPoints
+
 
 ArrayXXf DetectConeLane::traceBackToClosestPoint(ArrayXXf p1, ArrayXXf p2, ArrayXXf q)
 {
@@ -661,215 +587,197 @@ ArrayXXf DetectConeLane::traceBackToClosestPoint(ArrayXXf p1, ArrayXXf p2, Array
    return q+n*d;       // Follow the normal vector for that distance
 }
 
+
 ArrayXXf DetectConeLane::orderCones(ArrayXXf cones, ArrayXXf vehicleLocation)
 {
   // Input: Cone and vehicle positions in the same coordinate system
   // Output: The cones in order
 
-int nCones = cones.rows();
-ArrayXXf current = vehicleLocation;
-ArrayXXf found(nCones,1);
-found.fill(-1);
-ArrayXXf orderedCones(nCones,2);
+  int nCones = cones.rows();
+  ArrayXXf current = vehicleLocation;
+  ArrayXXf found(nCones,1);
+  found.fill(-1);
+  ArrayXXf orderedCones(nCones,2);
 
-float shortestDist;
-float tmpDist;
-int closestConeIndex;
+  float shortestDist;
+  float tmpDist;
+  int closestConeIndex;
 
-// The first chosen cone is the one closest to the vehicle. After that it continues with the closest neighbour
-for(int i = 0; i < nCones; i = i+1)
-{
-  shortestDist = std::numeric_limits<float>::infinity();
-  // Find closest cone to the last chosen cone
-  for(int j = 0; j < nCones; j = j+1)
+  // The first chosen cone is the one closest to the vehicle. After that it continues with the closest neighbour
+  for(int i = 0; i < nCones; i = i+1)
   {
-    if(!((found==j).any()))
+    shortestDist = std::numeric_limits<float>::infinity();
+    // Find closest cone to the last chosen cone
+    for(int j = 0; j < nCones; j = j+1)
     {
-      tmpDist = ((current-cones.row(j)).matrix()).norm();
-      if(tmpDist < shortestDist)
+      if(!((found==j).any()))
       {
-        shortestDist = tmpDist;
-        closestConeIndex = j;
+        tmpDist = ((current-cones.row(j)).matrix()).norm();
+        if(tmpDist < shortestDist)
+        {
+          shortestDist = tmpDist;
+          closestConeIndex = j;
+        } // End of if
       } // End of if
-    } // End of if
+    } // End of for
+
+    found(i) = closestConeIndex;
+    current = cones.row(closestConeIndex);
   } // End of for
 
-  found(i) = closestConeIndex;
-  current = cones.row(closestConeIndex);
-} // End of for
+  // Rearrange cones to have the order of found
+  for(int i = 0; i < nCones; i = i+1)
+  {
+    orderedCones.row(i) = cones.row(found(i));
+  } // End of for
 
-// Rearrange cones to have the order of found
-for(int i = 0; i < nCones; i = i+1)
-{
-  orderedCones.row(i) = cones.row(found(i));
-}
+  return orderedCones;
+} // End of orderCones
 
-//std::cout << "cones: " << cones << std::endl;
-//std::cout << "vehicleLocation: " << vehicleLocation << std::endl;
-
-return orderedCones;
-}
 
 ArrayXXf DetectConeLane::orderAndFilterCones(ArrayXXf cones, ArrayXXf vehicleLocation)
 {
   // Input: Cone and vehicle positions in the same coordinate system
   // Output: The cones that satisfy some requirements, in order
 
-int nCones = cones.rows();
-ArrayXXf current = vehicleLocation;
-ArrayXXf found(nCones,1);
-found.fill(-1);
+  int nCones = cones.rows();
+  ArrayXXf current = vehicleLocation;
+  ArrayXXf found(nCones,1);
+  found.fill(-1);
 
-float shortestDist;
-float tmpDist;
-int closestConeIndex;
-float line1;
-float line2;
-float line3;
-float angle;
-int nAcceptedCones = 0;
+  float shortestDist, tmpDist, line1, line2, line3, angle;
+  int closestConeIndex;
+  int nAcceptedCones = 0;
 
-float orderingDistanceThreshold = 5.5; // There might be an alternative to hard coding this...
-const float PI = 3.14159265;
+  float orderingDistanceThreshold = 5.5; // TODO: There might be an alternative to hard coding this...
+  const float PI = 3.14159265;
 
-for(int i = 0; i < nCones; i = i+1)
-{
-  shortestDist = std::numeric_limits<float>::infinity();
-  closestConeIndex = -1;
-  // Find closest cone to the last chosen cone
-  for(int j = 0; j < nCones; j = j+1)
+  for(int i = 0; i < nCones; i = i+1)
   {
-    if(!((found==j).any()))
+    shortestDist = std::numeric_limits<float>::infinity();
+    closestConeIndex = -1;
+    // Find closest cone to the last chosen cone
+    for(int j = 0; j < nCones; j = j+1)
     {
-      tmpDist = ((current-cones.row(j)).matrix()).norm();
-      if(tmpDist < shortestDist && tmpDist < orderingDistanceThreshold)
+      if(!((found==j).any()))
       {
-        // If it's one of the first two cones, the nearest neighbour is accepted
-        if(i < 2)
+        tmpDist = ((current-cones.row(j)).matrix()).norm();
+        if(tmpDist < shortestDist && tmpDist < orderingDistanceThreshold)
         {
-          shortestDist = tmpDist;
-          closestConeIndex = j;
-//std::cout << "Accepted " << j << " at i = " << i << std::endl;
-        }
-        // Otherwise the nearest neighbour needs to be considered to be placed in roughly the same direction as the two previous cones
-        // i.e the angle between the previous line and the next must be larger than pi/2 (it has a forward going component)
-        else
-        {
-          // The angle is found with the cosine rule
-          line1 = ((cones.row(found(i-2))-cones.row(found(i-1))).matrix()).norm();
-          line2 = ((cones.row(found(i-1))-cones.row(j)).matrix()).norm();
-          line3 = ((cones.row(j)-cones.row(found(i-2))).matrix()).norm();
-          angle = std::acos((float)(-std::pow(line3,2)+std::pow(line2,2)+std::pow(line1,2))/(2*line2*line1));
-
-          if(std::abs(angle) > PI/2)
+          // If it's one of the first two cones, the nearest neighbour is accepted
+          if(i < 2)
           {
             shortestDist = tmpDist;
             closestConeIndex = j;
-//std::cout << "Accepted " << j << " at i = " << i << std::endl;
-          } // End of if
-        } // End of else
+          }
+          // Otherwise the nearest neighbour needs to be considered to be placed in roughly the same direction as the two previous cones
+          // i.e the angle between the previous line and the next must be larger than pi/2 (it has a forward going component)
+          else
+          {
+            // The angle is found with the cosine rule
+            line1 = ((cones.row(found(i-2))-cones.row(found(i-1))).matrix()).norm();
+            line2 = ((cones.row(found(i-1))-cones.row(j)).matrix()).norm();
+            line3 = ((cones.row(j)-cones.row(found(i-2))).matrix()).norm();
+            angle = std::acos((float)(-std::pow(line3,2)+std::pow(line2,2)+std::pow(line1,2))/(2*line2*line1));
+
+            if(std::abs(angle) > PI/2)
+            {
+              shortestDist = tmpDist;
+              closestConeIndex = j;
+            } // End of if
+          } // End of else
+        } // End of if
       } // End of if
+    } // End of for
+
+    // If no remaining cone was accepted, the algorithm finishes early
+    if(closestConeIndex == -1)
+    {
+std::cout << "I BREAK NOW" << std::endl;
+      break;
     } // End of if
+
+    nAcceptedCones = nAcceptedCones+1;
+    found(i) = closestConeIndex;
+    current = cones.row(closestConeIndex);
   } // End of for
 
-  // If no remaining cone was accepted, the algorithm finishes early
-  if(closestConeIndex == -1)
+  // Rearrange cones to have the order of found
+  ArrayXXf orderedCones(nAcceptedCones,2);
+  for(int i = 0; i < nAcceptedCones; i = i+1)
   {
-std::cout << "I BREAK NOW" << std::endl;
-    break;
-  } // End of if
+    orderedCones.row(i) = cones.row(found(i));
+  }
 
-  nAcceptedCones = nAcceptedCones+1;
-  found(i) = closestConeIndex;
-//std::cout << "found: " << found << std::endl;
-  current = cones.row(closestConeIndex);
-} // End of for
+  return orderedCones;
+} // End of orderAndFilterCones
 
-// Rearrange cones to have the order of found
-ArrayXXf orderedCones(nAcceptedCones,2);
-for(int i = 0; i < nAcceptedCones; i = i+1)
-{
-  orderedCones.row(i) = cones.row(found(i));
-}
-
-//std::cout << "cones: " << cones << std::endl;
-//std::cout << "vehicleLocation: " << vehicleLocation << std::endl;
-
-return orderedCones;
-}
 
 ArrayXXf DetectConeLane::insertNeededGuessedCones(ArrayXXf longSide, ArrayXXf shortSide, ArrayXXf vehicleLocation, float distanceThreshold, float guessDistance, bool guessToTheLeft)
 {
   // Input: Both cone sides, vehicle position, two distance values and if the guesses should be on the left side
   // Output: The new ordered short side with mixed real and guessed cones
 
-int nConesLong = longSide.rows();
-int nConesShort = shortSide.rows();
-ArrayXXf guessedCones(2*nConesLong-2,2); // 2n-2 is the number of guesses if all known cones need guessed matches
+  int nConesLong = longSide.rows();
+  int nConesShort = shortSide.rows();
+  ArrayXXf guessedCones(2*nConesLong-2,2); // 2n-2 is the number of guesses if all known cones need guessed matches
 
-float shortestDist;
-float tmpDist;
-ArrayXXf guess(1,2);
-int nGuessedCones = 0;
+  float shortestDist, tmpDist;
+  ArrayXXf guess(1,2);
+  int nGuessedCones = 0;
 
-// Every long side cone should search for a possible match on the other side
-for(int i = 0; i < nConesLong; i = i+1)
-{
-  shortestDist = std::numeric_limits<float>::infinity();
-  // Find closest cone on the other side
-  for(int j = 0; j < nConesShort; j = j+1)
+  // Every long side cone should search for a possible match on the other side
+  for(int i = 0; i < nConesLong; i = i+1)
   {
-    tmpDist = ((longSide.row(i)-shortSide.row(j)).matrix()).norm();
-    if(tmpDist < shortestDist)
+    shortestDist = std::numeric_limits<float>::infinity();
+    // Find closest cone on the other side
+    for(int j = 0; j < nConesShort; j = j+1)
     {
-      shortestDist = tmpDist;
+      tmpDist = ((longSide.row(i)-shortSide.row(j)).matrix()).norm();
+      if(tmpDist < shortestDist)
+      {
+        shortestDist = tmpDist;
+     } // End of if
+    } // End of for
+
+
+    // If the closest cone is not valid, create cone guesses perpendicular to both segments connected to the current cone.
+    // If it's the first or last cone, there is only on segment available.
+    if(shortestDist > distanceThreshold)
+    {
+      if(i == 0)
+      {
+        guess = guessCones(longSide.row(0),longSide.row(1),guessDistance,guessToTheLeft,true,false);
+        nGuessedCones = nGuessedCones+1;
+      }
+      else if(i == nConesLong-1)
+      {
+        guess = guessCones(longSide.row(nConesLong-2),longSide.row(nConesLong-1),guessDistance,guessToTheLeft,false,true);
+        nGuessedCones = nGuessedCones+1;
+      }
+      else
+      {
+        guess = guessCones(longSide.row(i-1),longSide.row(i),guessDistance,guessToTheLeft,false,true);
+        nGuessedCones = nGuessedCones+1;
+        guessedCones.row(nGuessedCones-1) = guess;
+        guess = guessCones(longSide.row(i),longSide.row(i+1),guessDistance,guessToTheLeft,true,false);
+        nGuessedCones = nGuessedCones+1;
+      } // End of else
+
+      guessedCones.row(nGuessedCones-1) = guess;
     } // End of if
   } // End of for
 
+  // Collect real and guessed cones in the same array, and order them
+  ArrayXXf guessedConesFinal = guessedCones.topRows(nGuessedCones);
+  ArrayXXf realAndGuessedCones(nConesShort+nGuessedCones,2);
+  realAndGuessedCones.topRows(nConesShort) = shortSide;
+  realAndGuessedCones.bottomRows(nGuessedCones) = guessedConesFinal;
+  ArrayXXf newShortSide = orderCones(realAndGuessedCones,vehicleLocation);
 
-  // If the closest cone is not valid, create cone guesses perpendicular to both segments connected to the current cone.
-  // If it's the first or last cone, there is only on segment available.
-  if(shortestDist > distanceThreshold)
-  {
-    if(i == 0)
-    {
-      guess = guessCones(longSide.row(0),longSide.row(1),guessDistance,guessToTheLeft,true,false);
-      nGuessedCones = nGuessedCones+1;
-    }
-    else if(i == nConesLong-1)
-    {
-      guess = guessCones(longSide.row(nConesLong-2),longSide.row(nConesLong-1),guessDistance,guessToTheLeft,false,true);
-      nGuessedCones = nGuessedCones+1;
-    }
-    else
-    {
-      guess = guessCones(longSide.row(i-1),longSide.row(i),guessDistance,guessToTheLeft,false,true);
-      nGuessedCones = nGuessedCones+1;
-      guessedCones.row(nGuessedCones-1) = guess;
-      guess = guessCones(longSide.row(i),longSide.row(i+1),guessDistance,guessToTheLeft,true,false);
-      nGuessedCones = nGuessedCones+1;
-    } // End of else
+  return newShortSide;
+} // End of insertNeededGuessedCones
 
-    guessedCones.row(nGuessedCones-1) = guess;
-  } // End of if
-} // End of for
-
-// Collect real and guessed cones in the same array, and order them
-ArrayXXf guessedConesFinal = guessedCones.topRows(nGuessedCones);
-ArrayXXf realAndGuessedCones(nConesShort+nGuessedCones,2);
-realAndGuessedCones.topRows(nConesShort) = shortSide;
-realAndGuessedCones.bottomRows(nGuessedCones) = guessedConesFinal;
-ArrayXXf newShortSide = orderCones(realAndGuessedCones,vehicleLocation);
-
-//std::cout << "longSide:  " << longSide << std::endl;
-//std::cout << "shortSide:  " << shortSide << std::endl;
-//std::cout << "vehicleLocation:  " << vehicleLocation << std::endl;
-//std::cout << "distanceThreshold:  " << distanceThreshold << std::endl;
-//std::cout << "guessDistance:  " << guessDistance << std::endl;
-//std::cout << "guessToTheLeft:  " << guessToTheLeft << std::endl;
-
-return newShortSide;
-}
 
 ArrayXXf DetectConeLane::guessCones(ArrayXXf firstCone, ArrayXXf secondCone, float guessDistance, bool guessToTheLeft, bool guessForFirstCone, bool guessForSecondCone)
 {
@@ -877,68 +785,61 @@ ArrayXXf DetectConeLane::guessCones(ArrayXXf firstCone, ArrayXXf secondCone, flo
   // get matching guesses
   // Output: Guessed cone positions
 
-ArrayXXf vector = secondCone-firstCone;
-float direction;
-if(guessToTheLeft)
-{
-  direction = 1.0;
-}
-else
-{
-  direction = -1.0;
-} // End of else
+  ArrayXXf vector = secondCone-firstCone;
+  float direction;
+  if(guessToTheLeft)
+  {
+    direction = 1.0;
+  }
+  else
+  {
+    direction = -1.0;
+  } // End of else
 
-ArrayXXf normal(1,2);
-normal << -vector(1),vector(0);
-normal = normal/((normal.matrix()).norm());
-ArrayXXf guessVector = direction*guessDistance*normal;
+  ArrayXXf normal(1,2);
+  normal << -vector(1),vector(0);
+  normal = normal/((normal.matrix()).norm());
+  ArrayXXf guessVector = direction*guessDistance*normal;
 
-// The guess is placed a guessVector away from the cone that should get a mathing guess
-ArrayXXf guessedCones(1,2);
-if(guessForFirstCone && !guessForSecondCone)
-{
-  guessedCones << firstCone(0)+guessVector(0),firstCone(1)+guessVector(1);
-}
-else if(!guessForFirstCone && guessForSecondCone)
-{
-  guessedCones << secondCone(0)+guessVector(0),secondCone(1)+guessVector(1);
-}
-else
-{
-  // Should not be in use. Works in matlab but not here were array sizes have to be defined in advance? Throw exception if this is reached?
-  std::cout << "WARNING, ENTERED DANGEROUS AREA IN GUESSCONES " << std::endl;
-  guessedCones << -1000,-1000;
-} // End of else
+  // The guess is placed a guessVector away from the cone that should get a mathing guess
+  ArrayXXf guessedCones(1,2);
+  if(guessForFirstCone && !guessForSecondCone)
+  {
+    guessedCones << firstCone(0)+guessVector(0),firstCone(1)+guessVector(1);
+  }
+  else if(!guessForFirstCone && guessForSecondCone)
+  {
+    guessedCones << secondCone(0)+guessVector(0),secondCone(1)+guessVector(1);
+  }
+  else
+  {
+    // Should not be in use. Works in matlab but not here were array sizes have to be defined in advance? Throw exception if this is reached?
+    std::cout << "WARNING, ENTERED DANGEROUS AREA IN GUESSCONES " << std::endl;
+    guessedCones << -1000,-1000;
+  } // End of else
 
-//std::cout << "firstCone: " << firstCone << std::endl;
-//std::cout << "secondCone: " << secondCone << std::endl;
-//std::cout << "guessDistance: " << guessDistance << std::endl;
-//std::cout << "guessToTheLeft: " << guessToTheLeft << std::endl;
-//std::cout << "guessForFirstCone: " << guessForFirstCone << std::endl;
-//std::cout << "guessForSecondCone: " << guessForSecondCone << std::endl;
+  return guessedCones;
+} // End of guessCones
 
-return guessedCones;
-}
 
 float DetectConeLane::findTotalPathLength(ArrayXXf sidePoints)
 {
   // Input: Cone positions
   // Output: Total length of cone sequence
 
-int nCones = sidePoints.rows();
-float pathLength = 0;
+  int nCones = sidePoints.rows();
+  float pathLength = 0;
 
-float segLength;
-for(int i = 0; i < nCones-1; i = i+1)
-{
-  segLength = ((sidePoints.row(i+1)-sidePoints.row(i)).matrix()).norm();
-  pathLength = pathLength + segLength;
-}
+  float segLength;
+  for(int i = 0; i < nCones-1; i = i+1)
+  {
+    segLength = ((sidePoints.row(i+1)-sidePoints.row(i)).matrix()).norm();
+    pathLength = pathLength + segLength;
+  }
 
-// std::cout << "sidePoints: " << sidePoints << std::endl;
+  return pathLength;
+} // End of findTotalPathLength
 
-return pathLength;
-}
 
 float DetectConeLane::findFactorToClosestPoint(ArrayXXf p1, ArrayXXf p2, ArrayXXf q)
 {
@@ -946,246 +847,118 @@ float DetectConeLane::findFactorToClosestPoint(ArrayXXf p1, ArrayXXf p2, ArrayXX
   // Output: The factor to multiply with the vector between the cones in order to reach the point on the segment that has a
   // perpendicular line to the reference point
 
-ArrayXXf v = p2-p1; // The line to follow
-ArrayXXf n(1,2);    // The normal
-n << -v(1),v(0);
+  ArrayXXf v = p2-p1; // The line to follow
+  ArrayXXf n(1,2);    // The normal
+  n << -v(1),v(0);
 
-float factor = (q(0)-p1(0)+(p1(1)-q(1))*n(0)/n(1))/(v(0)-v(1)*n(0)/n(1));
+  float factor = (q(0)-p1(0)+(p1(1)-q(1))*n(0)/n(1))/(v(0)-v(1)*n(0)/n(1));
 
-//std::cout << "p1: " << p1 << std::endl;
-//std::cout << "p2: " << p2 << std::endl;
-//std::cout << "q: " << q << std::endl;
-
-return factor;
-}
+  return factor;
+} // End of findFactorToClosestPoint
 
 
 void DetectConeLane::sortIntoSideArrays(MatrixXd extractedCones, int nLeft, int nRight, int nSmall, int nBig)
 {
+
 std::cout << nLeft << " " << nRight << " " << nSmall << " " << nBig << std::endl;
-        int coneNum = extractedCones.cols();
-	//Convert to cartesian
-	Eigen::MatrixXd cone;
-	Eigen::MatrixXd coneLocal = Eigen::MatrixXd::Zero(2,coneNum);
-    for(int p = 0; p < coneNum; p++){
-        cone = Spherical2Cartesian(extractedCones(0,p), extractedCones(1,p), extractedCones(2,p));
-        //m_coneCollector.col(p) = cone;
-        coneLocal.col(p) = cone;
-    }
+  int coneNum = extractedCones.cols();
+  //Convert to cartesian
+  Eigen::MatrixXd cone;
+  Eigen::MatrixXd coneLocal = Eigen::MatrixXd::Zero(2,coneNum);
+  for(int p = 0; p < coneNum; p++)
+  {
+    cone = Spherical2Cartesian(extractedCones(0,p), extractedCones(1,p), extractedCones(2,p));
+    coneLocal.col(p) = cone;
+  }
 std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
 
-    //std::cout << "Cones " << std::endl;
-    //std::cout << coneLocal << std::endl;
+  if(nLeft > 1 || nRight > 1 )
+  {
 
-/*
-    // the following code only for test
-    // manually set left cones and right cones
-    int n_left = 0;
-    int n_right = 0;
-    for(int q = 0; q < coneNum; q++){
-        if(coneLocal(0,q) < 0){
-            n_left++;
-        }else if(coneLocal(0,q) > 0){
-        	n_right++;
-        }
-    }
-*/
+    Eigen::MatrixXd coneLeft = Eigen::MatrixXd::Zero(2,nLeft);
+    Eigen::MatrixXd coneRight = Eigen::MatrixXd::Zero(2,nRight);
+    Eigen::MatrixXd coneSmall = Eigen::MatrixXd::Zero(2,nSmall);
+    Eigen::MatrixXd coneBig = Eigen::MatrixXd::Zero(2,nBig);
+    int a = 0;
+    int b = 0;
+    int c = 0;
+    int d = 0;
+    int type;
 
-    if(nLeft > 1 || nRight > 1 ){
+    for(int k = 0; k < coneNum; k++){
+      type = static_cast<int>(extractedCones(3,k));
+      if(type == 1)
+      {
+        coneLeft.col(a) = coneLocal.col(k);
+        a++;
+      }
+      else if(type == 2)
+      {
+        coneRight.col(b) = coneLocal.col(k);
+        b++;
+      }
+      else if(type == 3)
+      {
+        coneSmall.col(c) = coneLocal.col(k);
+        c++;
+      }
+      else if(type == 4)
+      {
+        coneBig.col(d) = coneLocal.col(k);
+        d++;
+      }
+    } // End of for
 
-	    Eigen::MatrixXd coneLeft = Eigen::MatrixXd::Zero(2,nLeft);
-	    Eigen::MatrixXd coneRight = Eigen::MatrixXd::Zero(2,nRight);
-	    Eigen::MatrixXd coneSmall = Eigen::MatrixXd::Zero(2,nSmall);
-	    Eigen::MatrixXd coneBig = Eigen::MatrixXd::Zero(2,nBig);
-	    int a = 0;
-	    int b = 0;
-	    int c = 0;
-	    int d = 0;
-            int type;
+    /*
+    std::cout << "Left " << std::endl;
+    std::cout << coneLeft << std::endl;
+    std::cout << "Right " << std::endl;
+    std::cout << coneRight << std::endl;
+    */
 
-        for(int k = 0; k < coneNum; k++){
-            type = static_cast<int>(extractedCones(3,k));
-            if(type == 1){
-                coneLeft.col(a) = coneLocal.col(k);
-                a++;
-            }else if(type == 2){
-                coneRight.col(b) = coneLocal.col(k);
-                b++;
-            }else if(type == 3){
-                coneSmall.col(c) = coneLocal.col(k);
-                c++;
-            }else if(type == 4){
-                coneBig.col(d) = coneLocal.col(k);
-                d++;
-            }
-        }
-            /*
-            std::cout << "Left " << std::endl;
-            std::cout << coneLeft << std::endl;
-            std::cout << "Right " << std::endl;
-            std::cout << coneRight << std::endl;
-            */
-// Map with no guesses or filtering
-//ArrayXXf sideLeft(4,2); ArrayXXf sideRight(5,2); ArrayXXf location(1,2);
-//sideLeft << -68.0726,51.3005,
-//            -70.1104,46.7798,
-//            -69.1145,48.9532,
-//            -66.9452,53.4154;
-//sideRight << -65.4468,49.8283,
-//             -64.5145,51.6441,
-//             -63.5884,52.9191,
-//             -66.4618,47.5305,
-//             -67.5248,45.2408;
-//location << -70,44;
+    ArrayXXf location(1,2);
+    location << 0,0;
 
-// Map with no filtering but some guesses
-//ArrayXXf sideLeft(8,2); ArrayXXf sideRight(4,2); ArrayXXf location(1,2);
-//sideLeft << -65.7229,55.0356,
-//            -58.4039,60.0614,
-//            -63.4316,57.4711,
-//            -64.5641,56.3201,
-//            -62.3371,58.4472,
-//            -57.2672,59.6403,
-//            -61.2345,59.2276,
-//            -60.1803,59.7912;
-//sideRight << -62.4745,54.1608,
-//             -63.5884,52.9191,
-//             -61.4630,55.2024,
-//             -60.5469,56.0359;
-//location << -66,54;
-
-// Map with only one detected side
-//ArrayXXf sideLeft(0,2); ArrayXXf sideRight(5,2); ArrayXXf location(1,2);
-//sideRight << -71.3926,38.6152,
-//             -68.7047,42.9798,
-//             -67.5248,45.2408,
-//             -66.4618,47.5305,
-//             -69.9846,40.6632;
-//location << -72,38;
-
-// Map with both filtering and guesses (seeing later part of track)
-//ArrayXXf sideLeft(4,2); ArrayXXf sideRight(8,2); ArrayXXf location(1,2);
-//sideLeft << -77.1638,-19.5275,
-//            -74.6719,-22.8084,
-//            -76.1332,-20.4146,
-//            -75.3298,-21.4609;
-//sideRight << -75.3114,-17.1634,
-//             -76.8202,-16.2099,
-//             -77.9561,-12.1569,
-//             -78.1355,-15.3939,
-//             -73.8542,-18.4595,
-//             -76.8529,-12.6378,
-//             -79.4938,-14.6250,
-//             -72.6859,-20.0369;
-//location << -73,-22;
-
-// Map with both filtering and guesses (seeing earlier part of track)
-//ArrayXXf sideLeft(4,2); ArrayXXf sideRight(9,2); ArrayXXf location(1,2);
-//sideLeft << -79.0031,-7.1247,
-//            -83.4068,-15.5843,
-//            -79.2091,-5.7584,
-//            -82.4479,-16.2767;
-//sideRight << -79.8760,-11.2204,
-//             -81.7276,-13.0964,
-//             -80.5293,-13.9657,
-//             -81.8028,-8.2125,
-//             -82.2223,-5.6942,
-//             -79.4938,-14.6250,
-//             -78.8625,-11.7738,
-//             -82.6931,-12.5203,
-//             -81.1177,-9.6574;
-//location << -81,-5;
-
-// Map with a guess where cones are placed poorly
-/*
-ArrayXXf sideLeft(6,2); ArrayXXf sideRight(7,2); ArrayXXf location(1,2);
-sideLeft << -55.3944,58.0601,
-            -60.1803,59.7912,
-            -57.2672,59.6403,
-            -58.4039,60.0614,
-            -61.2345,59.2276,
-            -56.4540,59.3048;
-sideRight << -58.1339,56.8301,
-             -57.8483,56.0774,
-             -59.8076,56.5859,
-             -58.1000,56.7947,
-             -59.0203,57.0216,
-             -59.0262,57.1244,
-             -58.7363,57.0246;
-location << -61,57;
-*/
-
-ArrayXXf location(1,2);
-location << 0,0;
-
-
-MatrixXf coneLeft_f = coneLeft.cast <float> ();
-MatrixXf coneRight_f = coneRight.cast <float> ();
-
-ArrayXXf sideLeft = coneLeft_f.transpose().array();
-ArrayXXf sideRight = coneRight_f.transpose().array();
+    MatrixXf coneLeft_f = coneLeft.cast <float> ();
+    MatrixXf coneRight_f = coneRight.cast <float> ();
+    ArrayXXf sideLeft = coneLeft_f.transpose().array();
+    ArrayXXf sideRight = coneRight_f.transpose().array();
 
 // -- TODO: Add sending messages for orange cones --
-generateSurfaces(sideLeft, sideRight, location);
+    generateSurfaces(sideLeft, sideRight, location);
 
+  } // End of if
+} // End of sortIntoSideArrays
 
-
-
-//std::cout << "DETECTCONELANE IS SENDING SURFACE" << std::endl;
-//opendlv::logic::perception::Surface o9;
-//    o9.setSurfaceId(12345);
-//    odcore::data::Container c9(o9);
-//    getConference().send(c9);
-
-/*
-
-  if (a_container.getDataType() == opendlv::logic::perception::Object::ID()) {
-    auto object = a_container.getData<opendlv::logic::perception::Object>();
-    auto objectId = object.getObjectId();
-    std::cout << "[cognition] DETECTCONELANE IS RECIEVING OBJECT " << objectId << std::endl;
-    opendlv::logic::perception::Surface o1;
-    o1.setSurfaceId(12345);
-    odcore::data::Container c1(o1);
-    std::cout << "[cognition] DETECTCONELANE IS SENDING SURFACE 12345 " << std::endl;
-    getConference().send(c1);
-  }
- */
-
-
-
-
-    }
-
-}
 
 void DetectConeLane::sendMatchedContainer(Eigen::ArrayXXf virtualPointsLong, Eigen::ArrayXXf virtualPointsShort)
 {
-int nSurfaces = virtualPointsLong.rows()/2;
 
-std::cout << "Sending " << nSurfaces << " surfaces" << std::endl;
+  int nSurfaces = virtualPointsLong.rows()/2;
+  std::cout << "Sending " << nSurfaces << " surfaces" << std::endl;
 
-opendlv::logic::perception::GroundSurface surface;
-surface.setSurfaceId(nSurfaces);
-odcore::data::Container c0(surface);
-getConference().send(c0);
+  opendlv::logic::perception::GroundSurface surface;
+  surface.setSurfaceId(nSurfaces);
+  odcore::data::Container c0(surface);
+  getConference().send(c0);
 
-for(int n = 0; n < nSurfaces; n++){
+  for(int n = 0; n < nSurfaces; n++)
+  {
+    opendlv::logic::perception::GroundSurfaceArea surfaceArea;
+    surfaceArea.setSurfaceId(n);
+    surfaceArea.setX1(virtualPointsLong(2*n,0));
+    surfaceArea.setY1(virtualPointsLong(2*n,1));
+    surfaceArea.setX2(virtualPointsShort(2*n,0));
+    surfaceArea.setY2(virtualPointsShort(2*n,1));
+    surfaceArea.setX3(virtualPointsLong(2*n+1,0));
+    surfaceArea.setY3(virtualPointsLong(2*n+1,1));
+    surfaceArea.setX4(virtualPointsShort(2*n+1,0));
+    surfaceArea.setY4(virtualPointsShort(2*n+1,1));
+    odcore::data::Container c1(surfaceArea);
+    getConference().send(c1);
+  } // End of for
 
-  opendlv::logic::perception::GroundSurfaceArea surfaceArea;
-  surfaceArea.setSurfaceId(n);
-  surfaceArea.setX1(virtualPointsLong(2*n,0));
-  surfaceArea.setY1(virtualPointsLong(2*n,1));
-  surfaceArea.setX2(virtualPointsShort(2*n,0));
-  surfaceArea.setY2(virtualPointsShort(2*n,1));
-  surfaceArea.setX3(virtualPointsLong(2*n+1,0));
-  surfaceArea.setY3(virtualPointsLong(2*n+1,1));
-  surfaceArea.setX4(virtualPointsShort(2*n+1,0));
-  surfaceArea.setY4(virtualPointsShort(2*n+1,1));
-  odcore::data::Container c1(surfaceArea);
-  getConference().send(c1);
-
-  }
-}
+} // End of sendMatchedContainer
 
 
 
