@@ -191,9 +191,9 @@ std::cout << localPath << std::endl;
     }
     float const previewTime = 5;
     float const velocityLimit = 10;
-    float const lateralAccelerationLimit = 2*9.81;
-    float const accelerationLimit = 5; //TODO: dynamic limit?
-    float const decelerationLimit = -5;
+    float const ayLimit = 2*9.81;
+    float const axLimitPositive = 5; //TODO: dynamic limit?
+    float const axLimitNegative = -5;
     float const headingErrorDependency = 0; // > 0 limits desired velocity for heading errors > 0
 
     Eigen::MatrixXf localPathCopy;
@@ -214,7 +214,7 @@ localPath = DetectConeLane::placeEquidistantPoints(localPath,false,-1,distanceBe
 */
 
     float headingRequest = Track::driverModelSteering(localPathCopy, groundSpeedCopy, previewTime);
-    float accelerationRequest = Track::driverModelVelocity(localPathCopy, groundSpeedCopy, velocityLimit, lateralAccelerationLimit, accelerationLimit, decelerationLimit, headingRequest, headingErrorDependency);
+    float accelerationRequest = Track::driverModelVelocity(localPathCopy, groundSpeedCopy, velocityLimit, ayLimit, axLimitPositive, axLimitNegative, headingRequest, headingErrorDependency);
 
 std::cout << "Sending headingRequest: " << headingRequest << std::endl;
     //opendlv::logic::action::AimPoint o1;
@@ -298,7 +298,7 @@ float Track::driverModelSteering(Eigen::MatrixXf localPath, float groundSpeedCop
   return headingRequest;
 }
 
-float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCopy, float velocityLimit, float lateralAccelerationLimit, float accelerationLimit, float decelerationLimit, float headingRequest, float headingErrorDependency){
+float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCopy, float velocityLimit, float axLimitPositive, float axLimitNegative, float headingRequest, float headingErrorDependency, float mu){
   //driverModelVelocity calculates the desired acceleration of the CFSD18
   //vehicle.
   //
@@ -306,22 +306,37 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   //   LOCALPATH                   [n x 2] Local coordinates of the path [x,y]
   //   GROUNDSPEEDCOPY             [1 x 1] Velocity of the vehicle [m/s]
   //   VELOCITYLIMIT               [1 x 1] Maximum allowed velocity [m/s]
-  //   LATERALACCELERATIONLIMIT    [1 x 1] Allowed lateral acceleration [m/s^2]
-  //   ACCELERATIONLIMIT           [1 x 1] Allowed longitudinal acceleration (positive) [m/s^2]
-  //   DECELERATIONLIMIT           [1 x 1] Allowed longitudinal acceleration (negative) [m/s^2]
+  //   (AYLIMIT                     [1 x 1] Allowed lateral acceleration [m/s^2])
+  //   AXLIMITPOITIVE              [1 x 1] Allowed longitudinal acceleration (positive) [m/s^2]
+  //   AXLIMITNEGATIVE             [1 x 1] Allowed longitudinal acceleration (negative) [m/s^2]
   //   HEADINGREQUEST              [1 x 1] Heading error to aimpoint [rad]
   //   HEADINGERRORDEPENDENCY      [1 x 1] Constant
+  //   MU                          [1 x 1] Friction coefficient
   //
   //Output
   //   ACCELERATIONREQUEST         [1 x 1] Signed desired acceleration
 std::cout << "driverModelVelocity begin" <<"\n";
   // Caluclate curvature of path
-  int step = 1;
-  Eigen::VectorXf curveRadii = curvature(localPath,step);
+  bool polyFit = false; // TODO add as config
+  int step;
+  std::vector<float> curveRadii;
+  if (polyFit){
+    step = 0;
+    curveRadii = curvaturePolyFit(localPath);
+  }
+  else{
+    step = 5; //TODO add as config
+    while (localPath.rows()-(2*step)<=0){
+      step--;
+    }
+    curveRadii = curvatureTriCircle(localPath,step);
+  }
+  float g = 9.81f;
+  float ayLimit = mu*g*0.9f;
   // Set velocity candidate based on expected lateral acceleration limit
   Eigen::VectorXf speedProfile(curveRadii.size());
-  for (int k = 0; k < curveRadii.size(); k++){
-  speedProfile(k) = std::min(sqrtf(lateralAccelerationLimit*curveRadii(k)),velocityLimit);
+  for (uint32_t k = 0; k < curveRadii.size(); k++){
+  speedProfile(k) = std::min(sqrtf(ayLimit*curveRadii[k]),velocityLimit);
   }
 
   // Back propagate the whole path and lower velocities if deceleration cannot
@@ -329,17 +344,16 @@ std::cout << "driverModelVelocity begin" <<"\n";
   for (int k = speedProfile.size()-1; k > 0 ; k-=1) {
     // Distance between considered path points
     float pointDistance = (localPath.row(k+step)-localPath.row(k+step-1)).norm();
-    // Time between points if using averaged velocity
-    //float timeBetweenPoints = pointDistance/((speedProfile(k)+speedProfile(k-1))/2); //Using the highest velocity is safer?
     // Requiered acceleration to achieve velocity of following point from previous point
-    float requieredAcceleration = (speedProfile(k)-speedProfile(k-1))/(2*pointDistance);
+    float ax = (speedProfile(k)-speedProfile(k-1))/(2.0f*pointDistance);
+    // Lateral acceleration at k
+    float ay = powf(speedProfile(k),2)/curveRadii[k];
     // If deceleration is needed
-    if (requieredAcceleration < 0.0f) {
-      // If deceleration can't be achieved by braking...
-      if (requieredAcceleration < decelerationLimit) {
-        // Set deceleration to max achivable deceleration (vehicle specific)
-        // Calculate new velocity
-        speedProfile(k-1) = sqrtf(powf(speedProfile(k),2)-2.0f*decelerationLimit*pointDistance); // time based on average(v2-v1)/2
+    if (ax < 0.0f) {
+      // If deceleration is too high for point k, or higher than vehicle specific limit
+      if (sqrtf(powf(ay,2)+powf(ax,2)) >= powf(g*mu,2) || ax < axLimitNegative) {
+        ax = std::max((-sqrtf(powf(g*mu,2)-powf(powf(speedProfile(k),2)/curveRadii[k],2)))*0.9f,axLimitNegative); //0.9 is a safetyfactor since ax must be less than rhs
+        speedProfile(k-1) = sqrtf(powf(speedProfile(k),2)-2.0f*ax*pointDistance);
       }
     }
   }
@@ -347,17 +361,17 @@ std::cout << "driverModelVelocity begin" <<"\n";
   // Choose velocity to achieve
   // Limit it dependent on the heading request (heading error)
   float desiredVelocity = speedProfile(0)/(1.0f + headingErrorDependency*abs(headingRequest));
-  // Calculate time to desired velocity
-  float distanceToAimVelocity = localPath.row(step).norm();
+  // Calculate distance to desired velocity
+  float distanceToAimVelocity = (localPath.row(step)).norm();
   // Transform into acceleration
-  float accelerationRequest = (desiredVelocity-groundSpeedCopy)/(2*distanceToAimVelocity);
+  float accelerationRequest = (desiredVelocity-groundSpeedCopy)/(2.0f*distanceToAimVelocity); // TODO use ax directly?
   // Limit acceleration request for positive acceleration
-  if (accelerationRequest > 0.0f && accelerationRequest > accelerationLimit) {
-    accelerationRequest = accelerationLimit;
+  if (accelerationRequest > 0.0f && (sqrtf(powf(powf(speedProfile(0),2)/curveRadii[0],2)+powf(accelerationRequest,2)) >= powf(g*mu,2) || accelerationRequest > axLimitPositive)) {
+    accelerationRequest = std::min((sqrtf(powf(g*mu,2)-powf(powf(speedProfile(0),2)/curveRadii[0],2)))*0.9f,axLimitPositive); //0.9 is a safetyfactor since ax must be less than rhs
   }
   // Limit acceleration request for negative acceleration
-  if (accelerationRequest < 0.0f && accelerationRequest < decelerationLimit) {
-    accelerationRequest = decelerationLimit;
+  if (accelerationRequest < 0.0f && (sqrtf(powf(powf(speedProfile(0),2)/curveRadii[0],2)+powf(accelerationRequest,2)) >= powf(g*mu,2) || accelerationRequest < axLimitNegative)) {
+    accelerationRequest = std::max((-sqrtf(powf(g*mu,2)-powf(powf(speedProfile(0),2)/curveRadii[0],2)))*0.9f,axLimitNegative); //0.9 is a safetyfactor since ax must be less than rhs
   }
     std::cout << "distanceToAimVelocity: " << distanceToAimVelocity << std::endl;
   std::cout << "GroundSpeed: " << groundSpeedCopy << std::endl;
@@ -367,14 +381,13 @@ std::cout << "driverModelVelocity begin" <<"\n";
   return accelerationRequest;
 }
 
-Eigen::VectorXf Track::curvature(Eigen::MatrixXf localPath, int step){ //TODO: replace curvature estimation
+std::vector<float> Track::curvatureTriCircle(Eigen::MatrixXf localPath, int step){
   // Segmentize the path and calculate radius of segments
   // - First radius is calculated at 2nd path point
   // - Last radius is calculated at 2nd to last path point
   // Note! 3 points in a row gives infinate radius.
-  std::cout << "curvature begin" <<"\n";
-  Eigen::VectorXf curveRadii(localPath.rows()-(2*step));
-      std::cout << "localPath.rows() = " << localPath.rows() <<"\n";
+  std::vector<float>  curveRadii(localPath.rows()-(2*step));
+  std::cout << "localPath.rows() = " << localPath.rows() <<"\n";
   for (int k = 0; k < localPath.rows()-(2*step); k++) {
     // Choose three points and make a triangle with sides A(p1p2),B(p2p3),C(p1p3)
     float A = (localPath.row(k+step)-localPath.row(k)).norm();
@@ -394,26 +407,142 @@ Eigen::VectorXf Track::curvature(Eigen::MatrixXf localPath, int step){ //TODO: r
 
     if (C-(A-B) <= 0) {
       //std::cout << "WARNING! The data are not side-lengths of a real triangle" << std::endl;
-      curveRadii(k) = 10000; // Large radius instead of inf value will reach velocitylimit
+      curveRadii[k] = 10000; // Large radius instead of inf value will reach velocitylimit
     }
     else {
       // https://people.eecs.berkeley.edu/~wkahan/Triangle.pdf
       // Calculate triangle area
       float triangleArea = 0.25f*sqrtf((A+(B+C))*(C-(A-B))*(C+(A-B))*(A+(B-C)));
       // Calculate the radius of the circle that matches the points
-      curveRadii(k) = (A*B*C)/(4*triangleArea);
+      curveRadii[k] = (A*B*C)/(4*triangleArea);
     }
   }
   std::cout << "curveRadii =" <<curveRadii<<"\n";
   return curveRadii;
 }
 
+std::vector<float> Track::curvaturePolyFit(Eigen::MatrixXf localPath){ // TODO: double check coordinate system, maybe switch x/y
+  int n = 3; //polynomial degree TODO: add as config
+  int pointsPerSegment = 15; //TODO: add as config
+  int i,j,segments,N;
+  int k=0;
+  uint32_t l=0;
+  Eigen::VectorXf dividedPathX(localPath.rows()); // TODO: This is now maximum possible size, which in some cases is unneccesary
+  Eigen::VectorXf dividedPathY(localPath.rows());
+  std::vector<Eigen::VectorXf> dividedPathsX;
+  std::vector<Eigen::VectorXf> dividedPathsY;
+      //curveRadii.insert(curveRadii.end(), R.begin(), R.end() );
+  while (l < localPath.rows()-2){ //TODO improve this section
+    while ((localPath(l,0) >= localPath(l+1,0)) && l < localPath.rows()-2){ // While X decreasing
+      dividedPathX(k) = localPath(l,0);
+      dividedPathY(k) = localPath(l,1);
+      l++;
+      k++;
+        if (!((localPath(l,0) >= localPath(l+1,0)) && l < localPath.rows()-2)){ //If not decreasing, save this part of path
+          dividedPathsX.push_back(dividedPathX.segment(0,k));
+          dividedPathsY.push_back(dividedPathY.segment(0,k));
+          k=0;
+        }
+    }
+    while ((localPath(l,0) < localPath(l+1,0)) && l < localPath.rows()-2){ //While X increasing
+      dividedPathX(k) = localPath(l,0);
+      dividedPathY(k) = localPath(l,1);
+      l++;
+      k++;
+        if (!((localPath(l,0) < localPath(l+1,0)) && l < localPath.rows()-2)){ // If not increasing, save this part of path
+          dividedPathsX.push_back(dividedPathX.segment(0,k));
+          dividedPathsY.push_back(dividedPathY.segment(0,k));;
+          k=0;
+        }
+    }
+  }
+
+  std::vector<float> curveRadii;
+  std::vector<float> R;
+  Eigen::VectorXf pathx;
+  Eigen::VectorXf pathy;
+  Eigen::VectorXf x;
+  Eigen::VectorXf y;
+  Eigen::VectorXf a(n+1);
+  int segmentBegin;
+  int segmentLength;
+
+  for (uint32_t P=0; P<dividedPathsX.size(); P++) {
+    pathx = dividedPathsX[P];
+    pathy = dividedPathsY[P];
+    N = pointsPerSegment; // number of path points per segment TODO: add as config
+    if (pathx.size()<N) {
+      N = pathx.size();
+    }
+    segments = floor(pathx.size()/N); //number of segments
+
+    for (int p=0; p<segments; p++){
+      if ((p<segments-1) || (!(segments*N<pathx.size())) ){
+      segmentBegin = p*N;
+      segmentLength = N;
+      }
+      if (segments*N<pathx.size() && p+1>=segments){ // Use all points in last segment, N+rest
+       segmentBegin = p*N;
+       segmentLength = N+pathx.size()-N*segments;
+       N = segmentLength;
+      }
+      x = pathx.segment(segmentBegin,segmentLength).array()-x(0);
+      y = pathy.segment(segmentBegin,segmentLength).array()-y(0);
+
+      Eigen::VectorXf X(2*n+1);                        //Array that will store the values of sigma(xi),sigma(xi^2),sigma(xi^3)....sigma(xi^2n)
+      for (i=0;i<2*n+1;i++){
+        X(i)=0;
+        for (j=0;j<N;j++)
+            X(i)=X(i)+powf(x(j),i);        //consecutive positions of the array will store N,sigma(xi),sigma(xi^2),sigma(xi^3)....sigma(xi^2n)
+      }
+      //B is the Normal matrix(augmented) that will store the equations, 'a' is for value of the final coefficients
+      Eigen::MatrixXf B(n+1,n+2);
+      for (i=0;i<=n;i++)
+        for (j=0;j<=n;j++)
+            B(i,j)=X(i+j);            //Build the Normal matrix by storing the corresponding coefficients at the right positions except the last column of the matrix
+      Eigen::VectorXf Y(n+1);                    //Array to store the values of sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
+      for (i=0;i<n+1;i++){
+        Y(i)=0;
+        for (j=0;j<N;j++)
+        Y(i)=Y(i)+powf(x(j),i)*y(j);        //consecutive positions will store sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
+      }
+      for (i=0;i<=n;i++)
+        B(i,n+1)=Y(i);                //load the values of Y as the last column of B(Normal Matrix but augmented)
+
+      for (i=0;i<n+1;i++)                    //From now Gaussian Elimination starts(can be ignored) to solve the set of linear equations (Pivotisation)
+        for (k=i+1;k<n+1;k++)
+            if (B(i,i)<B(k,i))
+                for (j=0;j<=n+1;j++){
+                    float temp=B(i,j);
+                    B(i,j)=B(k,j);
+                    B(k,j)=temp;
+                }
+      for (i=0;i<n;i++)            //loop to perform the gauss elimination
+        for (k=i+1;k<n+1;k++){
+                float t=B(k,i)/B(i,i);
+                for (j=0;j<=n+1;j++)
+                    B(k,j)=B(k,j)-t*B(i,j);    //make the elements below the pivot elements equal to zero or elimnate the variables
+            }
+      for (i=n;i>=0;i--){                //back-substitution
+        a(i)=B(i,n+1);                //make the variable to be calculated equal to the rhs of the last equation
+        for (j=0;j<n+1;j++)
+            if (j!=i)            //then subtract all the lhs values except the coefficient of the variable whose value is being calculated
+                a(i)=a(i)-B(i,j)*a(j);
+        a(i)=a(i)/B(i,i);            //now finally divide the rhs by the coefficient of the variable to be calculated
+      }
+
+      R.resize(x.size()); // stores curvatures
+      for(uint32_t m=0; m<R.size();m++){
+        R[m] = 1/std::abs(2*a(2)+6*a(3)*x(m))/powf(1+powf(a(1)+2*a(2)*x(m)+3*a(3)*powf(x(m),2),2),1.5);
+      }
+      curveRadii.insert(curveRadii.end(), R.begin(), R.end());
+    } // end p-loop
+  } // end P-loop
+  return curveRadii;
+} // end curvaturePolyFit
 
 
-
-
-
-}
+} // end namespace
 }
 }
 }
