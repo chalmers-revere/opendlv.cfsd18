@@ -29,7 +29,7 @@ services:
     sim-global:
         image: chalmersrevere/opendlv-sim-global-amd64:v0.0.5
         network_mode: "host"
-        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=1 --frame-id=0 --x=-72.0 --y=38.0 --yaw=1.047197551"
+        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=0 --x=0.0 --y=1.5 --yaw=-2.356 --verbose=1"
 
 
     # microservice for ...
@@ -48,7 +48,7 @@ services:
             - odsupercomponent
         volumes:
         - .:/opt/opendlv.data
-        command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-perception-detectcone --cid=${CID} --verbose=1 --id=1 --freq=1"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-perception-detectcone --cid=${CID} --verbose=50 --id=1 --freq=1"
 
     # microservice for ...
     logic-cfsd18-cognition-track:
@@ -59,11 +59,11 @@ services:
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-cognition-track --cid=${CID} --verbose=1 --id=1"
 
     sim-lynx-vehicle:
-        image: seresearch/opendlv-lynx-on-opendlv-core-on-opendavinci-on-base
+        image: seresearch/opendlv-lynx-on-opendlv-core-on-opendavinci-on-base:latest
         network_mode: "host"
         depends_on:
             - odsupercomponent
-        command: "/opt/opendlv.lynx/bin/opendlv-sim-lynx-bicyclemodel --cid=${CID} --freq=1"
+        command: "/opt/opendlv.lynx/bin/opendlv-sim-lynx-bicyclemodel --cid=${CID} --freq=100 --verbose=1"
 
     ui-default:
 #        image: chalmersrevere/opendlv-ui-default-amd64

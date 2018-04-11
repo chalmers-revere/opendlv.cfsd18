@@ -1,9 +1,9 @@
 sim-cfsd18-perception-detectcone.detectRange = 11.5
 sim-cfsd18-perception-detectcone.detectWidth = 5.0
-sim-cfsd18-perception-detectcone.mapFilename = trackdrive_cones_dense.csv
-sim-cfsd18-perception-detectcone.startX = -61.0
-sim-cfsd18-perception-detectcone.startY = 57.0
-sim-cfsd18-perception-detectcone.startHeading = 0.523598333
+sim-cfsd18-perception-detectcone.mapFilename = trackdrive_cones_normalized.csv
+sim-cfsd18-perception-detectcone.startX = 0.0
+sim-cfsd18-perception-detectcone.startY = 1.5
+sim-cfsd18-perception-detectcone.startHeading = -2.356
 
 sim-lynx-bicyclemodel.mass = 188.0
 sim-lynx-bicyclemodel.momentOfInertiaZ = 105.0

@@ -88,7 +88,7 @@ void DetectConeLane::nextContainer(odcore::data::Container &a_container)
         m_coneCollector(0,objectId) = coneDirection.getAzimuthAngle();
 	    m_coneCollector(1,objectId) = coneDirection.getZenithAngle();
 	    coneNum++;
-	    
+
 	}
 
 	if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID()){
@@ -145,16 +145,16 @@ if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID
 
 	//std::cout << "FRAME: " << m_newFrame << std::endl;
    /* if (newFrameDir){
-      
+
       std::thread coneCollector (&DetectConeLane::initializeCollection,this);
       coneCollector.detach();
-      
-    } 
+
+    }
    */
 }
 
 else if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID()){
-    
+
     m_lastTimeStamp = a_container.getSampleTimeStamp();
     auto coneDistance = a_container.getData<opendlv::logic::perception::ObjectDistance>();
     uint32_t objectId = coneDistance.getObjectId();
@@ -163,7 +163,7 @@ else if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance:
       odcore::base::Lock lockCone(m_coneMutex);
       m_coneCollector(2,objectId) = coneDistance.getDistance();
       m_lastObjectId = (m_lastObjectId<objectId)?(objectId):(m_lastObjectId);
-	
+
 	//std::cout << "FRAME BEFORE LOCAL: " << m_newFrame << std::endl;
     //newFrameDist = m_newFrame;
       m_newFrame = false;
@@ -181,20 +181,20 @@ else if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance:
   }
 
   else if(a_container.getDataType() == opendlv::logic::perception::ObjectType::ID()){
-    
+
     //std::cout << "Recieved Type" << std::endl;
     m_lastTimeStamp = a_container.getSampleTimeStamp();
     auto coneType = a_container.getData<opendlv::logic::perception::ObjectType>();
     uint32_t objectId = coneType.getObjectId();
     m_lastTypeId = objectId;
   //bool newFrameType =false;
-    {          
+    {
       odcore::base::Lock lockCone(m_coneMutex);
       m_lastObjectId = (m_lastObjectId<objectId)?(objectId):(m_lastObjectId);
       auto type = coneType.getType();
       m_coneCollector(3,objectId) = type;
 std::cout << "Recieved Type " << type << std::endl;
-      
+
       if(type == 1){ m_nLeft++; }
       else if(type == 2){ m_nRight++; }
       else if(type == 3){ m_nSmall++; }
@@ -249,7 +249,7 @@ void DetectConeLane::initializeCollection(){
 
   {
     odcore::base::Lock lockCone(m_coneMutex);
-    
+
 	std::cout << "FRAME IN LOCK: " << m_newFrame << std::endl;
     extractedCones = m_coneCollector.leftCols(m_lastObjectId+1);
 //extractedCones = m_coneCollector.leftCols(m_nLeft+m_nRight+m_nSmall+m_nBig);
@@ -273,7 +273,7 @@ std::cout << "extractedCones: " << extractedCones.transpose() << std::endl;
   if(extractedCones.cols() > 0){
     //std::cout << "Extracted Cones " << std::endl;
     //std::cout << extractedCones << std::endl;
-    
+
     DetectConeLane::sortIntoSideArrays(extractedCones, nLeft, nRight, nSmall, nBig);
 
   }
@@ -451,7 +451,7 @@ for(int i = 0; i < nMidPoints; i = i+1)
   // on that place of the segment. If not, place the point on the cone. If it's the first or last cone there is only one segment to check
   if(closestConeIndex == 0)
   {
-    
+
     if(shortSide.rows() > 1)
     {
       factor = findFactorToClosestPoint(shortSide.row(0),shortSide.row(1),virtualPointsLong.row(i));
@@ -530,6 +530,8 @@ else
 
   virtualPointsLongFinal.bottomRows(1) = virtualPointsLong.row(nLong-1) + 0.01*lastVecLong;
   virtualPointsShortFinal.bottomRows(1) = virtualPointsShort.row(nShort-1) + 0.01*lastVecShort;
+  std::cout<<"virtualPointsLongFinal.bottomRows(1) =" << virtualPointsLongFinal.bottomRows(1)<<"\n";
+  std::cout<<"virtualPointsShortFinal.bottomRows(1) =" << virtualPointsShortFinal.bottomRows(1)<<"\n";
 }
 
 DetectConeLane::sendMatchedContainer(virtualPointsLongFinal, virtualPointsShortFinal);
@@ -823,7 +825,7 @@ for(int i = 0; i < nConesLong; i = i+1)
       shortestDist = tmpDist;
     } // End of if
   } // End of for
-  
+
 
   // If the closest cone is not valid, create cone guesses perpendicular to both segments connected to the current cone.
   // If it's the first or last cone, there is only on segment available.
@@ -974,7 +976,7 @@ std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
 
     //std::cout << "Cones " << std::endl;
     //std::cout << coneLocal << std::endl;
-    
+
 /*
     // the following code only for test
     // manually set left cones and right cones
@@ -1118,7 +1120,7 @@ location << 0,0;
 
 
 MatrixXf coneLeft_f = coneLeft.cast <float> ();
-MatrixXf coneRight_f = coneRight.cast <float> (); 
+MatrixXf coneRight_f = coneRight.cast <float> ();
 
 ArrayXXf sideLeft = coneLeft_f.transpose().array();
 ArrayXXf sideRight = coneRight_f.transpose().array();
@@ -1153,8 +1155,8 @@ generateSurfaces(sideLeft, sideRight, location);
 
 
     }
-    
-}    
+
+}
 
 void DetectConeLane::sendMatchedContainer(Eigen::ArrayXXf virtualPointsLong, Eigen::ArrayXXf virtualPointsShort)
 {
@@ -1193,4 +1195,3 @@ for(int n = 0; n < nSurfaces; n++){
 }
 }
 }
-
