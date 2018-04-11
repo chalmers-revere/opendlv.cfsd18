@@ -254,6 +254,9 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   }
   else{
     step = 5; //TODO add as config
+    while (localPath.rows()-(2*step)<=0){
+      step--;
+    }
     curveRadii = curvatureTriCircle(localPath,step);
   }
   float g = 9.81f;
@@ -291,7 +294,7 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   float accelerationRequest = (desiredVelocity-groundSpeedCopy)/(2.0f*distanceToAimVelocity); // TODO use ax directly?
   // Limit acceleration request for positive acceleration
   if (accelerationRequest > 0.0f && (sqrtf(powf(powf(speedProfile(0),2)/curveRadii[0],2)+powf(accelerationRequest,2)) >= powf(g*mu,2) || accelerationRequest > axLimitPositive)) {
-    accelerationRequest = std::min((sqrtf(powf(g*mu,2)-powf(powf(speedProfile(0),2)/curveRadii[0],2)))*0.9,axLimitPositive); //0.9 is a safetyfactor since ax must be less than rhs
+    accelerationRequest = std::min((sqrtf(powf(g*mu,2)-powf(powf(speedProfile(0),2)/curveRadii[0],2)))*0.9f,axLimitPositive); //0.9 is a safetyfactor since ax must be less than rhs
   }
   // Limit acceleration request for negative acceleration
   if (accelerationRequest < 0.0f && (sqrtf(powf(powf(speedProfile(0),2)/curveRadii[0],2)+powf(accelerationRequest,2)) >= powf(g*mu,2) || accelerationRequest < axLimitNegative)) {
