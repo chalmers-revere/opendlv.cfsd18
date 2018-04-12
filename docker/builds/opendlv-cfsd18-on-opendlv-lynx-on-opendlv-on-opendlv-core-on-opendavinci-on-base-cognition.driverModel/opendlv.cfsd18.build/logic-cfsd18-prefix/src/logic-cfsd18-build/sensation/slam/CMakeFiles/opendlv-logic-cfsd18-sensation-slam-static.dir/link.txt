@@ -1,0 +1,2 @@
+/usr/bin/ar qc libopendlv-logic-cfsd18-sensation-slam-static.a  CMakeFiles/opendlv-logic-cfsd18-sensation-slam-static.dir/src/slam.cpp.o
+/usr/bin/ranlib libopendlv-logic-cfsd18-sensation-slam-static.a

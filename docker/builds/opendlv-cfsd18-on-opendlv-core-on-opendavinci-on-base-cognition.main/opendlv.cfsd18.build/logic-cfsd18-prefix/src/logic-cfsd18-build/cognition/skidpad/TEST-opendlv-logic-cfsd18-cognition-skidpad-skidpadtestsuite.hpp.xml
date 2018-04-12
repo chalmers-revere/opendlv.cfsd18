@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites>
+<testsuite name="opendlv-logic-cfsd18-cognition-skidpad-skidpadtestsuite.hpp" tests="1" failures="0" errors="0" time="0" timestamp="Thu Apr 12 10:35:44 2018" file="/opt/opendlv.cfsd18.sources/code/logic-cfsd18/cognition/skidpad/testsuites/skidpadtestsuite.hpp" >
+    <testcase name="testApplication" classname="SkidpadTest" line="36" >    </testcase>
+</testsuite>
+</testsuites>

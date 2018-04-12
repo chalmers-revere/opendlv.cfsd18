@@ -1,0 +1,2 @@
+/usr/bin/ar qc libopendlv-logic-cfsd18-sensation-attention-static.a  CMakeFiles/opendlv-logic-cfsd18-sensation-attention-static.dir/src/attention.cpp.o
+/usr/bin/ranlib libopendlv-logic-cfsd18-sensation-attention-static.a

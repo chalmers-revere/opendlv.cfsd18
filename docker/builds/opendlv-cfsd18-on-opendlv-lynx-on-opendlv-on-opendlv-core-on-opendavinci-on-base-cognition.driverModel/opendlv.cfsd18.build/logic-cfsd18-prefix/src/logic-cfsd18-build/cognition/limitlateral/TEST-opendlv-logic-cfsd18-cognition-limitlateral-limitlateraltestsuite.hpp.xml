@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites>
+<testsuite name="opendlv-logic-cfsd18-cognition-limitlateral-limitlateraltestsuite.hpp" tests="1" failures="0" errors="0" time="0" timestamp="Wed Mar 28 12:45:45 2018" file="/opt/opendlv.cfsd18.sources/code/logic-cfsd18/cognition/limitlateral/testsuites/limitlateraltestsuite.hpp" >
+    <testcase name="testApplication" classname="LimitLateralTest" line="36" >    </testcase>
+</testsuite>
+</testsuites>

@@ -19,9 +19,9 @@ var g_scrollY = 0;
 var g_walls = [];
 
 
-var g_scaleSim = 7;
-var g_scrollXSim = -880;
-var g_scrollYSim = -480;
+var g_scaleSim = 100;
+var g_scrollXSim = 0;
+var g_scrollYSim = 0;
 
 
 function setupSimulationView() {
@@ -67,10 +67,21 @@ map.trim().split("\n").forEach(function(wall) {
           if (g_scale > 500) {
             g_scale = 500;
           }
+
+          g_scaleSim += deltaY;
+          if (g_scaleSim < 10) {
+            g_scaleSim = 10;
+          }
+          if (g_scaleSim > 500) {
+            g_scaleSim = 500;
+          }
         } else {
           g_scrollX += deltaX;
           g_scrollY += deltaY;
+          g_scrollXSim += deltaX;
+          g_scrollYSim += deltaY;
         }
+
 
         clickX = e.pageX;
         clickY = e.pageY;
@@ -98,8 +109,8 @@ function addSimulationViewData(data) {
     const y = data["opendlv_sim_Frame"]["y"];
     const yaw = data["opendlv_sim_Frame"]["yaw"];
 
-    const width = 0.16;
-    const length = 0.36;
+    const width = 1.3;
+    const length = 2;
 
     var canvas = document.getElementById("simulation-canvas");
     var context = canvas.getContext("2d");
@@ -107,6 +118,8 @@ function addSimulationViewData(data) {
     if (g_centerNext) {
       g_scrollX = -canvas.width / 2;
       g_scrollY = -canvas.height / 2;
+      g_scrollXSim = -canvas.width / 2;
+      g_scrollYSim = -canvas.height / 2;
       g_centerNext = false;
     }
 
@@ -155,20 +168,20 @@ function addSimulationViewData(data) {
     }
     */
     for (const wallKey in g_walls) {
-      const sx1 = g_scaleSim * g_walls[wallKey][0] - g_scrollX;
-      const sy1 = -g_scaleSim * g_walls[wallKey][1] - g_scrollY;
+      const sx1 = g_scaleSim * g_walls[wallKey][0] - g_scrollXSim;
+      const sy1 = -g_scaleSim * g_walls[wallKey][1] - g_scrollYSim;
       const type = g_walls[wallKey][2];
 
       //context.lineWidth = "0.1";
       context.beginPath();
       if(type == 1){
-        context.strokeStyle = "blue";
+        context.fillStyle = "#003cb3";
       }
       if(type == 2){
-        context.strokeStyle = "yellow";
+        context.fillStyle = "#ffbf00";
       }
       context.save();
-      context.rect(sx1, sy1, 6, 6);
+      context.fillRect(sx1, sy1, 6, 6);
       context.stroke();
       context.restore();
     }

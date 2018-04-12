@@ -1,0 +1,2 @@
+/usr/bin/ar qc libopendlv-sim-cfsd18-perception-detectcone-static.a  CMakeFiles/opendlv-sim-cfsd18-perception-detectcone-static.dir/src/detectcone.cpp.o
+/usr/bin/ranlib libopendlv-sim-cfsd18-perception-detectcone-static.a
