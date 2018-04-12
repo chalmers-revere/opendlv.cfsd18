@@ -29,7 +29,7 @@ services:
     sim-global:
         image: chalmersrevere/opendlv-sim-global-amd64:v0.0.5
         network_mode: "host"
-        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=0 --x=0.0 --y=1.5 --yaw=-2.356"
+        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=0 --x=-4.14 --y=50.209 --yaw=-0.785"
 
 
     # microservice for ...

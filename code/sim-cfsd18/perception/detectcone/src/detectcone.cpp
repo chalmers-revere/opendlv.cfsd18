@@ -103,21 +103,17 @@ float detectWidth = 5;
 //DetectCone::readMap(filename);
 
   if (a_container.getDataType() == opendlv::sim::Frame::ID()) {
-    std::cout << "RECIEVED NEW COORDINATES" << std::endl;
     auto frame = a_container.getData<opendlv::sim::Frame>();
     float x = frame.getX();
     float y = frame.getY();
     float yaw = frame.getYaw();
     m_location << x,y;
     m_heading = yaw;
-    std::cout << "New location: " << m_location << std::endl;
-    std::cout << "New heading: " << m_heading << std::endl;
   }
 }
 
 odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
 {
-std::cout << "DetectCone body" << std::endl;
   auto kv = getKeyValueConfiguration();
   float const detectRange = kv.getValue<float>("sim-cfsd18-perception-detectcone.detectRange");
   float const detectWidth = kv.getValue<float>("sim-cfsd18-perception-detectcone.detectWidth");
@@ -128,11 +124,9 @@ std::cout << "DetectCone body" << std::endl;
     ArrayXXf detectedConesRight = DetectCone::simConeDetectorBox(m_rightCones, m_location, m_heading, detectRange, detectWidth);
 // -- TODO: Add detection of orange cones --
 
-std::cout << "Exited detectors" << std::endl;
-
     // This is where the messages are (hopefully) sent
     MatrixXd detectedConesLeftMat = ((detectedConesLeft.matrix()).transpose()).cast <double> ();
-    MatrixXd detectedConesRightMat = ((detectedConesRight.matrix()).transpose()).cast <double> (); 
+    MatrixXd detectedConesRightMat = ((detectedConesRight.matrix()).transpose()).cast <double> ();
 // -- TODO: Add support for orange cones --
 
     opendlv::logic::perception::Object numberOfCones;
@@ -140,7 +134,7 @@ std::cout << "Exited detectors" << std::endl;
 // -- TODO: Add support for orange cones --
     odcore::data::Container c0(numberOfCones);
     c0.setSenderStamp(m_senderStamp);
-    getConference().send(c0);    
+    getConference().send(c0);
 
     int type = 1;
     auto startLeft = std::chrono::system_clock::now();
@@ -150,7 +144,7 @@ std::cout << "Exited detectors" << std::endl;
 // -- TODO: Send messages for orange cones --
     auto finishRight = std::chrono::system_clock::now();
     auto timeSend = std::chrono::duration_cast<std::chrono::microseconds>(finishRight - startLeft);
-    std::cout << "sendTIme:" << timeSend.count() << std::endl;
+    std::cout << "sendTime:" << timeSend.count() << std::endl;
 
     //std::cout << "detectedConesLeftMat: " << detectedConesLeftMat.transpose() << std::endl;
     //std::cout << "detectedConesRightMat: " << detectedConesRightMat.transpose() << std::endl;
@@ -173,13 +167,13 @@ void DetectCone::setUp()
 
   std::string const filename = kv.getValue<std::string>("sim-cfsd18-perception-detectcone.mapFilename");
   DetectCone::readMap(filename);
-  
+
   //std::cout << "Left: " << m_leftCones << std::endl;
   //std::cout << "Right: " << m_rightCones << std::endl;
-  std::cout << "Small: " << m_smallCones << std::endl;
-  std::cout << "Big: " << m_bigCones << std::endl;
+  //std::cout << "Small: " << m_smallCones << std::endl;
+  //std::cout << "Big: " << m_bigCones << std::endl;
 
-  // std::string const exampleConfig = 
+  // std::string const exampleConfig =
   //   getKeyValueConfiguration().getValue<std::string>(
   //     "logic-cfsd18-perception-detectcone.example-config");
 
@@ -211,7 +205,7 @@ void DetectCone::readMap(std::string filename)
     while(getline(file,line))
     {
       std::stringstream strstr(line);
-    
+
       getline(strstr,word,',');
       getline(strstr,word,',');
       getline(strstr,word,',');
@@ -221,7 +215,7 @@ void DetectCone::readMap(std::string filename)
       else if(word.compare("3") == 0){smallCounter = smallCounter+1;}
       else if(word.compare("4") == 0){bigCounter = bigCounter+1;}
       else{std::cout << "ERROR in DetectCone::simDetectCone while counting types. Not a valid cone type." << std::endl;}
-      
+
     }
     file.close();
   }
@@ -287,8 +281,6 @@ ArrayXXf DetectCone::simConeDetectorBox(ArrayXXf globalMap, ArrayXXf location, f
   // Input: Positions of cones and vehicle, heading angle, detection ranges forward and to the side
   // Output: Local coordinates of the cones within the specified area
 
-std::cout << "Entered detector " << std::endl;
-
 int nCones = globalMap.rows();
 
 MatrixXf rotationMatrix(2,2);
@@ -329,6 +321,7 @@ return detectedConesFinal;
 
 void DetectCone::sendMatchedContainer(Eigen::MatrixXd cones, int type, int startID)
 {
+std::cout << "New location: " << m_location << " and heading: " << m_heading << std::endl;
 std::cout << "Sending " << cones.cols() << " of type " << type << std::endl;
   opendlv::logic::sensation::Point conePoint;
   for(int n = 0; n < cones.cols(); n++){

@@ -193,7 +193,6 @@ else if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance:
       m_lastObjectId = (m_lastObjectId<objectId)?(objectId):(m_lastObjectId);
       auto type = coneType.getType();
       m_coneCollector(3,objectId) = type;
-std::cout << "Recieved Type " << type << std::endl;
 
       if(type == 1){ m_nLeft++; }
       else if(type == 2){ m_nRight++; }
@@ -250,7 +249,6 @@ void DetectConeLane::initializeCollection(){
   {
     odcore::base::Lock lockCone(m_coneMutex);
 
-	std::cout << "FRAME IN LOCK: " << m_newFrame << std::endl;
     extractedCones = m_coneCollector.leftCols(m_lastObjectId+1);
 //extractedCones = m_coneCollector.leftCols(m_nLeft+m_nRight+m_nSmall+m_nBig);
 std::cout << "members: " << m_nLeft << " " << m_nRight << " " << m_nSmall << " " << m_nBig << std::endl;
@@ -762,7 +760,7 @@ ArrayXXf DetectConeLane::orderAndFilterCones(ArrayXXf cones, ArrayXXf vehicleLoc
     // If no remaining cone was accepted, the algorithm finishes early
     if(closestConeIndex == -1)
     {
-std::cout << "I BREAK NOW" << std::endl;
+std::cout << "Remove invalid cones" << std::endl;
       break;
     } // End of if
 
