@@ -281,7 +281,6 @@ std::cout << "extractedCones: " << extractedCones.transpose() << std::endl;
 }
 
 void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, ArrayXXf location){
-
   float distanceThreshold = 3.5; // TODO: Set in configuration
   float guessDistance = 3.0;
 
@@ -293,7 +292,8 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
 
   ArrayXXf longSide;
   ArrayXXf shortSide;
-  if(pathLengthLeft > pathLengthRight)
+  bool leftIsLong = pathLengthLeft > pathLengthRight;
+  if(leftIsLong)
   {
     ArrayXXf tmpLongSide = orderedConesLeft;
     ArrayXXf tmpShortSide = DetectConeLane::insertNeededGuessedCones(orderedConesLeft, orderedConesRight, location, distanceThreshold,  guessDistance, false);
@@ -315,7 +315,8 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
     shortSide.resize(tmpShortSide.rows(),tmpShortSide.cols());
     shortSide = tmpShortSide;
   } // End of else
-
+  std::cout<<"longSide accepted cones: "<<longSide<<"\n";
+  std::cout<<"shortSide accepted cones: "<<shortSide<<"\n";
   if(longSide.rows() > 1)
   {
     // findSafeLocalPath ends with sending surfaces
@@ -324,6 +325,80 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
   else
   {
     // TODO: In here a special case surface should be sent
+    if(longSide.rows() == 0)
+    { std::cout<<"No Cones"<<"\n";
+      //No cones
+      opendlv::logic::perception::GroundSurface surface;
+      surface.setSurfaceId(1);
+      odcore::data::Container cStop1(surface);
+      getConference().send(cStop1);
+
+      opendlv::logic::perception::GroundSurfaceArea surfaceArea;
+      surfaceArea.setSurfaceId(0);
+      surfaceArea.setX1(1.0f);
+      surfaceArea.setY1(0.0f);
+      surfaceArea.setX2(1.0f);
+      surfaceArea.setY2(0.0f);
+      surfaceArea.setX3(0.0f);
+      surfaceArea.setY3(0.0f);
+      surfaceArea.setX4(0.0f);
+      surfaceArea.setY4(0.0f);
+      odcore::data::Container cStop2(surfaceArea);
+      getConference().send(cStop2);
+    }
+    else if(longSide.rows() == 1 && shortSide.rows() == 0)
+    { std::cout<<"1 Cone"<<"\n";
+      // 1 cone
+      int direction;
+      if(leftIsLong)
+      {
+        direction = 1;
+      }
+      else
+      {
+        direction = -1;
+      }
+
+      opendlv::logic::perception::GroundSurface surface;
+      surface.setSurfaceId(1);
+      odcore::data::Container cGo1(surface);
+      getConference().send(cGo1);
+
+      opendlv::logic::perception::GroundSurfaceArea surfaceArea;
+      surfaceArea.setSurfaceId(0);
+      surfaceArea.setX1(0.0f);
+      surfaceArea.setY1(0.0f);
+      surfaceArea.setX2(0.0f);
+      surfaceArea.setY2(0.0f);
+      surfaceArea.setX3(longSide(0,0));
+      surfaceArea.setY3(longSide(0,1)+1.5f*direction);
+      surfaceArea.setX4(shortSide(0,0));
+      surfaceArea.setY4(shortSide(0,1)+1.5f*direction);
+      odcore::data::Container cGo2(surfaceArea);
+      getConference().send(cGo2);
+
+    }
+    else
+    { std::cout<<"1 on each side"<<"\n";
+      //1 on each side
+      opendlv::logic::perception::GroundSurface surface;
+      surface.setSurfaceId(1);
+      odcore::data::Container cGo3(surface);
+      getConference().send(cGo3);
+
+      opendlv::logic::perception::GroundSurfaceArea surfaceArea;
+      surfaceArea.setSurfaceId(0);
+      surfaceArea.setX1(0.0f);
+      surfaceArea.setY1(0.0f);
+      surfaceArea.setX2(0.0f);
+      surfaceArea.setY2(0.0f);
+      surfaceArea.setX3(longSide(0,0));
+      surfaceArea.setY3(longSide(0,1));
+      surfaceArea.setX4(shortSide(0,0));
+      surfaceArea.setY4(shortSide(0,1));
+      odcore::data::Container cGo4(surfaceArea);
+      getConference().send(cGo4);
+    }
 
   } // End of else
 } // End of generateSurfaces
@@ -450,6 +525,7 @@ void DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePoi
     // Number of points is odd. Add another point with tiny extrapolation in the end.
     int nLong = virtualPointsLong.rows();
     int nShort = virtualPointsShort.rows();
+
     virtualPointsLongFinal.resize(nLong+1,2);
     virtualPointsShortFinal.resize(nShort+1,2);
 
@@ -458,13 +534,9 @@ void DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePoi
 
     ArrayXXf lastVecLong = virtualPointsLong.row(nLong-1)-virtualPointsLong.row(nLong-2);
     lastVecLong = lastVecLong / ((lastVecLong.matrix()).norm());
-    ArrayXXf lastVecShort = virtualPointsShort.row(nLong-1)-virtualPointsShort.row(nLong-2);
-    lastVecShort = lastVecShort / ((lastVecShort.matrix()).norm());
 
     virtualPointsLongFinal.bottomRows(1) = virtualPointsLong.row(nLong-1) + 0.01*lastVecLong;
-    virtualPointsShortFinal.bottomRows(1) = virtualPointsShort.row(nShort-1) + 0.01*lastVecShort;
-    std::cout<<"virtualPointsLongFinal.bottomRows(1) =" << virtualPointsLongFinal.bottomRows(1)<<"\n";
-    std::cout<<"virtualPointsShortFinal.bottomRows(1) =" << virtualPointsShortFinal.bottomRows(1)<<"\n";
+    virtualPointsShortFinal.bottomRows(1) = virtualPointsShort.row(nShort-1);
   } // End of else
 
   DetectConeLane::sendMatchedContainer(virtualPointsLongFinal, virtualPointsShortFinal);
@@ -592,13 +664,11 @@ ArrayXXf DetectConeLane::orderCones(ArrayXXf cones, ArrayXXf vehicleLocation)
 {
   // Input: Cone and vehicle positions in the same coordinate system
   // Output: The cones in order
-
   int nCones = cones.rows();
   ArrayXXf current = vehicleLocation;
   ArrayXXf found(nCones,1);
   found.fill(-1);
   ArrayXXf orderedCones(nCones,2);
-
   float shortestDist;
   float tmpDist;
   int closestConeIndex;
@@ -606,6 +676,7 @@ ArrayXXf DetectConeLane::orderCones(ArrayXXf cones, ArrayXXf vehicleLocation)
   // The first chosen cone is the one closest to the vehicle. After that it continues with the closest neighbour
   for(int i = 0; i < nCones; i = i+1)
   {
+
     shortestDist = std::numeric_limits<float>::infinity();
     // Find closest cone to the last chosen cone
     for(int j = 0; j < nCones; j = j+1)
@@ -624,13 +695,11 @@ ArrayXXf DetectConeLane::orderCones(ArrayXXf cones, ArrayXXf vehicleLocation)
     found(i) = closestConeIndex;
     current = cones.row(closestConeIndex);
   } // End of for
-
   // Rearrange cones to have the order of found
   for(int i = 0; i < nCones; i = i+1)
   {
     orderedCones.row(i) = cones.row(found(i));
   } // End of for
-
   return orderedCones;
 } // End of orderCones
 
@@ -717,10 +786,9 @@ ArrayXXf DetectConeLane::insertNeededGuessedCones(ArrayXXf longSide, ArrayXXf sh
 {
   // Input: Both cone sides, vehicle position, two distance values and if the guesses should be on the left side
   // Output: The new ordered short side with mixed real and guessed cones
-
   int nConesLong = longSide.rows();
   int nConesShort = shortSide.rows();
-  ArrayXXf guessedCones(2*nConesLong-2,2); // 2n-2 is the number of guesses if all known cones need guessed matches
+  ArrayXXf guessedCones(std::max(2*nConesLong-2,0),2); // 2n-2 is the number of guesses if all known cones need guessed matches
 
   float shortestDist, tmpDist;
   ArrayXXf guess(1,2);
@@ -773,6 +841,7 @@ ArrayXXf DetectConeLane::insertNeededGuessedCones(ArrayXXf longSide, ArrayXXf sh
   ArrayXXf realAndGuessedCones(nConesShort+nGuessedCones,2);
   realAndGuessedCones.topRows(nConesShort) = shortSide;
   realAndGuessedCones.bottomRows(nGuessedCones) = guessedConesFinal;
+
   ArrayXXf newShortSide = orderCones(realAndGuessedCones,vehicleLocation);
 
   return newShortSide;
@@ -860,7 +929,6 @@ float DetectConeLane::findFactorToClosestPoint(ArrayXXf p1, ArrayXXf p2, ArrayXX
 void DetectConeLane::sortIntoSideArrays(MatrixXd extractedCones, int nLeft, int nRight, int nSmall, int nBig)
 {
 
-std::cout << nLeft << " " << nRight << " " << nSmall << " " << nBig << std::endl;
   int coneNum = extractedCones.cols();
   //Convert to cartesian
   Eigen::MatrixXd cone;
@@ -872,8 +940,8 @@ std::cout << nLeft << " " << nRight << " " << nSmall << " " << nBig << std::endl
   }
 std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
 
-  if(nLeft > 1 || nRight > 1 )
-  {
+  //if(nLeft > 1 || nRight > 1 )
+  //{
 
     Eigen::MatrixXd coneLeft = Eigen::MatrixXd::Zero(2,nLeft);
     Eigen::MatrixXd coneRight = Eigen::MatrixXd::Zero(2,nRight);
@@ -909,12 +977,6 @@ std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
       }
     } // End of for
 
-    /*
-    std::cout << "Left " << std::endl;
-    std::cout << coneLeft << std::endl;
-    std::cout << "Right " << std::endl;
-    std::cout << coneRight << std::endl;
-    */
 
     ArrayXXf location(1,2);
     location << 0,0;
@@ -927,7 +989,7 @@ std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
 // -- TODO: Add sending messages for orange cones --
     generateSurfaces(sideLeft, sideRight, location);
 
-  } // End of if
+  //} // End of if
 } // End of sortIntoSideArrays
 
 

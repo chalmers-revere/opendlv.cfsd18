@@ -55,12 +55,12 @@ class Track : public odcore::base::module::DataTriggeredConferenceClientModule {
   float m_groundSpeed;
   Eigen::MatrixXf m_surfaceCollector;
   bool m_newFrame;
-  uint32_t m_lastObjectId;
+  int m_lastObjectId;
   float m_timeDiffMilliseconds;
   odcore::base::Mutex m_groundSpeedMutex;
   odcore::base::Mutex m_surfaceMutex;
   odcore::base::Mutex m_pathMutex;
-  uint32_t m_surfacesInFrame;
+  int m_surfacesInFrame;
 };
 
 }
