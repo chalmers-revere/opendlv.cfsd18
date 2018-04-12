@@ -67,7 +67,7 @@ services:
 
     ui-default:
 #        image: chalmersrevere/opendlv-ui-default-amd64
-        image: ziwei000/opendlv-ui-default:v0.0.1
+        image: opendlv-ui-default:v0.0.1
         network_mode: "host"
         volumes:
         - ./simulation-map.txt:/srv/http/simulation-map.txt
