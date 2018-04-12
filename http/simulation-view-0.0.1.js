@@ -71,7 +71,7 @@ map.trim().split("\n").forEach(function(wall) {
           g_scrollX += deltaX;
           g_scrollY += deltaY;
         }
-     
+
         clickX = e.pageX;
         clickY = e.pageY;
       }
@@ -100,7 +100,7 @@ function addSimulationViewData(data) {
 
     const width = 0.16;
     const length = 0.36;
-    
+
     var canvas = document.getElementById("simulation-canvas");
     var context = canvas.getContext("2d");
 
@@ -134,17 +134,17 @@ function addSimulationViewData(data) {
     context.lineTo(hslength, 0);
 
     context.strokeStyle = "red";
-    
+
     context.stroke();
     context.restore();
-    
+
     /*
     for (const wallKey in g_walls) {
       const sx1 = g_scale * g_walls[wallKey][0] - g_scrollX;
       const sy1 = -g_scale * g_walls[wallKey][1] - g_scrollY;
       const sx2 = g_scale * g_walls[wallKey][2] - g_scrollX;
       const sy2 = -g_scale * g_walls[wallKey][3] - g_scrollY;
-    
+
       context.save();
       context.beginPath();
       context.lineWidth = 5;
@@ -155,10 +155,10 @@ function addSimulationViewData(data) {
     }
     */
     for (const wallKey in g_walls) {
-      const sx1 = g_scaleSim * g_walls[wallKey][0] - g_scrollXSim;
-      const sy1 = -g_scaleSim * g_walls[wallKey][1] - g_scrollYSim;
+      const sx1 = g_scaleSim * g_walls[wallKey][0] - g_scrollX;
+      const sy1 = -g_scaleSim * g_walls[wallKey][1] - g_scrollY;
       const type = g_walls[wallKey][2];
-    
+
       //context.lineWidth = "0.1";
       context.beginPath();
       if(type == 1){
