@@ -204,7 +204,7 @@ void Track::collectAndRun(){
         STOP = true;
         std::cout << "STOP!!! " << std::endl;
       }
-      else if(localPathCopy.rows()<3{
+      else if(localPathCopy.rows()<3){
         localPathCopy = localPath.row(1);
         std::cout << "LocalPath is now one point: " <<localPathCopy<<"\n";
       }
@@ -337,7 +337,7 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   float g = 9.81f;
   float ayLimit = mu*g*0.9f;
 
-  if (!STOP && localPath.rows > 2){
+  if (!STOP && localPath.rows() > 2){
     // Caluclate curvature of path
     bool polyFit = false; // TODO add as config
       if (polyFit){

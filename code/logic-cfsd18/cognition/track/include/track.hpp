@@ -47,7 +47,7 @@ class Track : public odcore::base::module::DataTriggeredConferenceClientModule {
 
   void collectAndRun();
   float driverModelSteering(Eigen::MatrixXf, float, float);
-  float driverModelVelocity(Eigen::MatrixXf, float, float, float, float, float, float, float);
+  float driverModelVelocity(Eigen::MatrixXf, float, float, float, float, float, float, float, bool);
   std::vector<float> curvatureTriCircle(Eigen::MatrixXf, int);
   std::vector<float> curvaturePolyFit(Eigen::MatrixXf);
 
