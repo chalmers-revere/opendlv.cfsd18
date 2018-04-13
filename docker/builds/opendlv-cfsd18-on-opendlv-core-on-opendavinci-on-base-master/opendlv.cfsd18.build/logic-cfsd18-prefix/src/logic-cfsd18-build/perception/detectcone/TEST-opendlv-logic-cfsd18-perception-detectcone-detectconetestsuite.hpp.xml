@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<testsuites>
-<testsuite name="opendlv-logic-cfsd18-perception-detectcone-detectconetestsuite.hpp" tests="1" failures="0" errors="0" time="0" timestamp="Wed Mar 28 16:21:38 2018" file="/opt/opendlv.cfsd18.sources/code/logic-cfsd18/perception/detectcone/testsuites/detectconetestsuite.hpp" >
-    <testcase name="testApplication" classname="DetectConeTest" line="36" >    </testcase>
-</testsuite>
-</testsuites>

@@ -1,2 +1,0 @@
-/usr/bin/ar qc libopendlv-logic-cfsd18-cognition-brake-static.a  CMakeFiles/opendlv-logic-cfsd18-cognition-brake-static.dir/src/brake.cpp.o
-/usr/bin/ranlib libopendlv-logic-cfsd18-cognition-brake-static.a

@@ -10,5 +10,5 @@ services:
         image: opendlv-ui-default:v0.0.1
         network_mode: "host"
         volumes:
-          - ./simulation-map.txt:/srv/http/simulation-map.txt
+          - ./simulation-map-closed-lap.txt:/srv/http/simulation-map-closed-lap.txt
         command: "--cid=111"

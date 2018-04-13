@@ -1,1 +1,0 @@
-cmd='/usr/bin/cmake;-DCMAKE_INSTALL_PREFIX=/opt/opendlv.cfsd18;-DOPENDAVINCI_DIR=/opt/od4;-DODVDOPENDLVSTANDARDMESSAGESET_DIR=/opt/opendlv.core;-DODVDCFSD18_DIR=/opt/opendlv.lynx;-DCXXTEST_INCLUDE_DIR=/opt/opendlv.cfsd18.sources/thirdparty/cxxtest;-DEIGEN3_INCLUDE_DIR=/opt/od4/include/opendavinci;-GUnix Makefiles;/opt/opendlv.cfsd18.sources/code/logic-cfsd18'

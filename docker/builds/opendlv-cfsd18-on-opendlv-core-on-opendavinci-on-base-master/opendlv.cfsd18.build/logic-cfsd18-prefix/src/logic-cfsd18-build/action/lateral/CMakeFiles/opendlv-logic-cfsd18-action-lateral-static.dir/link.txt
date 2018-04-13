@@ -1,2 +1,0 @@
-/usr/bin/ar qc libopendlv-logic-cfsd18-action-lateral-static.a  CMakeFiles/opendlv-logic-cfsd18-action-lateral-static.dir/src/lateral.cpp.o
-/usr/bin/ranlib libopendlv-logic-cfsd18-action-lateral-static.a
