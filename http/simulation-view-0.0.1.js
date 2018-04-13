@@ -102,10 +102,11 @@ map.trim().split("\n").forEach(function(wall) {
     }
   });
 }
-var headingRequest;
-var Vx;
-var Vy;
-var groundSpeed;
+var headingRequest =0;
+var Vx=0;
+var Vy=0;
+var Ax=0;
+var groundSpeed=0;
 function addSimulationViewData(data) {
   if (data.dataType == 1090){
     headingRequest = data["opendlv_proxy_GroundSteeringRequest"]["groundSteering"];
@@ -116,6 +117,12 @@ function addSimulationViewData(data) {
   if (data.dataType == 1002){
     Vx = data["opendlv_sim_KinematicState"]["vx"];
     Vy = data["opendlv_sim_KinematicState"]["vy"];
+  }
+  if (data.dataType == 1092){
+    Ax = data["opendlv_proxy_GroundAccelerationRequest"]["groundAcceleration"];
+  }
+  if (data.dataType == 1093){
+    Ax = -data["opendlv_proxy_GroundDecelerationRequest"]["groundDeceleration"];
   }
   if (data.dataType == 1001) {
     const x = data["opendlv_sim_Frame"]["x"];
@@ -173,8 +180,8 @@ function addSimulationViewData(data) {
     // Outputs
     context.fillStyle="black";
     context.font = "20px Courier New";
-    context.fillText("X: "+x+" | Y: "+y+" | Yaw: "+yaw+" | Speed: "+groundSpeed, 50, canvas.height-60);
-    context.fillText("Vx: "+Vx+" | Vy: "+Vy+" | Aim: "+headingRequest, 50, canvas.height-30);
+    context.fillText("X: "+x.toFixed(2)+" | Y: "+y.toFixed(2)+" | Yaw: "+yaw.toFixed(2)+" | Speed: "+groundSpeed.toFixed(2)+" | Ax: "+Ax.toFixed(2), 50, canvas.height-60);
+    context.fillText("Vx: "+Vx.toFixed(2)+" | Vy: "+Vy.toFixed(2)+" | Aim: "+headingRequest.toFixed(2), 50, canvas.height-30);
     //#####################
     context.restore();
 
