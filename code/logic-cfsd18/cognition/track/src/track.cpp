@@ -195,12 +195,17 @@ void Track::collectAndRun(){
     float const axLimitPositive = 1.0f; //TODO: dynamic limit?
     float const axLimitNegative = -10.0f;
     float const headingErrorDependency = 0.0f; // > 0 limits desired velocity for heading errors > 0
-
+    bool STOP = false;
     Eigen::MatrixXf localPathCopy;
     {
       odcore::base::Lock lockPath(m_pathMutex);
       if (std::abs(localPath(1,0)) <= 0.0001f && std::abs(localPath(1,1)) <= 0.0001f && localPath.rows()<3) {
         localPathCopy = localPath.row(0);
+        STOP = true;
+        std::cout << "STOP!!! " << std::endl;
+      }
+      else if(localPathCopy.rows()<3{
+        localPathCopy = localPath.row(1);
         std::cout << "LocalPath is now one point: " <<localPathCopy<<"\n";
       }
       else{
@@ -219,7 +224,7 @@ localPath = DetectConeLane::placeEquidistantPoints(localPath,false,-1,distanceBe
 */
 
     float headingRequest = Track::driverModelSteering(localPathCopy, groundSpeedCopy, previewTime);
-    float accelerationRequest = Track::driverModelVelocity(localPathCopy, groundSpeedCopy, velocityLimit, axLimitPositive, axLimitNegative, headingRequest, headingErrorDependency, mu);
+    float accelerationRequest = Track::driverModelVelocity(localPathCopy, groundSpeedCopy, velocityLimit, axLimitPositive, axLimitNegative, headingRequest, headingErrorDependency, mu, STOP);
 
 std::cout << "Sending headingRequest: " << headingRequest << std::endl;
     //opendlv::logic::action::AimPoint o1;
@@ -308,7 +313,7 @@ float Track::driverModelSteering(Eigen::MatrixXf localPath, float groundSpeedCop
   return headingRequest;
 }
 
-float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCopy, float velocityLimit, float axLimitPositive, float axLimitNegative, float headingRequest, float headingErrorDependency, float mu){
+float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCopy, float velocityLimit, float axLimitPositive, float axLimitNegative, float headingRequest, float headingErrorDependency, float mu, bool STOP){
   //driverModelVelocity calculates the desired acceleration of the CFSD18
   //vehicle.
   //
@@ -329,38 +334,23 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   Eigen::VectorXf speedProfile;
   std::vector<float> curveRadii;
   int step;
-  bool STOP = false;
   float g = 9.81f;
   float ayLimit = mu*g*0.9f;
 
-  if (localPath.rows() < 3) {
-    step = 0;
-    curveRadii.resize(localPath.rows());
-    for (uint32_t i = 0; i < localPath.rows(); i++) {
-      curveRadii[i] = 2.0f;
-    }
-  }
-
-  if (localPath.rows() < 2) {
-    STOP = true;
-    std::cout << "STOP!!! " << std::endl;
-  }
-  if (!STOP){
+  if (!STOP && localPath.rows > 2){
     // Caluclate curvature of path
     bool polyFit = false; // TODO add as config
-    if (localPath.rows()>2){
       if (polyFit){
         step = 0;
         curveRadii = curvaturePolyFit(localPath);
       }
       else{
         step = 5; //TODO add as config
-        while (localPath.rows()-(2*step)<=0 && step > 0){
+        while (localPath.rows()-(2*step)<=0 && step > 0){ //This makes sure that step is as big as possible (up to limit)
           step--;
         }
         curveRadii = curvatureTriCircle(localPath,step);
       }
-    }
     // Set velocity candidate based on expected lateral acceleration limit
     speedProfile.resize(curveRadii.size());
     for (uint32_t k = 0; k < curveRadii.size(); k++){
@@ -404,30 +394,27 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
         accelerationRequest = 0.0f;
       }
     }
+    // Limit acceleration request for negative acceleration TODO: use groundSpeed instead of speedProfile(0)?? Fails if driving too fast
+    if (accelerationRequest < 0.0f && (sqrtf(powf(powf(speedProfile(0),2)/curveRadii[0],2)+powf(accelerationRequest,2)) >= powf(g*mu,2) || accelerationRequest < axLimitNegative)) {
+      std::cout << "accelerationRequest neg limited: " << accelerationRequest << std::endl;
+      if (powf(speedProfile(0),2)/curveRadii[0] < g*mu){
+      accelerationRequest = std::max((-sqrtf(powf(g*mu,2)-powf(powf(speedProfile(0),2)/curveRadii[0],2)))*0.9f,axLimitNegative); //0.9 is a safetyfactor since ax must be less than rhs
+      }
+      else{
+        std::cout<<"Fuck it, we are already sliding, BREAK HARD"<<"\n";
+        accelerationRequest = axLimitNegative;
+      }
+    }
   } //end if(!STOP)
-  else{
+  else if(STOP){
     if (std::abs(groundSpeedCopy) > 0.001f){
     accelerationRequest = axLimitNegative;
-    speedProfile.resize(1);
-    speedProfile(0) = groundSpeedCopy;
     std::cout << "BREAKING TO STOP " << std::endl;
-    std::cout << "Set speedProfile(0) = " << speedProfile(0)<< std::endl;
-    std::cout << "Set curveRadii[0] " <<curveRadii[0]<< std::endl;
     }
   }
-  // Limit acceleration request for negative acceleration TODO: use groundSpeed instead of speedProfile(0)?? Fails if driving too fast
-  if (accelerationRequest < 0.0f && (sqrtf(powf(powf(speedProfile(0),2)/curveRadii[0],2)+powf(accelerationRequest,2)) >= powf(g*mu,2) || accelerationRequest < axLimitNegative)) {
-    std::cout << "accelerationRequest neg limited: " << accelerationRequest << std::endl;
-    if (powf(speedProfile(0),2)/curveRadii[0] < g*mu){
-    accelerationRequest = std::max((-sqrtf(powf(g*mu,2)-powf(powf(speedProfile(0),2)/curveRadii[0],2)))*0.9f,axLimitNegative); //0.9 is a safetyfactor since ax must be less than rhs
-    }
-    else{
-      std::cout<<"Fuck it, we are already sliding, BREAK HARD"<<"\n";
-      accelerationRequest = axLimitNegative;
-    }
+  else{
+    accelerationRequest = 0.1f;
   }
-
-  std::cout << "GroundSpeed: " << groundSpeedCopy << std::endl;
   std::cout << "accelerationRequest Final: " << accelerationRequest << std::endl;
   return accelerationRequest;
 }
