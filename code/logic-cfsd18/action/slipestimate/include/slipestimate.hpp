@@ -41,7 +41,7 @@ class Slipestimate : public odcore::base::module::DataTriggeredConferenceClientM
   void CheckContainer(uint32_t);
   Eigen::MatrixXd Spherical2Cartesian(double, double, double);
   void rebuildLocalMap();
-  void newFrame();
+  void newFrame(Eigen::MatrixXd);
 
 
 

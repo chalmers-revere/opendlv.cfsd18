@@ -38,7 +38,6 @@ Slipestimate::Slipestimate(int32_t const &a_argc, char **a_argv) :
 , m_coneCollector()
 , coneNum()
 , m_pastMaps()
-
 {
     m_coneCollector = Eigen::MatrixXd::Zero(4,20);
     coneNum = 0;
@@ -47,8 +46,6 @@ Slipestimate::Slipestimate(int32_t const &a_argc, char **a_argv) :
 Slipestimate::~Slipestimate()
 {
 }
-
-
 
 
 void Slipestimate::nextContainer(odcore::data::Container &a_container)
@@ -62,10 +59,10 @@ void Slipestimate::nextContainer(odcore::data::Container &a_container)
 	    coneNum++;
 	}
 	if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID()){
-        auto coneDistance = a_container.getData<opendlv::logic::perception::ObjectDistance>();
-        uint32_t objectId = coneDistance.getObjectId();
-        //CheckContainer(objectId);
-        m_coneCollector(2,objectId) = coneDistance.getDistance();
+      auto coneDistance = a_container.getData<opendlv::logic::perception::ObjectDistance>();
+      uint32_t objectId = coneDistance.getObjectId();
+      //CheckContainer(objectId);
+      m_coneCollector(2,objectId) = coneDistance.getDistance();
 	    m_coneCollector(3,objectId) = 0;
 	}
 }
@@ -74,7 +71,7 @@ void Slipestimate::CheckContainer(uint32_t objectId){
 	if (objectId == 0){
 		rebuildLocalMap();
 		m_coneCollector = Eigen::MatrixXd::Zero(4,20);
-	    coneNum = 0;
+	  coneNum = 0;
 	}
 }
 // copy from perception-detectcone
@@ -96,32 +93,31 @@ void Slipestimate::rebuildLocalMap()
 	//Convert to cartesian
 	Eigen::MatrixXd cone;
 	Eigen::MatrixXd coneLocal = Eigen::MatrixXd::Zero(2,coneNum);
-    for(int p = 0; p < coneNum; p++){
-        cone = Spherical2Cartesian(m_coneCollector(0,p), m_coneCollector(1,p), m_coneCollector(2,p));
-        //m_coneCollector.col(p) = cone;
-        coneLocal.col(p) = cone.topRows(2);
-    }
-}
-void Slipestimate::newFrame(){
-  uint32_t lookback = 5;
-  if (m_pastMaps.size() < lookback) {
-    m_pastMaps.push_back(m_coneCollector);
-  } else {
-    for (uint32_t i = 1; i<lookback; i++){
-      m_pastMaps[lookback-i] = m_pastMaps[lookback-i-1];
-    }
+
+  for(int p = 0; p < coneNum; p++){
+      cone = Spherical2Cartesian(m_coneCollector(0,p), m_coneCollector(1,p), m_coneCollector(2,p));
+      //m_coneCollector.col(p) = cone;
+      coneLocal.col(p) = cone.topRows(2);
   }
+  calcSlip(coneLocal);
+}
+// void Slipestimate::newFrame(Eigen::MatrixXd coneLocal){
+//   uint32_t lookback = 5;
+//   if (m_pastMaps.size() < lookback) {
+//     m_pastMaps.push_back(coneLocal);
+//   } else {
+//     for (uint32_t i = 1; i<lookback; i++){
+//       m_pastMaps[lookback-i] = m_pastMaps[lookback-i-1];
+//     }
+//     m_pastMaps[0] = coneLocal;
+//   }
+// }
+void Slipestimate::calcSlip(Eigen::MatrixXd coneLocal){
+
 }
 
 void Slipestimate::setUp()
 {
-  // std::string const exampleConfig =
-  //   getKeyValueConfiguration().getValue<std::string>(
-  //     "logic-cfsd18-perception-slipestimate.example-config");
-
-  // if (isVerbose()) {
-  //   std::cout << "Example config is " << exampleConfig << std::endl;
-  // }
 }
 
 void Slipestimate::tearDown()

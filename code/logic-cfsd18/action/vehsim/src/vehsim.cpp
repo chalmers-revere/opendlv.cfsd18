@@ -221,7 +221,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         x += dx*sampleTime;
 
         // send vehicle states
-        opendlv::logic::sensation::Geolocation outPos(X(1),X(0),0,X(2));
+        opendlv::sim::Frame outPos(X(0),X(1),0,0,0,X(2));
         opendlv::sim::KinematicState outVel(x(0),x(1),0,0,0,x(2));
         odcore::data::Container posC(outPos);
         odcore::data::Container velC(outVel);

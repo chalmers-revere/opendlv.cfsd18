@@ -44,27 +44,11 @@ class Motion : public odcore::base::module::DataTriggeredConferenceClientModule 
   void tearDown();
   void calcTorque(float);
   void sendActuationContainer(int32_t, float);
-  float calcYawRateRef(float);
+  float calcYawRateRef(opendlv::logic::action::AimPoint);
 
  private:
-   float m_headingRequest;
-   bool m_brakeEnabled;
-   double m_deceleration;
+   opendlv::logic::action::AimPoint m_aimPoint;
    float m_speed;
-   int32_t m_leftMotorID;
-   int32_t m_rightMotorID;
-   float m_PI;
-   float m_aimTime;
-   float m_dt;
-   float m_mass;
-   float m_Iz;
-   float m_g;
-   float m_L;
-   float m_lf;
-   float m_lr;
-   float m_mu;
-   float m_wR;
-
 };
 
 }
