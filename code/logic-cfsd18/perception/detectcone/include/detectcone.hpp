@@ -75,7 +75,7 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   void slidingWindow(const std::string &);
   int backwardDetection(cv::Mat, cv::Vec3f);
   void efficientSlidingWindow(const std::string &, int, int);
-  void softmax(cv::Vec4d, cv::Vec4d &);
+  void softmax(cv::Vec<double,5>, cv::Vec<double,5> &);
   std::vector <cv::Point> imRegionalMax(cv::Mat, int, double, int);
   int medianVector(std::vector<std::pair<float, int>>);
   void forwardDetection();
