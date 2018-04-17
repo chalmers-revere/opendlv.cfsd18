@@ -13,7 +13,7 @@
 /**
  * define if you want to use intel TBB library
  */
-#define CNN_USE_TBB
+//#define CNN_USE_TBB
 
 /**
  * define to enable avx vectorization
