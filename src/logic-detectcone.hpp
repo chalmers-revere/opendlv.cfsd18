@@ -52,11 +52,18 @@ class DetectCone {
     ~DetectCone() = default;
 
    public:
+    void reconstruction(cv::Mat, cv::Mat &, cv::Mat &, cv::Mat &, cv::Mat &);
+    void blockMatching(cv::Mat &, cv::Mat, cv::Mat);
+    void xyz2xy(cv::Mat, cv::Point3d, cv::Point2d &);
+    double depth2resizeRate(double, double);
     void convertImage(cv::Mat, int, int, tiny_dnn::vec_t &);
+    void slidingWindow(const std::string &, tiny_dnn::network<tiny_dnn::sequential> &);
+    void backwardDetection(cv::Mat, tiny_dnn::network<tiny_dnn::sequential>, std::vector<cv::Point3d>, std::vector<int>&);
     void efficientSlidingWindow(const std::string &, tiny_dnn::network<tiny_dnn::sequential> &, int, int);
-    void softmax(cv::Vec4d, cv::Vec4d &);
+    void softmax(cv::Vec<double,5>, cv::Vec<double,5> &);
     std::vector <cv::Point> imRegionalMax(cv::Mat, int, double, int);
-    void forwardDetection(tiny_dnn::network<tiny_dnn::sequential>);
+    // int medianVector(std::vector<std::pair<double, int>>);
+    void forwardDetection(cv::Mat, tiny_dnn::network<tiny_dnn::sequential>);
 };
 
 #endif

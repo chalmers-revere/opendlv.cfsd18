@@ -26,13 +26,29 @@
 
 int32_t main() {
     DetectCone detector;
-    tiny_dnn::network<tiny_dnn::sequential> nn;
-    detector.efficientSlidingWindow("efficientSlidingWindow", nn, 320, 60);
-    while(1)
-        detector.forwardDetection(nn);
+    tiny_dnn::network<tiny_dnn::sequential> m_slidingWindow, m_efficientSlidingWindow;
+    detector.efficientSlidingWindow("efficientSlidingWindow", m_efficientSlidingWindow, 320, 60);
+    detector.slidingWindow("slidingWindow", m_slidingWindow);
+    while(1){
+        cv::Mat img = cv::imread("test.png");
+        
+        // std::vector<cv::Point3d> pts;
+        // pts.push_back(cv::Point3d(-0.319045, 0.164448, 0.787049)*2);
+        // pts.push_back(cv::Point3d(-0.656261, 0.133473, 1.90641)*2);
+        // pts.push_back(cv::Point3d(0.435741, 0.154018, 0.824888)*2);
+        // pts.push_back(cv::Point3d(0.477722, 0.0988543, 3.17735)*2);
+        // pts.push_back(cv::Point3d(-0.369824, 0.0811971, 3.17735)*2);
+        // pts.push_back(cv::Point3d(0.715716, 0.158176, 1.94974)*2);
+        // std::vector<int> outputs;
 
-    
-
+        auto startTime = std::chrono::system_clock::now();
+        // detector.backwardDetection(img, m_slidingWindow, pts, outputs);
+        detector.forwardDetection(img, m_efficientSlidingWindow);
+        auto endTime = std::chrono::system_clock::now();
+        std::chrono::duration<double> diff = endTime-startTime;
+        std::cout << "Time: " << diff.count() << " s\n";
+    }
+        
     // int32_t retCode{0};
     // auto commandlineArguments = cluon::getCommandlineArguments(argc, argv);
     // if ( (0 == commandlineArguments.count("port")) || (0 == commandlineArguments.count("cid")) ) {
