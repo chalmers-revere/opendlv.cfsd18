@@ -28,6 +28,7 @@ RUN pacman -Sy --noconfirm  \
   glslang \
   glm \
   glfw-x11
+RUN pacman -Syu --noconfirm nvidia
         
 ADD . /opt/sources
 WORKDIR /opt/sources
@@ -48,6 +49,7 @@ RUN pacman -Sy --noconfirm  \
   vulkan-icd-loader \
   vulkan-validation-layers \
   glfw-x11
+RUN pacman -Syu --noconfirm nvidia
 
 WORKDIR /usr
 COPY --from=builder /tmp/opendlv-device-gpu-vulkan-dest/ /usr/
