@@ -52,7 +52,7 @@ class DetectConeLane : public odcore::base::module::DataTriggeredConferenceClien
   void setUp();
   void tearDown();
 
-  void initializeCollection();
+  void initializeCollection(int);
   void generateSurfaces(ArrayXXf, ArrayXXf, ArrayXXf);
   //void CheckContainer(uint32_t);
   Eigen::MatrixXd Spherical2Cartesian(double, double, double);
@@ -60,16 +60,10 @@ class DetectConeLane : public odcore::base::module::DataTriggeredConferenceClien
 
   odcore::data::TimeStamp m_lastTimeStamp;
   Eigen::MatrixXd m_coneCollector;
-  uint32_t m_lastObjectId;
   odcore::base::Mutex m_coneMutex;
   bool m_newFrame;
   int m_timeDiffMilliseconds;
-  int m_nLeft;
-  int m_nRight;
-  int m_nSmall;
-  int m_nBig;
-  uint32_t m_conesInFrame;
-  uint32_t m_lastTypeId;
+  int m_lastTypeId;
 
   const double DEG2RAD = 0.017453292522222; // PI/180.0
 

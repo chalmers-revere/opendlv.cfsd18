@@ -27,6 +27,7 @@
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 //#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
+#include <opendavinci/odcore/base/Lock.h>
 
 namespace opendlv {
 namespace sim {
@@ -49,6 +50,7 @@ class DetectCone : public odcore::base::module::TimeTriggeredConferenceClientMod
   ArrayXXf m_smallCones;
   ArrayXXf m_bigCones;
   uint32_t m_senderStamp = 1;
+  odcore::base::Mutex m_locationMutex;
   const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD
 
   odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode body();

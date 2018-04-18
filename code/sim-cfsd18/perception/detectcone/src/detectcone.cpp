@@ -41,6 +41,7 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_rightCones()
 , m_smallCones()
 , m_bigCones()
+, m_locationMutex()
 {
 }
 
@@ -107,8 +108,11 @@ float detectWidth = 5;
     float x = frame.getX();
     float y = frame.getY();
     float yaw = frame.getYaw();
-    m_location << x,y;
-    m_heading = yaw;
+    {
+      odcore::base::Lock lockLocation(m_locationMutex);
+      m_location << x,y;
+      m_heading = yaw;
+    }
   }
 }
 
@@ -120,8 +124,15 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
 
   while(getModuleStateAndWaitForRemainingTimeInTimeslice() == odcore::data::dmcp::ModuleStateMessage::RUNNING)
   {
-    ArrayXXf detectedConesLeft = DetectCone::simConeDetectorBox(m_leftCones, m_location, m_heading, detectRange, detectWidth);
-    ArrayXXf detectedConesRight = DetectCone::simConeDetectorBox(m_rightCones, m_location, m_heading, detectRange, detectWidth);
+    ArrayXXf locationCopy;
+    float headingCopy;
+    {
+      odcore::base::Lock lockLocation(m_locationMutex);
+      locationCopy = m_location;
+      headingCopy=m_heading;
+    }
+    ArrayXXf detectedConesLeft = DetectCone::simConeDetectorBox(m_leftCones, locationCopy, headingCopy, detectRange, detectWidth);
+    ArrayXXf detectedConesRight = DetectCone::simConeDetectorBox(m_rightCones, locationCopy, headingCopy, detectRange, detectWidth);
 // -- TODO: Add detection of orange cones --
 
     // This is where the messages are (hopefully) sent
@@ -269,11 +280,10 @@ void DetectCone::readMap(std::string filename)
     }
     myFile.close();
   }
-
-  m_leftCones = tmpLeftCones;
-  m_rightCones = tmpRightCones;
-  m_smallCones = tmpSmallCones;
-  m_bigCones = tmpBigCones;
+    m_leftCones = tmpLeftCones;
+    m_rightCones = tmpRightCones;
+    m_smallCones = tmpSmallCones;
+    m_bigCones = tmpBigCones;
 }
 
 ArrayXXf DetectCone::simConeDetectorBox(ArrayXXf globalMap, ArrayXXf location, float heading, float detectRange, float detectWidth)
