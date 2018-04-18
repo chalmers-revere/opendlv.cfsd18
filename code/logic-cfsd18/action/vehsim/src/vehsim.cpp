@@ -104,10 +104,6 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
   float lr = kv.getValue<float>("global.vehicle-parameter.lr");   // Distance from CoG to rear axle
   float wf = kv.getValue<float>("global.vehicle-parameter.wf");   // Track width front
   float wr = kv.getValue<float>("global.vehicle-parameter.wr");   // Track width rear
-  // float Ca1 = kv.getValue<float>("global.vehicle-parameter.Ca1"); // Cornering stiffness front
-  // float Ca2 = kv.getValue<float>("global.vehicle-parameter.Ca2"); // Cornering stiffness rear
-  // float Ku = (Ca2*lr-Ca1*lf)/(Ca1*Ca2*L);                         // Understeercoefficient
-
 
   // Simulation Specific stuff
   float sampleTime = 0.01f; //1/static_cast<float>(getFrequency());
@@ -122,6 +118,8 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
   // All wheel speeds equal to free rolling
   Eigen::ArrayXf omega(4); omega << 0,0,0,0;
   omega += u0/0.22f;
+
+  Eigen::ArrayXf motorTorque(2); motorTorque << 0,0;
 
   std::cout << "Initializing states." << std::endl;
 
@@ -195,9 +193,11 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         delta << 0.1f,0.1f,0,0;
         // Calculate vertical load on each wheel
         Eigen::ArrayXf Fz = loadTransfer(x, mass, L, lf, lr, wf, wr);
+        // Model motor response
+        motorTorque = motorModel(sampleTime,motorTorque,omega);
         // Calculate the Fx and the speed of the wheels
         Eigen::ArrayXf Fx = longitudinalControl(Fz, x, tireLoad, tireSlipX,
-          tireForceX, &omega, sampleTime);
+          tireForceX, &omega, motorTorque, sampleTime);
         // Calculate lateral forces
         Eigen::ArrayXf Fy = tireModel(delta,x,Fz, lf, lr, wf, wr, tireLoad,
           tireSlipY, tireForceY);
@@ -208,10 +208,6 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         // Calculate the rotation of the vehicle by integrating and assuming constant accelerations
         X(2) = X(2) + x(2)*sampleTime + dx(2)*(float)pow(sampleTime,2)/2;
 
-        // Rotational matrix to convert between local and global coordinates
-        // Eigen::MatrixXf rotMat(2,2);
-        // rotMat << std::cos(X(2)), -std::sin(X(2)),
-        //           std::sin(X(2)), std::cos(X(2));
         // Integrate and rotate positions to global frame
         X(0) = X(0) + (std::cos(X(2))*x(0) - std::sin(X(2))*x(1))*sampleTime + (std::cos(X(2))*dx(0) - std::sin(X(2))*dx(1))*(float)pow(sampleTime,2)/2;
         X(1) = X(1) + (std::sin(X(2))*x(0) + std::cos(X(2))*x(1))*sampleTime + (std::sin(X(2))*dx(0) + std::cos(X(2))*dx(1))*(float)pow(sampleTime,2)/2;
@@ -302,6 +298,7 @@ Eigen::ArrayXf Vehsim::loadTransfer(Eigen::ArrayXf x, float mass, float L,
   float const hp = 0.432f;    // Height at which center of pressure acts (aero dynamic related)
   float const area = 1.14f;   // frontal area of the vehicle
 
+
   float Fl  = 0.5f*area*rho*Cl*(float)pow(u,2.0f); // Lift force
   float Fd  = 0.5f*area*rho*Cd*(float)pow(u,2.0f); // Drag force
 
@@ -386,10 +383,41 @@ Eigen::ArrayXf Vehsim::tireModel(Eigen::ArrayXf delta, Eigen::ArrayXf x,
   return Fy;
 }
 
+Eigen::ArrayXf Vehsim::motorModel(float sampleTime,
+  Eigen::ArrayXf Torque, Eigen::ArrayXf omega)
+  {
+    float gearRatio = 16;
+    float maxPower = 38e3;
+    Eigen::ArrayXf motorSpeed = omega.tail(2)*gearRatio;
+
+    float dtMax = 50*sampleTime;
+    Eigen::VectorXf torqueRequest(2);
+    torqueRequest << m_torqueRequest1, m_torqueRequest2;
+
+    for (int i=0;i<2;i++){
+      float TorqueError = torqueRequest(i)-Torque(i+2);
+
+      Torque(i) = Torque(i) + std::min(std::max(TorqueError,-dtMax),dtMax);
+
+      float maxTorque;
+
+
+      if (std::fabs(motorSpeed(i)) < 11000*PI/30){
+        maxTorque = 24;
+      } else if (std::fabs(motorSpeed(i)) > 20000*PI/30){
+        maxTorque = 0;
+      } else {
+        maxTorque = maxPower/std::fabs(motorSpeed(i));
+      }
+      Torque(i) = std::max(std::min(Torque(i),maxTorque),-maxTorque);
+    }
+  return Torque;
+}
 
 Eigen::ArrayXf Vehsim::longitudinalControl(Eigen::ArrayXf Fz, Eigen::ArrayXf x,
   Eigen::VectorXf tireLoad, Eigen::VectorXf tireSlipX,
-  Eigen::MatrixXf tireForceX, Eigen::ArrayXf *wheelSpeed, float sampleTime) {
+  Eigen::MatrixXf tireForceX, Eigen::ArrayXf *wheelSpeed, Eigen::ArrayXf motorTorque,
+  float sampleTime) {
 
   float u = x(0);                   // Vehicle speed
   float const wheelRadius = 0.22f;  // Radius of tires
@@ -404,8 +432,8 @@ Eigen::ArrayXf Vehsim::longitudinalControl(Eigen::ArrayXf Fz, Eigen::ArrayXf x,
   Eigen::ArrayXf wheelSlip(4);
   Eigen::ArrayXf omegaDot(4);
 
-  float tr1 = m_torqueRequest1;    // Get most recent torque requests recieved
-  float tr2 = m_torqueRequest2;    // These can be negative! (Still only from motors, not brakes)
+  float tr1 = motorTorque(0);    // Get most recent torque requests recieved
+  float tr2 = motorTorque(1);    // These can be negative! (Still only from motors, not brakes)
 
   Eigen::ArrayXf FxBrakes(4); FxBrakes << 0,0,0,0;
   // Initialize brakes forces, and assign values if brakes are enabled
@@ -455,6 +483,11 @@ Eigen::ArrayXf Vehsim::motion(Eigen::ArrayXf delta, Eigen::ArrayXf Fy,
   float u = x(0);   // Vehicle speed
   float v = x(1);   // lateral speed
   float r = x(2);   // yaw rate
+  float g = 9.81;   // Gravity constant
+  float fr = 0.01;  // Rolling res. coefficient
+  float const area = 1.14f;   // frontal area of the vehicle
+  float const Cd = 1.21f;     // Drag coefficient
+  float const rho = 1.1842f;  // Density of air
 
   Eigen::ArrayXf dx(6);
 //################################
@@ -470,10 +503,13 @@ Eigen::ArrayXf Vehsim::motion(Eigen::ArrayXf delta, Eigen::ArrayXf Fy,
   float Ffrx = Fx(1)*(float)cos(delta(1))-Fy(1)*(float)sin(delta(1));
   float Frlx = Fx(2)*(float)cos(delta(2))-Fy(2)*(float)sin(delta(2));
   float Frrx = Fx(3)*(float)cos(delta(3))-Fy(3)*(float)sin(delta(3));
+
+  // Air and tire resistance
+  float FxRes = mass*g*fr + 1/2*rho*Cd*area*static_cast<float>(pow(u,2));
 //#########################
 
   // sum(Fx) = m*ax = m*(VxDot - yawrate*Vy)
-  float du = (Ffrx+Fflx+Frlx+Frrx)/mass + r*v;
+  float du = (Ffrx+Fflx+Frlx+Frrx-FxRes)/mass + r*v;
   // sum(Fy) = m*ax = m*(VxDot + yawrate*Vy)
   float dv = (Ffry+Ffly+Frly+Frry)/mass - r*u;
   // sum(Mz) = Izz*yawAcceleration
