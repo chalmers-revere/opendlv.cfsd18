@@ -1,0 +1,79 @@
+# Copyright (C) 2018  Björnborg Nguyen
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+FROM alpine:edge AS builder
+MAINTAINER Björnborg Nguyen "bjornborg.nguyen@chalmers.se"
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+RUN apk update && \
+   apk --no-cache add \
+       ca-certificates \
+       bash \
+       cmake \
+       g++ \
+       git \
+       make \
+       upx \
+       ccache \
+       gfortran \
+       openblas-dev \
+       icu \
+       opencv-dev \
+       opencv-libs \
+       libtbb-dev \
+       libtbb \
+       opencv
+
+WORKDIR /tmp
+
+ADD . /tmp/sources
+
+RUN git clone https://github.com/justusc/FindTBB.git && \
+   cp FindTBB/FindTBB.cmake /usr/share/cmake/Modules/ && \
+   cd FindTBB && \
+   ./test.sh
+
+RUN git clone https://github.com/tiny-dnn/tiny-dnn.git && \
+  mkdir -p tiny-dnn/build && \
+  cp sources/config.h tiny-dnn/tiny_dnn/config.h && \
+  cd tiny-dnn/build && \
+  cmake .. && \
+  make install
+
+RUN git clone https://github.com/eigenteam/eigen-git-mirror.git && \
+   mkdir -p eigen-git-mirror/build && \
+   cd eigen-git-mirror/build && \
+   cmake .. && \
+   make install
+
+RUN cd sources && \
+   rm -rf build && \
+   mkdir build && \
+   cd build && \
+   cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/tmp/detectcone-dest .. && \
+   make && make install && upx -9 /tmp/detectcone-dest/bin/detectcone
+
+# # # Part to deploy beaglebone.
+FROM alpine:edge
+MAINTAINER Björnborg Nguyen "bjornborg.nguyen@chalmers.se"
+
+WORKDIR /usr/bin
+COPY --from=builder /tmp/detectcone-dest/bin/detectcone .
+#COPY --from=builder /usr/lib/libopencv_imgcodecs.so* /usr/lib/
+#COPY --from=builder /usr/lib/libopencv_imgproc.so* /usr/lib/
+#COPY --from=builder /usr/lib/libopencv_core.so* /usr/lib/
+COPY --from=builder /usr/local/include/ /usr/include/
+COPY --from=builder /usr/local/lib/ /usr/lib/
+COPY --from=builder /usr/lib/ /usr/lib/
+CMD ["/usr/bin/detectcone"]
