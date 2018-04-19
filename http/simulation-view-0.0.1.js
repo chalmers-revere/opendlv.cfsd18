@@ -107,6 +107,7 @@ var Vx=0;
 var Vy=0;
 var Ax=0;
 var groundSpeed=0;
+var distanceToAimPoint = 0;
 function addSimulationViewData(data) {
   if (data.dataType == 1172){
     headingRequest = data["opendlv_logic_action_AimPoint"]["azimuthAngle"];
@@ -169,7 +170,7 @@ function addSimulationViewData(data) {
 
     // DRAW HEADINGREQUEST
     const H = g_scale*distanceToAimPoint;
-    context.moveTo(0.765,0);
+    context.moveTo(0.765*g_scale,0);
     context.lineTo(H*Math.cos(-headingRequest),H*Math.sin(-headingRequest));
     //####################
     context.strokeStyle = "black";
