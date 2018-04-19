@@ -108,8 +108,9 @@ var Vy=0;
 var Ax=0;
 var groundSpeed=0;
 function addSimulationViewData(data) {
-  if (data.dataType == 1090){
-    headingRequest = data["opendlv_proxy_GroundSteeringRequest"]["groundSteering"];
+  if (data.dataType == 1172){
+    headingRequest = data["opendlv_logic_action_AimPoint"]["azimuthAngle"];
+    distanceToAimPoint = data["opendlv_logic_action_AimPoint"]["distance"];
   }
   if (data.dataType == 1046){
     groundSpeed = data["opendlv_proxy_GroundSpeedReading"]["groundSpeed"];
@@ -167,8 +168,8 @@ function addSimulationViewData(data) {
     context.lineTo(hslength, 0);
 
     // DRAW HEADINGREQUEST
-    const H = g_scale*5;
-    context.moveTo(0,0);
+    const H = g_scale*distanceToAimPoint;
+    context.moveTo(0.765,0);
     context.lineTo(H*Math.cos(-headingRequest),H*Math.sin(-headingRequest));
     //####################
     context.strokeStyle = "black";
