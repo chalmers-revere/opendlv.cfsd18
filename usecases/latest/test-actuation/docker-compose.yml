@@ -42,13 +42,21 @@ services:
           - .:/opt/opendlv.data
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-vehsim --cid=${CID} --verbose=0 --freq=100 --id=1"
 
-    # microservice for lynx-steering
+    # microservice for logic-motion
     cfsd-motion:
         image: ${IMAGE}
         network_mode: "host"
         depends_on:
           - odsupercomponent
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-motion --cid=${CID} --verbose=0 --id=1"
+
+    # microservice for logic-steering
+    cfsd-motion:
+        image: ${IMAGE}
+        network_mode: "host"
+        depends_on:
+          - odsupercomponent
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-steering --cid=${CID} --verbose=0 --id=1"        
 
     ui-default:
 #        image: chalmersrevere/opendlv-ui-default-amd64

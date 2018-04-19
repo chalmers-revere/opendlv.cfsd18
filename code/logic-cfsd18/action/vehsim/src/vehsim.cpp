@@ -106,7 +106,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
   float wr = kv.getValue<float>("global.vehicle-parameter.wr");   // Track width rear
 
   // Simulation Specific stuff
-  float sampleTime = 0.01f; //1/static_cast<float>(getFrequency());
+  float sampleTime = 1/static_cast<double>(getFrequency()); //1/static_cast<float>(getFrequency());
   // use second part to run real time
 
   // States of the vehicle
@@ -395,12 +395,8 @@ Eigen::ArrayXf Vehsim::motorModel(float sampleTime,
     torqueRequest << m_torqueRequest1, m_torqueRequest2;
 
     for (int i=0;i<2;i++){
-      std::cout << "Loop: " << i << std::endl;
       float torqueError = torqueRequest(i)-Torque(i);
-      std::cout << "Torque Error: " << torqueError << std::endl;
-
       Torque(i) = Torque(i) + std::min(std::max(torqueError,-dtMax),dtMax);
-      std::cout << "Torque: " << Torque.transpose() << std::endl;
       float maxTorque;
 
 
@@ -411,10 +407,8 @@ Eigen::ArrayXf Vehsim::motorModel(float sampleTime,
       } else {
         maxTorque = maxPower/std::fabs(motorSpeed(i));
       }
-      std::cout << "Max torque: " << maxTorque << std::endl;
       Torque(i) = std::max(std::min(Torque(i),maxTorque),-maxTorque);
-      std::cout << "Torque: " << Torque.transpose() << std::endl;
-    }
+      }
   return Torque;
 }
 
@@ -445,7 +439,7 @@ Eigen::ArrayXf Vehsim::longitudinalControl(Eigen::ArrayXf Fz, Eigen::ArrayXf x,
     FxBrakes = m_deceleration*brakeDist;
   }
 
-  if (abs(u) < 1e-4) { // Exception if u = 0
+  if (abs(u) < 1e-4) {          // Exception if u = 0
     for (int i=0; i<wheelSlip.size();i++){
       if (abs(omega(i))<1e-10){
         wheelSlip(i) = 0;
@@ -510,7 +504,7 @@ Eigen::ArrayXf Vehsim::motion(Eigen::ArrayXf delta, Eigen::ArrayXf Fy,
 
   // Air and tire resistance
   float FxRes = mass*g*fr + 1/2*rho*Cd*area*static_cast<float>(pow(u,2));
-//#########################
+  //#########################
 
   // sum(Fx) = m*ax = m*(VxDot - yawrate*Vy)
   float du = (Ffrx+Fflx+Frlx+Frrx-FxRes)/mass + r*v;
@@ -616,7 +610,7 @@ void Vehsim::setUp()
   m_outputData.open("/opt/opendlv.data/outputData",std::ofstream::out);
 
   if (m_outputData.is_open()) {
-    m_outputData << "time\t" << "X\t" << "Y\t" << "Psi\t" << "u\t" << "v\t" << "r" << std::endl;
+    m_outputData << "% time\t" << "X\t" << "Y\t" << "Psi\t" << "u\t" << "v\t" << "r" << std::endl;
   }
 
   // add aim point infront of the car as initializer
