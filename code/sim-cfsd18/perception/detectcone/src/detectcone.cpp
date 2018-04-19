@@ -129,20 +129,27 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
     {
       odcore::base::Lock lockLocation(m_locationMutex);
       locationCopy = m_location;
-      headingCopy=m_heading;
+      headingCopy = m_heading;
     }
     ArrayXXf detectedConesLeft = DetectCone::simConeDetectorBox(m_leftCones, locationCopy, headingCopy, detectRange, detectWidth);
     ArrayXXf detectedConesRight = DetectCone::simConeDetectorBox(m_rightCones, locationCopy, headingCopy, detectRange, detectWidth);
-// -- TODO: Add detection of orange cones --
-
-    // This is where the messages are (hopefully) sent
+    ArrayXXf detectedConesSmall = DetectCone::simConeDetectorBox(m_smallCones, locationCopy, headingCopy, detectRange, detectWidth);
+    ArrayXXf detectedConesBig = DetectCone::simConeDetectorBox(m_bigCones, locationCopy, headingCopy, detectRange, detectWidth);
+/*
+std::cout << "detectedConesLeft: " << detectedConesLeft << std::endl;
+std::cout << "detectedConesRight: " << detectedConesRight << std::endl;
+std::cout << "detectedConesSmall: " << detectedConesSmall << std::endl;
+std::cout << "detectedConesBig: " << detectedConesBig << std::endl;
+*/
+    // This is where the messages are sent
     MatrixXd detectedConesLeftMat = ((detectedConesLeft.matrix()).transpose()).cast <double> ();
     MatrixXd detectedConesRightMat = ((detectedConesRight.matrix()).transpose()).cast <double> ();
-// -- TODO: Add support for orange cones --
+    MatrixXd detectedConesSmallMat = ((detectedConesSmall.matrix()).transpose()).cast <double> ();
+    MatrixXd detectedConesBigMat = ((detectedConesBig.matrix()).transpose()).cast <double> ();
 
     opendlv::logic::perception::Object numberOfCones;
-    numberOfCones.setObjectId(detectedConesLeftMat.cols()+detectedConesRightMat.cols());
-// -- TODO: Add support for orange cones --
+    numberOfCones.setObjectId(detectedConesLeftMat.cols()+detectedConesRightMat.cols()+detectedConesSmallMat.cols()+detectedConesBigMat.cols());
+
     odcore::data::Container c0(numberOfCones);
     c0.setSenderStamp(m_senderStamp);
     getConference().send(c0);
@@ -152,7 +159,11 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
     sendMatchedContainer(detectedConesLeftMat, type, 0);
     type = 2;
     sendMatchedContainer(detectedConesRightMat, type, detectedConesLeftMat.cols());
-// -- TODO: Send messages for orange cones --
+    type = 3;
+    sendMatchedContainer(detectedConesSmallMat, type, detectedConesLeftMat.cols()+detectedConesRightMat.cols());
+    type = 4;
+    sendMatchedContainer(detectedConesBigMat, type, detectedConesLeftMat.cols()+detectedConesRightMat.cols()+detectedConesSmallMat.cols());
+
     auto finishRight = std::chrono::system_clock::now();
     auto timeSend = std::chrono::duration_cast<std::chrono::microseconds>(finishRight - startLeft);
     std::cout << "sendTime:" << timeSend.count() << std::endl;
