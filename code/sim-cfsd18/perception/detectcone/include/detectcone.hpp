@@ -49,6 +49,7 @@ class DetectCone : public odcore::base::module::TimeTriggeredConferenceClientMod
   ArrayXXf m_rightCones;
   ArrayXXf m_smallCones;
   ArrayXXf m_bigCones;
+  bool m_orangeVisibleInSlam;
   uint32_t m_senderStamp = 1;
   odcore::base::Mutex m_locationMutex;
   const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD
@@ -58,6 +59,7 @@ class DetectCone : public odcore::base::module::TimeTriggeredConferenceClientMod
   void tearDown();
   void readMap(std::string);
   ArrayXXf simConeDetectorBox(ArrayXXf, ArrayXXf, float, float, float);
+  ArrayXXf simConeDetectorSlam(ArrayXXf, ArrayXXf, float, int);
   void sendMatchedContainer(Eigen::MatrixXd, int, int);
   void Cartesian2Spherical(double, double, double, opendlv::logic::sensation::Point &);
 };

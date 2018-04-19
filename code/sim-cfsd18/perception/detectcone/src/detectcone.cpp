@@ -41,6 +41,7 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_rightCones()
 , m_smallCones()
 , m_bigCones()
+, m_orangeVisibleInSlam()
 , m_locationMutex()
 {
 }
@@ -121,6 +122,8 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
   auto kv = getKeyValueConfiguration();
   float const detectRange = kv.getValue<float>("sim-cfsd18-perception-detectcone.detectRange");
   float const detectWidth = kv.getValue<float>("sim-cfsd18-perception-detectcone.detectWidth");
+  bool const fakeSlamActivated = kv.getValue<bool>("sim-cfsd18-perception-detectcone.fakeSlamActivated");
+  int const nConesFakeSlam = kv.getValue<int>("sim-cfsd18-perception-detectcone.nConesFakeSlam");
 
   while(getModuleStateAndWaitForRemainingTimeInTimeslice() == odcore::data::dmcp::ModuleStateMessage::RUNNING)
   {
@@ -131,10 +134,45 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
       locationCopy = m_location;
       headingCopy = m_heading;
     }
-    ArrayXXf detectedConesLeft = DetectCone::simConeDetectorBox(m_leftCones, locationCopy, headingCopy, detectRange, detectWidth);
-    ArrayXXf detectedConesRight = DetectCone::simConeDetectorBox(m_rightCones, locationCopy, headingCopy, detectRange, detectWidth);
-    ArrayXXf detectedConesSmall = DetectCone::simConeDetectorBox(m_smallCones, locationCopy, headingCopy, detectRange, detectWidth);
-    ArrayXXf detectedConesBig = DetectCone::simConeDetectorBox(m_bigCones, locationCopy, headingCopy, detectRange, detectWidth);
+    ArrayXXf detectedConesLeft;
+    ArrayXXf detectedConesRight;
+    ArrayXXf detectedConesSmall;
+    ArrayXXf detectedConesBig;
+    
+    if(fakeSlamActivated)
+    {
+      detectedConesLeft = DetectCone::simConeDetectorSlam(m_leftCones, locationCopy, headingCopy, nConesFakeSlam);
+      detectedConesRight = DetectCone::simConeDetectorSlam(m_rightCones, locationCopy, headingCopy, nConesFakeSlam);
+      if(m_orangeVisibleInSlam)
+      {
+        m_orangeVisibleInSlam = false;
+        MatrixXf rotationMatrix(2,2);
+        rotationMatrix << std::cos(-headingCopy),-std::sin(-headingCopy),
+                          std::sin(-headingCopy),std::cos(-headingCopy);
+
+        ArrayXXf tmpLocationSmall(m_smallCones.rows(),2);
+        (tmpLocationSmall.col(0)).fill(locationCopy(0));
+        (tmpLocationSmall.col(1)).fill(locationCopy(1));
+        ArrayXXf tmpLocationBig(m_bigCones.rows(),2);
+        (tmpLocationBig.col(0)).fill(locationCopy(0));
+        (tmpLocationBig.col(1)).fill(locationCopy(1));
+
+        detectedConesSmall = ((rotationMatrix*(((m_smallCones-tmpLocationSmall).matrix()).transpose())).transpose()).array();
+        detectedConesBig = ((rotationMatrix*(((m_bigCones-tmpLocationBig).matrix()).transpose())).transpose()).array();
+      }
+      else
+      {
+        detectedConesSmall.resize(0,2);
+        detectedConesBig.resize(0,2);
+      } // End of else
+    }
+    else
+    {
+      detectedConesLeft = DetectCone::simConeDetectorBox(m_leftCones, locationCopy, headingCopy, detectRange, detectWidth);
+      detectedConesRight = DetectCone::simConeDetectorBox(m_rightCones, locationCopy, headingCopy, detectRange, detectWidth);
+      detectedConesSmall = DetectCone::simConeDetectorBox(m_smallCones, locationCopy, headingCopy, detectRange, detectWidth);
+      detectedConesBig = DetectCone::simConeDetectorBox(m_bigCones, locationCopy, headingCopy, detectRange, detectWidth);
+    } // End of else
 /*
 std::cout << "detectedConesLeft: " << detectedConesLeft << std::endl;
 std::cout << "detectedConesRight: " << detectedConesRight << std::endl;
@@ -339,6 +377,83 @@ ArrayXXf detectedConesFinal = detectedCones.topRows(nFound);
 
 return detectedConesFinal;
 }
+
+
+ArrayXXf DetectCone::simConeDetectorSlam(ArrayXXf globalMap, ArrayXXf location, float heading, int nConesInFakeSlam)
+{
+  // Input: Positions of cones and vehicle, heading angle, detection ranges forward and to the side
+  // Output: Local coordinates of the upcoming cones
+
+int nCones = globalMap.rows();
+
+MatrixXf rotationMatrix(2,2);
+rotationMatrix << std::cos(-heading),-std::sin(-heading),
+                  std::sin(-heading),std::cos(-heading);
+
+ArrayXXf tmpLocation(nCones,2);
+(tmpLocation.col(0)).fill(location(0));
+(tmpLocation.col(1)).fill(location(1));
+
+ArrayXXf localMap = ((rotationMatrix*(((globalMap-tmpLocation).matrix()).transpose())).transpose()).array();
+
+float shortestDist = std::numeric_limits<float>::infinity();
+float tmpDist;
+int closestConeIndex = -1;
+
+// Find closest cone
+for(int i = 0; i < nCones; i = i+1)
+{
+  tmpDist = ((localMap.row(i)).matrix()).norm();
+  if(tmpDist < shortestDist && tmpDist > 0)
+  {
+    shortestDist = tmpDist;
+    closestConeIndex = i;
+  } // End of if
+} // End of for
+
+if(closestConeIndex != -1)
+{
+  VectorXi indices;
+  if(nConesInFakeSlam >= nCones)
+  {
+    VectorXi firstPart = VectorXi::LinSpaced(nCones-closestConeIndex,closestConeIndex,nCones-1);
+    VectorXi secondPart = VectorXi::LinSpaced(closestConeIndex,0,closestConeIndex-1);
+    indices << firstPart, secondPart;
+  }
+  else if(closestConeIndex + nConesInFakeSlam > nCones)
+  {
+    VectorXi firstPart = VectorXi::LinSpaced(nCones-closestConeIndex,closestConeIndex,nCones-1);
+    VectorXi secondPart = VectorXi::LinSpaced(nConesInFakeSlam-(nCones-closestConeIndex),0,nConesInFakeSlam-(nCones-closestConeIndex)-1);
+    indices << firstPart, secondPart;
+  }
+  else
+  {
+    indices = VectorXi::LinSpaced(nConesInFakeSlam,closestConeIndex,closestConeIndex+nConesInFakeSlam-1);
+  }
+
+  ArrayXXf detectedCones(indices.size(),2);
+  for(int i = 0; i < indices.size(); i = i+1)
+  {
+    detectedCones.row(i) = localMap.row(indices(i));
+  }
+
+  if(indices.minCoeff() == 0)
+  {
+    m_orangeVisibleInSlam = true;
+  }
+
+  return detectedCones;
+
+}
+else
+{
+  std::cout << "Error: No cone found in fake slam detection" << std::endl;
+  ArrayXXf detectedCones(0,2);
+  
+  return detectedCones;
+} // End of else
+
+} // End of simConeDetectorSlam
 
 void DetectCone::sendMatchedContainer(Eigen::MatrixXd cones, int type, int startID)
 {

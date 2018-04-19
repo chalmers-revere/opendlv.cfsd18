@@ -4,6 +4,8 @@ sim-cfsd18-perception-detectcone.mapFilename = simulation-map-closed-lap.txt
 sim-cfsd18-perception-detectcone.startX = 0
 sim-cfsd18-perception-detectcone.startY = 1.5
 sim-cfsd18-perception-detectcone.startHeading = -2.3
+sim-cfsd18-perception-detectcone.fakeSlamActivated = 0
+sim-cfsd18-perception-detectcone.nConesFakeSlam = 10
 
 # x=-4.14 --y=50.209 --yaw=-0.785 >> top right
 # x=0 --y=1.5 --yaw=-2.3"         >>start position
