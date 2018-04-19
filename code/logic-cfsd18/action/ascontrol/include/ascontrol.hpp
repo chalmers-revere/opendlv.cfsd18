@@ -23,7 +23,6 @@
 #include <opendavinci/odcore/base/module/TimeTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
-#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 
 namespace opendlv {
 namespace logic {
@@ -46,7 +45,7 @@ class Ascontrol : public odcore::base::module::TimeTriggeredConferenceClientModu
  private:
   uint32_t m_pwmIdRed;
   uint32_t m_pwmIdGreen;
-  uint32_t m_pwmIdBlue;  
+  uint32_t m_pwmIdBlue;
 };
 
 }

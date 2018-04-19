@@ -24,7 +24,6 @@
 #include <opendavinci/odcore/data/Container.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
-#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 
 namespace opendlv {
 namespace logic {

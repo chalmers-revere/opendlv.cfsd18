@@ -30,7 +30,7 @@ services:
     sim-global:
         image: chalmersrevere/opendlv-sim-global-amd64:v0.0.5
         network_mode: "host"
-        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=0 --x=-4.14 --y=50.209 --yaw=-0.785"
+        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=1 --x=-4.14 --y=50.209 --yaw=-0.785"
 
 #  microservice for veh-sim
     cfsd-vehsim:
@@ -51,24 +51,42 @@ services:
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-motion --cid=${CID} --verbose=0 --id=1"
 
     # microservice for logic-steering
-    cfsd-motion:
+    cfsd-steering:
         image: ${IMAGE}
         network_mode: "host"
         depends_on:
           - odsupercomponent
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-steering --cid=${CID} --verbose=0 --id=1"
 
-    # microservice for logic-driver model
-    cfsd-motion:
+    # microservice for ...
+    logic-cfsd18-perception-detectconelane:
         image: ${IMAGE}
         network_mode: "host"
         depends_on:
-          - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-motion --cid=${CID} --verbose=0 --id=1"
+            - odsupercomponent
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectconelane --cid=${CID} --verbose=0 --id=1"
+
+    # microservice for ...
+    sim-cfsd18-perception-detectcone:
+        image: ${IMAGE}
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        volumes:
+        - .:/opt/opendlv.data
+        command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-perception-detectcone --cid=${CID} --verbose=0 --id=1 --freq=20"
+
+    # microservice for ...
+    logic-cfsd18-cognition-track:
+        image: ${IMAGE}
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-cognition-track --cid=${CID} --verbose=0 --id=1"
 
     ui-default:
-#        image: chalmersrevere/opendlv-ui-default-amd64
-        image: opendlv-ui-default:v0.0.1
+        image: chalmersrevere/opendlv-ui-default-amd64:v0.0.4
+#        image: opendlv-ui-default:v0.0.1
         network_mode: "host"
         volumes:
           - ./simulation-map.txt:/srv/http/simulation-map.txt

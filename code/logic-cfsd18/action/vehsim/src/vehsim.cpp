@@ -47,7 +47,7 @@ Vehsim::Vehsim(int32_t const &a_argc, char **a_argv) :
   m_deceleration(),
   m_brakeEnabled(),
   m_delta(),
-  m_outputData()
+  //m_outputData()
   {
   }
 
@@ -190,7 +190,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         float yawRef = 0.0f; // yawModel(m_aimPoint, x);
         // Calculate steering angle based on optimal yawrate
         Eigen::Array4f delta(m_delta,m_delta,0,0);
-        delta << 0.1f,0.1f,0,0;
+        // delta << 0.1f,0.1f,0,0;
         // Calculate vertical load on each wheel
         Eigen::ArrayXf Fz = loadTransfer(x, mass, L, lf, lr, wf, wr);
         // Model motor response
@@ -224,7 +224,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         //getConference().send(posC);
         getConference().send(velC);
 
-        float averageSpeed = (omega(0)+omega(1))/2;
+        float averageSpeed = x(0);
         opendlv::proxy::GroundSpeedReading outSpeed(averageSpeed);
         odcore::data::Container speedC(outSpeed);
         getConference().send(speedC);
@@ -234,10 +234,10 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
 
         // update simulation clock
 
-        if (m_outputData.is_open()) {
-          m_outputData << timer << " " << X.transpose() << std::endl;
-          m_outputData.flush();
-        }
+        // if (m_outputData.is_open()) {
+        //   m_outputData << timer << " " << X.transpose() << std::endl;
+        //   m_outputData.flush();
+        // }
         timer += sampleTime;
     }
 
@@ -607,11 +607,11 @@ void Vehsim::setUp()
 {
   std::cout << "vehsim setup" << std::endl;
 
-  m_outputData.open("/opt/opendlv.data/outputData",std::ofstream::out);
-
-  if (m_outputData.is_open()) {
-    m_outputData << "% time\t" << "X\t" << "Y\t" << "Psi\t" << "u\t" << "v\t" << "r" << std::endl;
-  }
+  // m_outputData.open("/opt/opendlv.data/outputData",std::ofstream::out);
+  //
+  // if (m_outputData.is_open()) {
+  //   m_outputData << "% time\t" << "X\t" << "Y\t" << "Psi\t" << "u\t" << "v\t" << "r" << std::endl;
+  // }
 
   // add aim point infront of the car as initializer
   m_aimPoint = opendlv::logic::action::AimPoint(0.0f,0.0f,5.0f);
@@ -619,7 +619,7 @@ void Vehsim::setUp()
 
 void Vehsim::tearDown()
 {
-  m_outputData.close();
+//  m_outputData.close();
 }
 
 }

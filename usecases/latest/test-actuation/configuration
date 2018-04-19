@@ -97,6 +97,42 @@ global.sender-stamp.green = 212
 global.sender-stamp.blue = 213
 
 global.sender-stamp.aim-point-time = 231
-
 ######CONTROL PARAMETERS#######
 opendlv-logic-cfsd18-action-steering.control-parameter.Kp = 2
+
+
+
+################ COGNITION SETUP, A LOT OF REDUNDANCY ####################
+sim-cfsd18-perception-detectcone.detectRange = 11.5
+sim-cfsd18-perception-detectcone.detectWidth = 5.0
+sim-cfsd18-perception-detectcone.mapFilename = simulation-map-closed-lap.txt
+sim-cfsd18-perception-detectcone.startX = 0
+sim-cfsd18-perception-detectcone.startY = 1.5
+sim-cfsd18-perception-detectcone.startHeading = -2.3
+
+
+sim-lynx-bicyclemodel.mass = 188.0
+sim-lynx-bicyclemodel.momentOfInertiaZ = 105.0
+sim-lynx-bicyclemodel.length = 1.53
+sim-lynx-bicyclemodel.frontToCog = 0.765
+sim-lynx-bicyclemodel.frictionCoefficient = 0.9
+sim-lynx-bicyclemodel.magicFormulaCAlpha = 25229.0
+sim-lynx-bicyclemodel.magicFormulaC = 1.0
+sim-lynx-bicyclemodel.magicFormulaE = -2.0
+
+logic-cfsd18-cognition-track.previewTime = 1.0
+logic-cfsd18-cognition-track.velocityLimit = 10.0
+logic-cfsd18-cognition-track.mu = 0.9
+logic-cfsd18-cognition-track.axLimitPositive = 5.0
+logic-cfsd18-cognition-track.axLimitNegative = -5.0
+logic-cfsd18-cognition-track.headingErrorDependency = 0.0
+
+logic-cfsd18-cognition-track.distanceBetweenPoints = 0.5
+logic-cfsd18-cognition-track.traceBack = 0
+
+logic-cfsd18-cognition-track.step = 5
+logic-cfsd18-cognition-track.polyFit = 0
+logic-cfsd18-cognition-track.polynomialDegree = 3
+logic-cfsd18-cognition-track.pointsPerSegment = 15
+
+logic-cfsd18-cognition-track.wheelBase = 1.53

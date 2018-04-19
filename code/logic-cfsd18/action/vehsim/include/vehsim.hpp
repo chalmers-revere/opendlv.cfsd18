@@ -23,7 +23,6 @@
 #include <opendavinci/odcore/base/module/TimeTriggeredConferenceClientModule.h>
 #include <opendavinci/odcore/data/Container.h>
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
-#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 #include <opendavinci/odcore/wrapper/Eigen.h>
 #include <fstream>
 
@@ -67,7 +66,7 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
    float m_deceleration;
    bool m_brakeEnabled;
    float m_delta;
-   std::ofstream m_outputData;
+   // std::ofstream m_outputData;
 };
 
 }
