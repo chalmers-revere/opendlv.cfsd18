@@ -41,20 +41,14 @@ DetectCone::~DetectCone()
 
 
 
-void DetectCone::nextContainer(odcore::data::Container &a_container)
+void DetectCone::nextContainer(odcore::data::Container &)
 {
-  if (a_container.getDataType() == opendlv::logic::sensation::Attention::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
-    opendlv::logic::perception::Object o1;
-    odcore::data::Container c1(o1);
-    getConference().send(c1);
-  }
 }
 
 void DetectCone::setUp()
 {
-  // std::string const exampleConfig = 
+  // std::string const exampleConfig =
   //   getKeyValueConfiguration().getValue<std::string>(
   //     "logic-cfsd18-perception-detectcone.example-config");
 
