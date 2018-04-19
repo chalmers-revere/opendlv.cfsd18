@@ -27,6 +27,11 @@ services:
           - .:/opt/opendlv.data
         command: "/opt/od4/bin/odsupercomponent --cid=${CID} --verbose=0 --configuration=/opt/opendlv.data/configuration"
 
+    sim-global:
+        image: chalmersrevere/opendlv-sim-global-amd64:v0.0.5
+        network_mode: "host"
+        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=0 --x=-4.14 --y=50.209 --yaw=-0.785"
+
 #  microservice for veh-sim
     cfsd-vehsim:
         image: ${IMAGE}
@@ -35,12 +40,20 @@ services:
           - odsupercomponent
         volumes:
           - .:/opt/opendlv.data
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-vehsim --cid=${CID} --verbose=0 --freq=1 --id=1"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-vehsim --cid=${CID} --verbose=0 --freq=100 --id=1"
 
     # microservice for lynx-steering
     cfsd-motion:
         image: ${IMAGE}
         network_mode: "host"
         depends_on:
-            - odsupercomponent
+          - odsupercomponent
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-motion --cid=${CID} --verbose=0 --id=1"
+
+    ui-default:
+#        image: chalmersrevere/opendlv-ui-default-amd64
+        image: opendlv-ui-default:v0.0.1
+        network_mode: "host"
+        volumes:
+          - ./simulation-map.txt:/srv/http/simulation-map.txt
+        command: "--cid=${CID}"

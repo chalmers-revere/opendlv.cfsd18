@@ -90,24 +90,30 @@ void Motion::calcTorque(float a_arg)
 {
   auto kv = getKeyValueConfiguration();
   uint32_t leftMotorID = kv.getValue<uint32_t>("global.sender-stamp.left-motor");
-  uint32_t rightMotorID = kv.getValue<uint32_t>("global.sender-stamp.right-motor ");
+  uint32_t rightMotorID = kv.getValue<uint32_t>("global.sender-stamp.right-motor");
   float dT = kv.getValue<float>("opendlv-logic-cfsd18-action-motion.torque-parameter");
 
 
   float mass = kv.getValue<float>("global.vehicle-parameter.m");
   float wheelRadius = kv.getValue<float>("global.vehicle-parameter.wR");
   float torque = a_arg*mass*wheelRadius;
+  std::cout << torque << std::endl;
   float Iz = kv.getValue<float>("global.vehicle-parameter.Iz");
 
   float yawRateRef = calcYawRateRef(m_aimPoint);
 
   float e_yawRate = -yawRateRef; // Add yaw rate here when Marcus is done with message
-
-  float dTorque = 0.5f/dT*e_yawRate*Iz;
+  (void) (e_yawRate*dT);
+  float dTorque = Iz*0;
+  std::cout << dTorque << std::endl;
   // Torque distribution
   float torqueLeft = torque*0.5f - dTorque;
   float torqueRight = torque-torqueLeft;
 
+  std::cout << torqueLeft << std::endl;
+  std::cout << torqueRight << std::endl;
+
+  std::cout << "Acceleration: " << a_arg << std::endl;
   sendActuationContainer(leftMotorID,torqueLeft);
   sendActuationContainer(rightMotorID,torqueRight);
 }
@@ -131,6 +137,8 @@ void Motion::sendActuationContainer(int32_t a_arg, float torque)
   opendlv::proxy::TorqueRequest tr(torque);
   odcore::data::Container c(tr);
   c.setSenderStamp(a_arg);
+  std::cout << "Stamp: " << a_arg << std::endl;
+  std::cout << "Torque " << torque << std::endl;
   getConference().send(c);
 }
 

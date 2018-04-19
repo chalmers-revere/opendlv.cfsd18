@@ -217,11 +217,11 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         x += dx*sampleTime;
 
         // send vehicle states
-        opendlv::sim::Frame outPos(X(0),X(1),0,0,0,X(2));
+        //opendlv::sim::Frame outPos(X(0),X(1),0,0,0,X(2));
         opendlv::sim::KinematicState outVel(x(0),x(1),0,0,0,x(2));
-        odcore::data::Container posC(outPos);
+        //odcore::data::Container posC(outPos);
         odcore::data::Container velC(outVel);
-        getConference().send(posC);
+        //getConference().send(posC);
         getConference().send(velC);
 
         float averageSpeed = (omega(0)+omega(1))/2;
@@ -395,10 +395,12 @@ Eigen::ArrayXf Vehsim::motorModel(float sampleTime,
     torqueRequest << m_torqueRequest1, m_torqueRequest2;
 
     for (int i=0;i<2;i++){
-      float TorqueError = torqueRequest(i)-Torque(i+2);
+      std::cout << "Loop: " << i << std::endl;
+      float torqueError = torqueRequest(i)-Torque(i);
+      std::cout << "Torque Error: " << torqueError << std::endl;
 
-      Torque(i) = Torque(i) + std::min(std::max(TorqueError,-dtMax),dtMax);
-
+      Torque(i) = Torque(i) + std::min(std::max(torqueError,-dtMax),dtMax);
+      std::cout << "Torque: " << Torque.transpose() << std::endl;
       float maxTorque;
 
 
@@ -409,7 +411,9 @@ Eigen::ArrayXf Vehsim::motorModel(float sampleTime,
       } else {
         maxTorque = maxPower/std::fabs(motorSpeed(i));
       }
+      std::cout << "Max torque: " << maxTorque << std::endl;
       Torque(i) = std::max(std::min(Torque(i),maxTorque),-maxTorque);
+      std::cout << "Torque: " << Torque.transpose() << std::endl;
     }
   return Torque;
 }
@@ -441,7 +445,7 @@ Eigen::ArrayXf Vehsim::longitudinalControl(Eigen::ArrayXf Fz, Eigen::ArrayXf x,
     FxBrakes = m_deceleration*brakeDist;
   }
 
-  if (abs(u) < 1e-10) { // Exception if u = 0
+  if (abs(u) < 1e-4) { // Exception if u = 0
     for (int i=0; i<wheelSlip.size();i++){
       if (abs(omega(i))<1e-10){
         wheelSlip(i) = 0;
@@ -584,7 +588,7 @@ float Vehsim::interp2(Eigen::VectorXf arg_X, Eigen::VectorXf arg_Y, Eigen::Matri
   while (arg_yq >= arg_Y(j)) {
     if (j >= arg_Y.size()-1) {
       // Exception, same as X.
-      std::cout << "Interp2: y-value out of bounds" << std::endl;
+      // std::cout << "Interp2: y-value out of bounds" << std::endl;
       j = 0;
       arg_yq = std::copysign(arg_Y(j),arg_yq);
     }
