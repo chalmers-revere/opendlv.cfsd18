@@ -46,7 +46,7 @@ Vehsim::Vehsim(int32_t const &a_argc, char **a_argv) :
   m_torqueRequest2(),
   m_deceleration(),
   m_brakeEnabled(),
-  m_delta(),
+  m_delta()
   //m_outputData()
   {
   }
@@ -221,6 +221,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         opendlv::sim::KinematicState outVel(x(0),x(1),0,0,0,x(2));
         //odcore::data::Container posC(outPos);
         odcore::data::Container velC(outVel);
+        velC.setSenderStamp(0);
         //getConference().send(posC);
         getConference().send(velC);
 

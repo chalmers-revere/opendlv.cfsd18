@@ -90,7 +90,7 @@ void DetectConeLane::nextContainer(odcore::data::Container &a_container)
 */
 
 if(a_container.getDataType() == opendlv::logic::perception::Object::ID()){
-    std::cout << "RECIEVED AN OBJECT!" << std::endl;
+    //std::cout << "RECIEVED AN OBJECT!" << std::endl;
     m_lastTimeStamp = a_container.getSampleTimeStamp();
     auto coneObject = a_container.getData<opendlv::logic::perception::Object>();
     int conesInFrame = coneObject.getObjectId();
@@ -230,14 +230,14 @@ void DetectConeLane::initializeCollection(int conesInFrame){
         std::cout << "WARNING! Object " << i << " has invalid cone type: " << type << std::endl;
       }
     }
-    std::cout << "members: " << nLeft << " " << nRight << " " << nSmall << " " << nBig << std::endl;
+    //std::cout << "members: " << nLeft << " " << nRight << " " << nSmall << " " << nBig << std::endl;
     m_coneCollector = Eigen::MatrixXd::Zero(4,20);
     m_lastTypeId = -1;
     m_newFrame = true;
   }
   //Initialize for next collection
-  std::cout << "Collection done " << extractedCones.rows() << " " << extractedCones.cols() << std::endl;
-std::cout << "extractedCones: " << extractedCones.transpose() << std::endl;
+  //std::cout << "Collection done " << extractedCones.rows() << " " << extractedCones.cols() << std::endl;
+//std::cout << "extractedCones: " << extractedCones.transpose() << std::endl;
   if(extractedCones.cols() > 0){
     //std::cout << "Extracted Cones " << std::endl;
     //std::cout << extractedCones << std::endl;

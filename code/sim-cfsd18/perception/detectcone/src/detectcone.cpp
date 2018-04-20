@@ -155,7 +155,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
 // -- TODO: Send messages for orange cones --
     auto finishRight = std::chrono::system_clock::now();
     auto timeSend = std::chrono::duration_cast<std::chrono::microseconds>(finishRight - startLeft);
-    std::cout << "sendTime:" << timeSend.count() << std::endl;
+    // std::cout << "sendTime:" << timeSend.count() << std::endl;
 
     //std::cout << "detectedConesLeftMat: " << detectedConesLeftMat.transpose() << std::endl;
     //std::cout << "detectedConesRightMat: " << detectedConesRightMat.transpose() << std::endl;
@@ -331,8 +331,8 @@ return detectedConesFinal;
 
 void DetectCone::sendMatchedContainer(Eigen::MatrixXd cones, int type, int startID)
 {
-std::cout << "New location: " << m_location << " and heading: " << m_heading << std::endl;
-std::cout << "Sending " << cones.cols() << " of type " << type << std::endl;
+// std::cout << "New location: " << m_location << " and heading: " << m_heading << std::endl;
+// std::cout << "Sending " << cones.cols() << " of type " << type << std::endl;
   opendlv::logic::sensation::Point conePoint;
   for(int n = 0; n < cones.cols(); n++){
 

@@ -45,9 +45,9 @@ Ebsmonitoring::~Ebsmonitoring()
 }
 
 void Ebsmonitoring::nextContainer(odcore::data::Container &a_container) {
-  if (a_container.getDataType() == opendlv::proxy::VoltageReading::ID()) { 
+  if (a_container.getDataType() == opendlv::proxy::VoltageReading::ID()) {
     auto analogReading = a_container.getData<opendlv::proxy::VoltageReading>();
-    m_analogReading = analogReading.getTorque();
+    m_analogReading = analogReading.getVoltage();
   }
 }
 
