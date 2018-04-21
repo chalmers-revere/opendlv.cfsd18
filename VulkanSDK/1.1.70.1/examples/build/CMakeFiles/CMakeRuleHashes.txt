@@ -1,0 +1,3 @@
+# Hashes of file build rules.
+e44b9ad7e68512f2a0cced86d11a82a1 cube.frag.inc
+77152945e588cd0436eee323917d0afd cube.vert.inc

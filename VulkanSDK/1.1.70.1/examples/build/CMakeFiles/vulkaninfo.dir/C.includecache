@@ -1,0 +1,100 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/vulkaninfo.c
+assert.h
+-
+inttypes.h
+-
+stdbool.h
+-
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+fcntl.h
+-
+io.h
+-
+X11/Xutil.h
+-
+vulkan/vulkan.h
+-
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vk_platform.h
+stddef.h
+-
+stdint.h
+-
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan.h
+vk_platform.h
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vk_platform.h
+vulkan_core.h
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_core.h
+vulkan_android.h
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_android.h
+vulkan_ios.h
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_ios.h
+vulkan_macos.h
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_macos.h
+mir_toolkit/client_types.h
+-
+vulkan_mir.h
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_mir.h
+vulkan_vi.h
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_vi.h
+wayland-client.h
+-
+vulkan_wayland.h
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_wayland.h
+windows.h
+-
+vulkan_win32.h
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_win32.h
+xcb/xcb.h
+-
+vulkan_xcb.h
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xcb.h
+X11/Xlib.h
+-
+vulkan_xlib.h
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xlib.h
+X11/Xlib.h
+-
+X11/extensions/Xrandr.h
+-
+vulkan_xlib_xrandr.h
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xlib_xrandr.h
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_android.h
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_core.h
+vk_platform.h
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vk_platform.h
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_ios.h
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_macos.h
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_mir.h
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_vi.h
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_wayland.h
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_win32.h
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xcb.h
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xlib.h
+
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xlib_xrandr.h
+

@@ -1,0 +1,5 @@
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/build/CMakeFiles/edit_cache.dir
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/build/CMakeFiles/vulkaninfo.dir
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/build/CMakeFiles/cubepp.dir
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/build/CMakeFiles/cube.dir
+/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/build/CMakeFiles/rebuild_cache.dir

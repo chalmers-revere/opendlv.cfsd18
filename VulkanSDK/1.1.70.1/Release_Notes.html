@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" href="vulkan_lunarg_icon.png">
+<link rel="stylesheet" href="doc/github-markdown.css">
+<style>
+    body {
+        box-sizing: border-box;
+        min-width: 200px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 45px;
+    }
+</style>
+</head>
+<body>
+<article class="markdown-body">
+<h1>
+<a id="user-content-vulkan-sdk-for-linux-release-notes" class="anchor" href="#user-content-vulkan-sdk-for-linux-release-notes" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Vulkan SDK for Linux Release Notes</h1>
+<p><a name="user-content-vsdkrel-1.1.70.1"></a></p>
+<h2>
+<a id="user-content-vulkan-sdk-11701-release-notes" class="anchor" href="#user-content-vulkan-sdk-11701-release-notes" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Vulkan SDK 1.1.70.1 Release Notes</h2>
+<h5>
+<a id="user-content-version-11701-for-linux" class="anchor" href="#user-content-version-11701-for-linux" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Version 1.1.70.1 for Linux</h5>
+<h6>
+<a id="user-content-march-9-2018" class="anchor" href="#user-content-march-9-2018" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>March 9, 2018</h6>
+<p>This SDK resolves crashes when using layers built with the layer factory, including the assistant layer and demo layer.</p>
+<p><a name="user-content-vsdkrel-1.1.70"></a></p>
+<h2>
+<a id="user-content-vulkan-sdk-11700-release-notes" class="anchor" href="#user-content-vulkan-sdk-11700-release-notes" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Vulkan SDK 1.1.70.0 Release Notes</h2>
+<h5>
+<a id="user-content-version-11700-for-linux" class="anchor" href="#user-content-version-11700-for-linux" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Version 1.1.70.0 for Linux</h5>
+<h6>
+<a id="user-content-march-7-2018" class="anchor" href="#user-content-march-7-2018" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>March 7, 2018</h6>
+<p>This SDK supports Vulkan API revision 1.1.70.  The prior SDK supported Vulkan API revision 1.0.68.</p>
+<p>NOTE -- this SDK supports Vulkan 1.1.70, and is <strong>backwards-compatible</strong> with Vulkan 1.0.70.</p>
+<p>Dependencies for Ubuntu now include:</p>
+<pre><code>libx11-dev libxcb1-dev libxkbcommon-dev libmirclient-dev libwayland-dev
+</code></pre>
+<p>The dependencies on other platforms may be different.</p>
+<p>Please refer to the Getting Started Guide for a list of supported Linux distributions.</p>
+<p><strong>Drivers:</strong> LunarG recommends that you update your Vulkan-capable hardware drivers to the latest
+recommended version from your hardware vendor.  A list of <a href="#user-content-known-driver-issues">Known Driver Issues</a> appears
+at the end of this document with more information.</p>
+<p><strong>Linux Loader now searches <code>/usr/local/etc/vulkan</code> and <code>/usr/local/share/vulkan</code> for drivers and layers.</strong>
+These new paths are in addition to the previous locations of <code>/etc/vulkan</code>, <code>/usr/share/vulkan</code>,
+and the user's <code>HOME</code> local path, e.g., <code>$HOME/.local/share/vulkan</code>.
+The two new "<code>/usr/local</code>" locations are configurable at build time, allowing configuration of the loader
+for specific filesystem structures.
+See the <code>BUILD.html</code> guide in the Loader And Validation Layers repository and the "Loader and Layers Interface"
+guide for more information.</p>
+<p><strong>CMake:</strong> CMake 3.2 or later is now required to build the source code contents of the SDK. Any user with an older version will need to upgrade.</p>
+<h3>
+<a id="user-content-overview-of-new-features-in-sdk-1170" class="anchor" href="#user-content-overview-of-new-features-in-sdk-1170" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Overview of new features in SDK 1.1.70</h3>
+<ul>
+<li>
+<p>Support for Vulkan Version 1.1.x, the first major Vulkan update</p>
+</li>
+<li>
+<p>The VulkanInfo utility now features a json backend, for use with the device simulation layer</p>
+</li>
+<li>
+<p>Many bug fixes, validation coverage and accuracy improvements, and many feature additions</p>
+</li>
+<li>
+<p>The following extensions are <strong>new</strong> for Vulkan <strong>1.1.70</strong>:</p>
+<pre><code>  VK_KHR_maintenance3
+  VK_EXT_vertex_attribute_divisor
+</code></pre>
+</li>
+<li>
+<p>The following extensions have been <strong>promoted from <em>experimental</em> or <em>vendor</em> extensions to Khronos extensions</strong> for Vulkan <strong>1.1.70</strong>:</p>
+<pre><code>  VK_KHR_multiview                       (formerly VK_KHX_multiview)
+  VK_KHR_device_group                    (formerly VK_KHX_device_group)
+  VK_KHR_device_group_creation           (formerly VK_KHX_device_group_creation)
+  VK_KHR_external_memory_capabilities    (formerly VK_NV_external_memory_capabilities)
+  VK_KHR_external_memory                 (formerly VK_NV_external_memory)
+</code></pre>
+</li>
+<li>
+<p>The following Vulkan 1.0 extensions have been <strong>promoted to core</strong> for <strong>Vulkan 1.1.70</strong>:</p>
+<pre><code> VK_KHR_multiview
+ VK_KHR_device_group
+ VK_KHR_device_group_creation
+ VK_KHR_bind_memory_2
+ VK_KHR_descriptor_update_template
+ VK_KHR_sampler_ycbcr_conversion
+ VK_KHR_get_memory_requirements_2
+ VK_KHR_maintenance3
+ VK_KHR_external_memory_capabilities
+ VK_KHR_external_fence_capabilities
+ VK_KHR_external_semaphore_capabilities
+ VK_KHR_get_physical_device_properties_2
+ VK_KHR_maintenance1
+ VK_KHR_external_memory
+ VK_KHR_external_semaphore
+ VK_KHR_16bit_storage
+ VK_KHR_external_fence
+ VK_KHR_maintenance2
+ VK_KHR_variable_pointers
+ VK_KHR_dedicated_allocation
+</code></pre>
+</li>
+<li>
+<p>All KHX extensions have been promoted to KHR extensions. The KHX versions of these extensions are no longer supported.</p>
+</li>
+</ul>
+<h3>
+<a id="user-content-outside-contributors" class="anchor" href="#user-content-outside-contributors" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Outside Contributors</h3>
+<p>Lunarg would like to thank the following Vulkan Ecosystem Developers for their contributions:</p>
+<ul>
+<li>Jeff Bolz</li>
+<li>Slawomir Cygan</li>
+<li>Norbert Garnys</li>
+<li>Petr Kraus</li>
+</ul>
+<h4>
+<a id="user-content-sdk-components" class="anchor" href="#user-content-sdk-components" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>SDK Components</h4>
+<p>This version of the SDK components are based on the following specifications and source code repositories:</p>
+<ul>
+<li>
+<p><a href="https://www.khronos.org/registry/vulkan" TARGET="_blank" rel="nofollow"><strong>Vulkan Specification including extensions</strong></a></p>
+</li>
+<li>
+<p><a href="https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/tree/sdk-1.1.70" TARGET="_blank"><strong>Vulkan Loader and Validation</strong></a></p>
+</li>
+<li>
+<p><a href="https://www.khronos.org/registry/spir-v/" TARGET="_blank" rel="nofollow"><strong>SPIR-V Specification</strong> version 1.3</a></p>
+</li>
+<li>
+<p><a href="https://github.com/KhronosGroup/glslang/commit/2651ccaec8170b3257642b3c438f50dc4f181fdd" TARGET="_blank"><strong>Glslang library and tools</strong></a></p>
+</li>
+<li>
+<p><a href="https://github.com/LunarG/VulkanTools/tree/sdk-1.1.70" TARGET="_blank"><strong>Vulkan Tools</strong></a></p>
+</li>
+<li>
+<p><a href="https://github.com/LunarG/VulkanSamples/tree/sdk-1.1.70" TARGET="_blank"><strong>Vulkan Samples</strong></a></p>
+</li>
+</ul>
+<h3>
+<a id="user-content-last-commits-are-designated-by-the-following-git-tags-in-the-respective-repositories" class="anchor" href="#user-content-last-commits-are-designated-by-the-following-git-tags-in-the-respective-repositories" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Last Commits are designated by the following Git Tags in the respective repositories:</h3>
+<ul>
+<li>LoaderAndValidationLayers:    sdk-1.1.70.0</li>
+<li>VulkanTools:                  sdk-1.1.70.0</li>
+<li>VulkanSamples:                sdk-1.1.70.0</li>
+</ul>
+<h3>
+<a id="user-content-fixed-issues" class="anchor" href="#user-content-fixed-issues" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Fixed Issues</h3>
+<p><strong>Fixed Vulkan-LoaderAndValidationLayers Github Issues:</strong></p>
+<ul>
+<li>#2410 vkGetSwapchainImagesKHR called more than once, returns another handle (ID)s bug</li>
+<li>#2403 Presence of ICD json causes loader errors when loading layers loader question</li>
+<li>#2379 vulkaninfo doesn't give anything useful when DISPLAY is not set</li>
+<li>#2360 Validate descriptor set flags for vkCmdPushDescriptorSetKHR incomplete</li>
+<li>#2289 Missing validation: Transitioning an image before binding memory to it is illegal incomplete</li>
+<li>#2213 VL reports too early when recording secondary command buffer bug</li>
+<li>#1600 SC layer: GS output to FS input not taken into account (refs VS instead)</li>
+</ul>
+<p><strong>Fixed LunarXchange Issues:</strong></p>
+<ul>
+<li>#740 - Fullscreen/Windowed Borderless screen tearing w/ mailbox and triple buffering</li>
+<li>#739 - Vulkan-1.dll deleted after GPU driver install</li>
+<li>#737 - calling vkCreateInstance results in unhandled exception</li>
+<li>#735 - SPIR-V module not valid when creating shader module (Result Id is 0)</li>
+</ul>
+<h3>
+<a id="user-content-known-issues" class="anchor" href="#user-content-known-issues" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Known Issues</h3>
+<ul>
+<li>Loader and validation layer open issues are available in the <a href="https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/issues" TARGET="_blank">Vulkan-LoaderAndValidationLayers Github Repository</a>
+</li>
+<li>VkTrace and other tool-related open issues are available in the <a href="https://github.com/LunarG/VulkanTools/issues" TARGET="_blank">VulkanTools Github Repository</a>
+</li>
+<li>Vulkan Sample-related open issues are available in the <a href="https://github.com/LunarG/VulkanSamples/issues" TARGET="_blank">VulkanSamples Github Repository</a>
+</li>
+</ul>
+<h2>
+<a id="user-content-developer-notes" class="anchor" href="#user-content-developer-notes" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Developer Notes</h2>
+<ul>
+<li>The pre-compiled glslang static libraries are not compatible with the Linux 4 runtime (e.g., Ubuntu 15.10).  These libraries must be rebuilt before use with the SDK samples.  See the Vulkan Samples page for more information.</li>
+<li>The script <code>source/shaderc/update_shaderc_sources.py</code> fails on Arch Linux because python3 is the default python interpreter. To work around this issue, change the line at the top of the file to be python2.</li>
+</ul>
+<h3>
+<a id="user-content-known-driver-issues" class="anchor" href="#user-content-known-driver-issues" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Known Driver Issues</h3>
+<p>None</p>
+<h4>
+<a id="user-content-important-notes-about-experimental-extensions" class="anchor" href="#user-content-important-notes-about-experimental-extensions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Important Notes About Experimental Extensions</h4>
+<p>The <code>KHX</code> and <code>NVX</code> identifiers in the name indicate that the extension is experimental, and is being considered for
+future standardization.  In the case of a <code>KHX</code> extension, this extension is being considered as either a <code>KHR</code> extension
+or core Vulkan API functionality.  <code>NVX</code> extensions are being considered for either a final <code>NV</code> or a more general
+(<code>EXT</code>, <code>KHR</code>) extension.</p>
+<p>As experimental extensions:</p>
+<ul>
+<li>Developers are encouraged to experiment with them and provide feedback, but <strong>should not</strong> use them as the basis for production applications.</li>
+<li>These experimental extensions are expected to be supported for a limited time only.</li>
+<li>They <strong>may</strong> change their interfaces and behavior in significant ways as a result of feedback</li>
+<li>They <strong>may</strong> be withdrawn or replaced with a different stable (<code>KHR</code>, <code>EXT</code>, ...) extension or core functionality at any time.</li>
+<li>Implementations of these extensions receive limited or no testing when submitted to the Khronos conformance process.</li>
+<li>Using experimental extensions with the validation layers may produce inaccurate validation results.</li>
+</ul>
+</article>
+</body>
+</html>
