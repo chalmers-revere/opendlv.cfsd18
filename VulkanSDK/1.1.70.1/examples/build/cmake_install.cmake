@@ -1,4 +1,4 @@
-# Install script for directory: /media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples
+# Install script for directory: /home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -40,5 +40,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

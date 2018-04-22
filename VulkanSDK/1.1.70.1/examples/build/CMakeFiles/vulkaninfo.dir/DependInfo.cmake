@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/vulkaninfo.c" "/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/build/CMakeFiles/vulkaninfo.dir/vulkaninfo.c.o"
+  "/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/vulkaninfo.c" "/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/build/CMakeFiles/vulkaninfo.dir/vulkaninfo.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 
@@ -15,8 +15,8 @@ set(CMAKE_TARGET_DEFINITIONS_C
 
 # The include file search paths:
 set(CMAKE_C_TARGET_INCLUDE_PATH
-  "/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include"
-  "/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan"
+  "/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include"
+  "/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan"
   "../"
   "."
   )

@@ -23,10 +23,19 @@
 //
 // For more information, please refer to <http://unlicense.org/>
 
-#include "vulkan.h"
+#include <vulkan/vulkan.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <iostream>
+#include <fstream>
+#include <stdexcept>
+#include <algorithm>
+#include <vector>
+#include <cstring>
+#include <cstdlib>
+#include <set>
 
 #define BAIL_ON_BAD_RESULT(result) \
   if (VK_SUCCESS != (result)) { fprintf(stderr, "Failure at %u %s\n", __LINE__, __FILE__); exit(-1); }
@@ -127,7 +136,7 @@ int main(int argc, const char * const argv[]) {
     0,
     VK_MAKE_VERSION(1, 0, 9)
   };
-  
+
   const VkInstanceCreateInfo instanceCreateInfo = {
     VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
     0,
@@ -138,10 +147,10 @@ int main(int argc, const char * const argv[]) {
     0,
     0
   };
-  
+
   VkInstance instance;
   BAIL_ON_BAD_RESULT(vkCreateInstance(&instanceCreateInfo, 0, &instance));
-  
+
   uint32_t physicalDeviceCount = 0;
   BAIL_ON_BAD_RESULT(vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, 0));
 
@@ -189,7 +198,7 @@ int main(int argc, const char * const argv[]) {
     const uint32_t bufferSize = sizeof(int32_t) * bufferLength;
 
     // we are going to need two buffers from this one memory
-    const VkDeviceSize memorySize = bufferSize * 2; 
+    const VkDeviceSize memorySize = bufferSize * 2;
 
     // set memoryTypeIndex to an invalid entry in the properties.memoryTypes array
     uint32_t memoryTypeIndex = VK_MAX_MEMORY_TYPES;
@@ -316,10 +325,10 @@ int main(int argc, const char * const argv[]) {
       0,          // schema
 
       // OpCapability Shader
-      (2 << 16) | OP_CAPABILITY, 1, 
+      (2 << 16) | OP_CAPABILITY, 1,
 
       // OpMemoryModel Logical Simple
-      (3 << 16) | OP_MEMORY_MODEL, 0, 0, 
+      (3 << 16) | OP_MEMORY_MODEL, 0, 0,
 
       // OpEntryPoint GLCompute %FUNC_ID "f" %IN_ID %OUT_ID
       (4 << 16) | OP_ENTRY_POINT, 5, FUNC_ID, 0x00000066,
@@ -329,7 +338,7 @@ int main(int argc, const char * const argv[]) {
 
       // next declare decorations
 
-      (3 << 16) | OP_DECORATE, STRUCT_ID, BUFFER_BLOCK, 
+      (3 << 16) | OP_DECORATE, STRUCT_ID, BUFFER_BLOCK,
 
       (4 << 16) | OP_DECORATE, GLOBAL_INVOCATION_ID, BUILTIN, GLOBAL_INVOCATION,
 

@@ -1,4 +1,4 @@
-#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
 
 #IncludeRegexScan: ^.*$
 
@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/cube.cpp
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/cube.cpp
 X11/Xutil.h
 -
 linux/input.h
@@ -30,67 +30,67 @@ vulkan/vulkan.hpp
 vulkan/vk_sdk_platform.h
 -
 linmath.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/linmath.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/linmath.h
 cube.frag.inc
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/cube.frag.inc
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/cube.frag.inc
 cube.vert.inc
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/cube.vert.inc
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/cube.vert.inc
 shellapi.h
 -
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/linmath.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/examples/linmath.h
 math.h
 -
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vk_platform.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vk_platform.h
 stddef.h
 -
 stdint.h
 -
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vk_sdk_platform.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vk_sdk_platform.h
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan.h
 vk_platform.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vk_platform.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vk_platform.h
 vulkan_core.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_core.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_core.h
 vulkan_android.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_android.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_android.h
 vulkan_ios.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_ios.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_ios.h
 vulkan_macos.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_macos.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_macos.h
 mir_toolkit/client_types.h
 -
 vulkan_mir.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_mir.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_mir.h
 vulkan_vi.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_vi.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_vi.h
 wayland-client.h
 -
 vulkan_wayland.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_wayland.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_wayland.h
 windows.h
 -
 vulkan_win32.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_win32.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_win32.h
 xcb/xcb.h
 -
 vulkan_xcb.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xcb.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xcb.h
 X11/Xlib.h
 -
 vulkan_xlib.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xlib.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xlib.h
 X11/Xlib.h
 -
 X11/extensions/Xrandr.h
 -
 vulkan_xlib_xrandr.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xlib_xrandr.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xlib_xrandr.h
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan.hpp
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan.hpp
 algorithm
 -
 array
@@ -120,29 +120,29 @@ vector
 cassert
 -
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_android.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_android.h
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_core.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_core.h
 vk_platform.h
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vk_platform.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vk_platform.h
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_ios.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_ios.h
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_macos.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_macos.h
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_mir.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_mir.h
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_vi.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_vi.h
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_wayland.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_wayland.h
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_win32.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_win32.h
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xcb.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xcb.h
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xlib.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xlib.h
 
-/media/weiming/Ny volym/ubuntu-project/perception.vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xlib_xrandr.h
+/home/igor/Projects/solvi-ml/tmp/vulkan/opendlv.cfsd18/VulkanSDK/1.1.70.1/x86_64/include/vulkan/vulkan_xlib_xrandr.h
 
 cube.frag.inc
 
