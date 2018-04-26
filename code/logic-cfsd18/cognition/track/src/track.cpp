@@ -23,7 +23,6 @@
 #include <opendavinci/odcore/strings/StringToolbox.h>
 
 #include <thread>
-
 #include "track.hpp"
 
 namespace opendlv {
@@ -34,16 +33,20 @@ namespace cognition {
 Track::Track(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-cognition-track"),
   m_groundSpeed{0.0f},
-  m_surfaceCollector{},
   m_newFrame{true},
-  m_lastObjectId{-1},
-  m_timeDiffMilliseconds{1},
+  m_objectId{1},
   m_groundSpeedMutex{},
   m_surfaceMutex{},
   m_pathMutex{},
-  m_surfacesInFrame{-1}
+  m_surfaceFrame{},
+  m_surfaceFrameBuffer{},
+  m_nSurfacesInframe{},
+  m_surfaceId{},
+  m_timeReceived{},
+  m_lastObjectId{},
+  m_newId{true}
 {
-  m_surfaceCollector = Eigen::MatrixXf::Zero(100,2); // TODO: how big?
+
 }
 
 Track::~Track()
@@ -59,31 +62,39 @@ void Track::nextContainer(odcore::data::Container &a_container)
 
   }
 
-if(a_container.getDataType() == opendlv::logic::perception::GroundSurface::ID()){
-    std::cout << "RECIEVED A SURFACE!" << std::endl;
-//    m_lastTimeStamp = a_container.getSampleTimeStamp();
-    auto surface = a_container.getData<opendlv::logic::perception::GroundSurface>();
-    int surfacesInFrame = surface.getSurfaceId();
-    if (m_newFrame){
-      m_newFrame = false;
-      std::thread surfaceCollector(&Track::collectAndRun, this, surfacesInFrame);
-      surfaceCollector.detach();
-    }
+  if(a_container.getDataType() == opendlv::logic::perception::GroundSurfaceProperty::ID()){
+      std::cout << "TRACK RECIEVED A SURFACE!" << std::endl;
+  //    m_lastTimeStamp = a_container.getSampleTimeStamp();
+      auto surfaceProperty = a_container.getData<opendlv::logic::perception::GroundSurfaceProperty>();
+      int surfaceId = surfaceProperty.getSurfaceId();
+      auto nSurfacesInframe = surfaceProperty.getProperty();
+
+      if (m_newFrame) {
+        m_nSurfacesInframe = std::stoul(nSurfacesInframe);
+        m_surfaceId = surfaceId;
+        std::cout << "SurfaceId: " << surfaceId<<std::endl;
+        std::cout << "nSurfacesInframe: " << nSurfacesInframe<<std::endl;
+        m_newFrame = false;
+      }
 
   }
 
   if (a_container.getDataType() == opendlv::logic::perception::GroundSurfaceArea::ID()) {
-
-    auto groundSurfaceArea = a_container.getData<opendlv::logic::perception::GroundSurfaceArea>();
-    uint32_t objectId = groundSurfaceArea.getSurfaceId();
-
+    int objectId;
     {
-      odcore::base::Lock lockSurface(m_surfaceMutex);
-      //Check last timestamp if they are from same message
-      m_lastObjectId = (m_lastObjectId < static_cast<int>(objectId))?(static_cast<int>(objectId)):(m_lastObjectId);
-      //std::cout << "### m_lastObjectId: " << m_lastObjectId<< std::endl;
-      //std::cout << "### objectId: " << objectId<< std::endl;
-
+    odcore::base::Lock lockSurface(m_surfaceMutex);
+      auto groundSurfaceArea = a_container.getData<opendlv::logic::perception::GroundSurfaceArea>();
+      objectId = groundSurfaceArea.getSurfaceId();
+      odcore::data::TimeStamp containerStamp = a_container.getReceivedTimeStamp();
+      double timeStamp = containerStamp.toMicroseconds();
+      if (m_newId) { // TODO: does it need to be global? can it be initialized in another way?
+        m_objectId = (objectId!=m_lastObjectId)?(objectId):(-1);
+        std::cout << "newId, m_objectId: " <<m_objectId <<std::endl;
+        m_newId=(m_objectId !=-1)?(false):(true);
+      }
+      std::cout << "objectId: " <<objectId <<std::endl;
+      std::cout << "m_objectId: " <<m_objectId <<std::endl;
+      std::cout << "m_lastObjectId: " <<m_lastObjectId <<std::endl;
       float x1 = groundSurfaceArea.getX1();
       float y1 = groundSurfaceArea.getY1();
       float x2 = groundSurfaceArea.getX2();
@@ -92,26 +103,61 @@ if(a_container.getDataType() == opendlv::logic::perception::GroundSurface::ID())
       float y3 = groundSurfaceArea.getY3();
       float x4 = groundSurfaceArea.getX4();
       float y4 = groundSurfaceArea.getY4();
-      m_surfaceCollector(2*objectId,0) = (x1+x2)/2;
-      m_surfaceCollector(2*objectId,1) = (y1+y2)/2;
-      m_surfaceCollector(2*objectId+1,0) = (x3+x4)/2;
-      m_surfaceCollector(2*objectId+1,1) = (y3+y4)/2;
+      std::vector<float> v(4);
+      v[0] = (x1+x2)/2.0f;
+      v[1] = (y1+y2)/2.0f;
+      v[2] = (x3+x4)/2.0f;
+      v[3] = (y3+y4)/2.0f;
 
-/*
-      m_surfaceCollector(2*objectId,0) = groundSurfaceArea.getX1();
-      m_surfaceCollector(2*objectId,1) = groundSurfaceArea.getY1();
-      m_surfaceCollector(2*objectId+1,0) = groundSurfaceArea.getX2();
-      m_surfaceCollector(2*objectId+1,1) = groundSurfaceArea.getY2();
-*/
+      if (objectId == m_objectId) {
+        std::cout << "objectId in frame: " <<objectId <<std::endl;
+        m_surfaceFrame[timeStamp] = v;
+        std::cout << "Surfaces in frame: " <<m_surfaceFrame.size() <<std::endl;
+        for (std::map<double, std::vector<float> >::iterator it = m_surfaceFrame.begin();it !=m_surfaceFrame.end();it++){
+          v = it->second;
+          for (size_t i = 0; i < 4; i++) {
+            std::cout<<v[i]<<"\n";
+          }
+        }
+        m_timeReceived = std::chrono::system_clock::now();
+      } else if (objectId != m_lastObjectId){
+        std::cout << "objectId in buffer: " <<objectId <<std::endl;
+        m_surfaceFrameBuffer[timeStamp] = v;
+        std::cout << "Surfaces in buffer: " <<m_surfaceFrameBuffer.size() <<std::endl;
+        for (std::map<double, std::vector<float> >::iterator it = m_surfaceFrame.begin();it !=m_surfaceFrame.end();it++){
+          v = it->second;
+          for (size_t i = 0; i < 4; i++) {
+            std::cout<<v[i]<<"\n";
+          }
+        }
+      }
     }
-/*
-    if (m_newFrame){
-      std::thread surfaceCollector (&Track::collectAndRun,this); //just sleep instead maybe since this is unclear how it works
+    auto wait = std::chrono::system_clock::now();
+    std::chrono::duration<double> dur = wait-m_timeReceived;
+    double duration = (m_objectId!=-1)?(dur.count()):(-1.0);
+    double receiveTimeLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.receiveTimeLimit");
+
+    if ((m_surfaceFrame.size()==m_nSurfacesInframe || duration>receiveTimeLimit)) { //!m_newFrame && objectId==m_surfaceId &&
+      std::cout<<"Run condition OK "<<"\n";
+      std::cout << "duration: " <<duration <<std::endl;
+      std::map< double, std::vector<float> > surfaceFrame;
+      {
+      odcore::base::Lock lockSurface(m_surfaceMutex);
+        m_newFrame = true;
+        surfaceFrame = m_surfaceFrame;
+        m_surfaceFrame = m_surfaceFrameBuffer;
+        m_surfaceFrameBuffer.clear();
+        m_lastObjectId = m_objectId;
+        m_newId = true;
+        std::cout << "Cleared buffer " <<std::endl;
+      }
+      std::cout << "Run " << surfaceFrame.size() << " surfaces"<< std::endl;
+      std::thread surfaceCollector(&Track::collectAndRun, this, surfaceFrame);
       surfaceCollector.detach();
-      m_newFrame = false;
     }
-*/
   }
+}
+
   // TODO: logic for different states, start and stop
   /*
   if (a_container.getDataType() == opendlv::system::SignalStatusMessage::ID()) {
@@ -125,7 +171,7 @@ if(a_container.getDataType() == opendlv::logic::perception::GroundSurface::ID())
   }
   */
 
-}
+
 
 void Track::setUp()
 {
@@ -135,43 +181,25 @@ void Track::tearDown()
 {
 }
 
-void Track::collectAndRun(int surfacesInFrame){
-  //std::this_thread::sleep_for(std::chrono::duration 1s); //std::chrono::milliseconds(m_timeDiffMilliseconds)
+void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
 
-  bool sleep = true;
-  //auto start = std::chrono::system_clock::now();
-  //std::cout << "m_lastObjectId1: " << m_lastObjectId<< std::endl;
-  //std::cout << "surfacesInFrame1: " << surfacesInFrame<< std::endl;
-  while(sleep) // Can probably be rewritten nicer
-  {
-    if (m_lastObjectId >= surfacesInFrame-1)
-        sleep = false;
-  }
-  //std::cout << "m_lastObjectId2: " << m_lastObjectId<< std::endl;
-  //std::cout << "surfacesInFrame2: " << surfacesInFrame<< std::endl;
-/*
-  bool sleep = true;
-  auto start = std::chrono::system_clock::now();
-
-  while(sleep)
-  {
-    auto now = std::chrono::system_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - start);
-    if ( elapsed.count() > m_timeDiffMilliseconds*1000 )
-        sleep = false;
-  }
-*/
-
-  Eigen::MatrixXf localPath;
+  //std::vector<double> timeStamps(surfaceFrame.size());
+  std::vector<float> v;
+  Eigen::MatrixXf localPath(surfaceFrame.size()*2,2);
+  std::cout<<"localPath.rows(): "<<localPath.rows()<<"\n";
   {
     odcore::base::Lock lockSurface(m_surfaceMutex);
     odcore::base::Lock lockPath(m_pathMutex);
-    localPath = m_surfaceCollector.topRows(2*surfacesInFrame);
-    std::cout << "localPath rows: " << localPath.rows() << std::endl;
-
-    m_surfaceCollector = Eigen::MatrixXf::Zero(100,2); // TODO: how big?
-    m_lastObjectId = -1;
-    m_newFrame = true;
+    int I=0;
+    for (std::map<double, std::vector<float> >::iterator it = surfaceFrame.begin();it !=surfaceFrame.end();it++){
+      v=it->second;
+      localPath(2*I,0)=v[0];
+      localPath(2*I,1)=v[1];
+      localPath(2*I+1,0)=v[2];
+      localPath(2*I+1,1)=v[3];
+      I++;
+    }
+    std::cout<<"localPath: "<<localPath<<"\n";
 
   }
   //################ RUN and SEND ##################
@@ -189,15 +217,13 @@ void Track::collectAndRun(int surfacesInFrame){
       if (std::abs(localPath(1,0)) <= 0.0001f && std::abs(localPath(1,1)) <= 0.0001f && localPath.rows()<3) {
         localPathCopy = localPath.row(0);
         STOP = true;
-        std::cout << "STOP!!! " << std::endl;
+        std::cout << "STOP! " << std::endl;
       }
       else if(localPath.rows()<3){
         localPathCopy = localPath.row(1);
-        std::cout << "LocalPath is now one point: " <<localPathCopy<<"\n";
       }
       else{
         if (localPath(0,0)<=0.0f) {
-          std::cout << "Found negtive path!: " << localPath << std::endl;
           int i = 0;
           while (localPath(i,0)<=0.0f){
             i++;
@@ -247,6 +273,13 @@ std::cout << "Sending headingRequest: " << headingRequest << std::endl;
     o1.setGroundSteering(headingRequest);
     odcore::data::Container c1(o1);
     getConference().send(c1);
+
+    //Send for Ui TODO: Remove
+    opendlv::logic::action::AimPoint o4;
+    o4.setAzimuthAngle(headingRequest);
+    o4.setDistance(distanceToAimPoint);
+    odcore::data::Container c4(o4);
+    getConference().send(c4);
 
     if (accelerationRequest >= 0.0f) {
 std::cout << "Sending accelerationRequest: " << accelerationRequest << std::endl;
@@ -368,6 +401,11 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
   //Output
   //   HEADINGREQUEST  [1 x 1] Desired heading angle [rad]
 
+  // Move localPath to front wheels
+    /*float const frontToCog = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.frontToCog");
+    Eigen::MatrixXf foo = Eigen::MatrixXf::Zero(localPath.rows(),2);
+    foo.col(0).fill(frontToCog);
+    localPath = localPath-foo;*/
   // Calculate the distance between vehicle and aimpoint;
   float previewDistance = std::abs(groundSpeedCopy)*previewTime;
   std::cout<<"previewDistance: "<<previewDistance<<" m \n";
@@ -410,16 +448,18 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
   // Angle to aimpoint
   float headingRequest;
   headingRequest = atan2(aimPoint(1),aimPoint(0));
-  std::cout << "headingRequest unlimited: "<<headingRequest<<"\n";
+  // Limit heading request due to physical limitations
+  float wheelAngleLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.wheelAngleLimit");
   if (headingRequest>=0) {
-    headingRequest = std::min(headingRequest,25*3.14159265f/180.0f);
+    headingRequest = std::min(headingRequest,wheelAngleLimit*3.14159265f/180.0f);
   } else {
-    headingRequest = std::max(headingRequest,-25*3.14159265f/180.0f);
+    headingRequest = std::max(headingRequest,-wheelAngleLimit*3.14159265f/180.0f);
   }
   float distanceToAimPoint=aimPoint.norm();
   std::cout << "AimPoint: "<<aimPoint<<"\n";
   std::cout << "distanceToAimPoint: "<<distanceToAimPoint<<"\n";
   std::cout << "previewDistance: "<<previewDistance<<"\n";
+
   return std::make_tuple(headingRequest,distanceToAimPoint);
 }
 
@@ -487,10 +527,9 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
     }
     std::cout << "speedProfile = " << speedProfile.transpose() << "\n";
     // Choose velocity to achieve
-    // Limit it dependent on the heading request (heading error)
+    // Limit it dependent on the path length and heading request (heading error)
     if(previewTime*groundSpeedCopy>distanceToAimPoint){
       speedProfile(0)=distanceToAimPoint/previewTime;
-      std::cout << "speedProfile(0) limited to: "<<speedProfile(0)<<"\n";
     }
     float desiredVelocity = speedProfile(0)/(1.0f + headingErrorDependency*std::abs(headingRequest));
     // Calculate distance to desired velocity
@@ -530,7 +569,6 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   else{
     accelerationRequest = 0.0f;
   }
-  std::cout << "accelerationRequest Final: " << accelerationRequest << std::endl;
   std::cout << "groundSpeedCopy: " << groundSpeedCopy << std::endl;
   return accelerationRequest;
 }

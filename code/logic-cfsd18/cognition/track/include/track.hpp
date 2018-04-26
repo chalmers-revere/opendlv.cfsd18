@@ -26,8 +26,8 @@
 #include <opendavinci/odcore/base/Lock.h>
 
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
-
-
+#include <map>
+#include <chrono>
 namespace opendlv {
 namespace logic {
 namespace cfsd18 {
@@ -45,7 +45,7 @@ class Track : public odcore::base::module::DataTriggeredConferenceClientModule {
   void setUp();
   void tearDown();
 
-  void collectAndRun(int);
+  void collectAndRun(std::map< double, std::vector<float> >);
   Eigen::RowVector2f traceBackToClosestPoint(Eigen::RowVector2f, Eigen::RowVector2f, Eigen::RowVector2f);
   Eigen::MatrixXf placeEquidistantPoints(Eigen::MatrixXf, bool, int, float);
   std::tuple<float, float> driverModelSteering(Eigen::MatrixXf, float, float);
@@ -55,14 +55,18 @@ class Track : public odcore::base::module::DataTriggeredConferenceClientModule {
 
   /* Member variables */
   float m_groundSpeed;
-  Eigen::MatrixXf m_surfaceCollector;
   bool m_newFrame;
-  int m_lastObjectId;
-  float m_timeDiffMilliseconds;
+  int m_objectId;
   odcore::base::Mutex m_groundSpeedMutex;
   odcore::base::Mutex m_surfaceMutex;
   odcore::base::Mutex m_pathMutex;
-  int m_surfacesInFrame;
+  std::map< double, std::vector<float> > m_surfaceFrame;
+  std::map< double, std::vector<float> > m_surfaceFrameBuffer;
+  uint64_t m_nSurfacesInframe;
+  int m_surfaceId;
+  std::chrono::time_point<std::chrono::system_clock> m_timeReceived;
+  int m_lastObjectId;
+  bool m_newId;
 };
 
 }

@@ -64,6 +64,7 @@ class DetectConeLane : public odcore::base::module::DataTriggeredConferenceClien
   bool m_newFrame;
   int m_timeDiffMilliseconds;
   int m_lastTypeId;
+  int m_surfaceId;
 
   const double DEG2RAD = 0.017453292522222; // PI/180.0
 

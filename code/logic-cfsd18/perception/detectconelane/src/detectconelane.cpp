@@ -18,6 +18,7 @@
 */
 
 #include <iostream>
+#include <cstdlib>
 
 #include <opendavinci/odcore/data/TimeStamp.h>
 #include <opendavinci/odcore/strings/StringToolbox.h>
@@ -38,11 +39,13 @@ DetectConeLane::DetectConeLane(int32_t const &a_argc, char **a_argv) :
 , m_newFrame()
 , m_timeDiffMilliseconds()
 , m_lastTypeId()
+, m_surfaceId()
 {
     m_coneCollector = Eigen::MatrixXd::Zero(4,20);
     m_newFrame = true;
     m_timeDiffMilliseconds = 150;
     m_lastTypeId = -1;
+    m_surfaceId = rand();
 }
 
 DetectConeLane::~DetectConeLane()
@@ -236,8 +239,8 @@ void DetectConeLane::initializeCollection(int conesInFrame){
     m_newFrame = true;
   }
   //Initialize for next collection
-  std::cout << "Collection done " << extractedCones.rows() << " " << extractedCones.cols() << std::endl;
-std::cout << "extractedCones: " << extractedCones.transpose() << std::endl;
+  //std::cout << "Collection done " << extractedCones.rows() << " " << extractedCones.cols() << std::endl;
+//std::cout << "extractedCones: " << extractedCones.transpose() << std::endl;
   if(extractedCones.cols() > 0){
     //std::cout << "Extracted Cones " << std::endl;
     //std::cout << extractedCones << std::endl;
@@ -313,13 +316,14 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
     if(longSide.rows() == 0)
     { std::cout<<"No Cones"<<"\n";
       //No cones
-      opendlv::logic::perception::GroundSurface surface;
-      surface.setSurfaceId(1);
+      opendlv::logic::perception::GroundSurfaceProperty surface;
+      surface.setSurfaceId(m_surfaceId);
+      surface.setProperty("1");
       odcore::data::Container cStop1(surface);
       getConference().send(cStop1);
 
       opendlv::logic::perception::GroundSurfaceArea surfaceArea;
-      surfaceArea.setSurfaceId(0);
+      surfaceArea.setSurfaceId(m_surfaceId);
       surfaceArea.setX1(1.0f);
       surfaceArea.setY1(0.0f);
       surfaceArea.setX2(1.0f);
@@ -330,6 +334,10 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
       surfaceArea.setY4(0.0f);
       odcore::data::Container cStop2(surfaceArea);
       getConference().send(cStop2);
+      std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
+      int rndmId;
+      while (m_surfaceId == rndmId){rndmId = rand();}
+      m_surfaceId = rndmId;
     }
     else if(longSide.rows() == 1 && shortSide.rows() == 0)
     { std::cout<<"1 Cone"<<"\n";
@@ -344,13 +352,14 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
         direction = 1;
       }
 
-      opendlv::logic::perception::GroundSurface surface;
-      surface.setSurfaceId(1);
+      opendlv::logic::perception::GroundSurfaceProperty surface;
+      surface.setSurfaceId(m_surfaceId);
+      surface.setProperty("1");
       odcore::data::Container cGo1(surface);
       getConference().send(cGo1);
 
       opendlv::logic::perception::GroundSurfaceArea surfaceArea;
-      surfaceArea.setSurfaceId(0);
+      surfaceArea.setSurfaceId(m_surfaceId);
       surfaceArea.setX1(0.0f);
       surfaceArea.setY1(0.0f);
       surfaceArea.setX2(0.0f);
@@ -361,18 +370,22 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
       surfaceArea.setY4(longSide(0,1)+1.5f*direction);
       odcore::data::Container cGo2(surfaceArea);
       getConference().send(cGo2);
-
+      std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
+      int rndmId;
+      while (m_surfaceId == rndmId){rndmId = rand();}
+      m_surfaceId = rndmId;
     }
     else
     { std::cout<<"1 on each side"<<"\n";
       //1 on each side
-      opendlv::logic::perception::GroundSurface surface;
-      surface.setSurfaceId(1);
+      opendlv::logic::perception::GroundSurfaceProperty surface;
+      surface.setSurfaceId(m_surfaceId);
+      surface.setProperty("1");
       odcore::data::Container cGo3(surface);
       getConference().send(cGo3);
 
       opendlv::logic::perception::GroundSurfaceArea surfaceArea;
-      surfaceArea.setSurfaceId(0);
+      surfaceArea.setSurfaceId(m_surfaceId);
       surfaceArea.setX1(0.0f);
       surfaceArea.setY1(0.0f);
       surfaceArea.setX2(0.0f);
@@ -383,6 +396,10 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
       surfaceArea.setY4(shortSide(0,1));
       odcore::data::Container cGo4(surfaceArea);
       getConference().send(cGo4);
+      std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
+      int rndmId;
+      while (m_surfaceId == rndmId){rndmId = rand();}
+      m_surfaceId = rndmId;
     }
 
   } // End of else
@@ -919,7 +936,7 @@ void DetectConeLane::sortIntoSideArrays(MatrixXd extractedCones, int nLeft, int 
     cone = Spherical2Cartesian(extractedCones(0,p), extractedCones(1,p), extractedCones(2,p));
     coneLocal.col(p) = cone;
   }
-std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
+//std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
 
   //if(nLeft > 1 || nRight > 1 )
   //{
@@ -980,8 +997,10 @@ void DetectConeLane::sendMatchedContainer(Eigen::ArrayXXf virtualPointsLong, Eig
   int nSurfaces = virtualPointsLong.rows()/2;
   std::cout << "Sending " << nSurfaces << " surfaces" << std::endl;
 
-  opendlv::logic::perception::GroundSurface surface;
-  surface.setSurfaceId(nSurfaces);
+  opendlv::logic::perception::GroundSurfaceProperty surface;
+  surface.setSurfaceId(m_surfaceId);
+  std::string property = std::to_string(nSurfaces);
+  surface.setProperty(property);
   odcore::data::Container c0(surface);
   getConference().send(c0);
   //std::cout << "virtualPointsLong: " << virtualPointsLong<< std::endl;
@@ -989,7 +1008,7 @@ void DetectConeLane::sendMatchedContainer(Eigen::ArrayXXf virtualPointsLong, Eig
   for(int n = 0; n < nSurfaces; n++)
   {
     opendlv::logic::perception::GroundSurfaceArea surfaceArea;
-    surfaceArea.setSurfaceId(n);
+    surfaceArea.setSurfaceId(m_surfaceId);
     surfaceArea.setX1(virtualPointsLong(2*n,0));
     surfaceArea.setY1(virtualPointsLong(2*n,1));
     surfaceArea.setX2(virtualPointsShort(2*n,0));
@@ -1000,9 +1019,11 @@ void DetectConeLane::sendMatchedContainer(Eigen::ArrayXXf virtualPointsLong, Eig
     surfaceArea.setY4(virtualPointsShort(2*n+1,1));
     odcore::data::Container c1(surfaceArea);
     getConference().send(c1);
-
   } // End of for
-
+  std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
+  int rndmId;
+  while (m_surfaceId == rndmId){rndmId = rand();}
+  m_surfaceId = rndmId;
 } // End of sendMatchedContainer
 
 
