@@ -130,7 +130,7 @@ void Motion::sendActuationContainer(int32_t a_arg, float torque)
 {
   (void) a_arg;
   (void) torque;
-  opendlv::proxy::TorqueRequest tr(torque);
+  opendlv::proxy::TorqueRequest tr(0*torque);
   odcore::data::Container c(tr);
   c.setSenderStamp(a_arg);
   getConference().send(c);

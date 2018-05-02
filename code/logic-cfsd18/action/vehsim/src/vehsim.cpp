@@ -41,13 +41,13 @@ namespace action {
 
 Vehsim::Vehsim(int32_t const &a_argc, char **a_argv) :
   TimeTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-action-vehsim"),
-  m_aimPoint(),
+  m_headingRequest(),
   m_torqueRequest1(),
   m_torqueRequest2(),
   m_deceleration(),
   m_brakeEnabled(),
-  m_delta()
-  //m_outputData()
+  m_delta(),
+  m_outputData()
   {
   }
 
@@ -62,9 +62,9 @@ void Vehsim::nextContainer(odcore::data::Container &a_container)
   uint32_t leftMotorID = kv.getValue<uint32_t>("global.sender-stamp.left-motor");
   uint32_t rightMotorID = kv.getValue<uint32_t>("global.sender-stamp.right-motor");
 
-  if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
+  if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
     // Get the heading request. Change to use steering output instead
-    m_aimPoint = a_container.getData<opendlv::logic::action::AimPoint>();
+    m_headingRequest = a_container.getData<opendlv::proxy::GroundSteeringRequest>();
   }
 
   if (a_container.getDataType() == opendlv::proxy::TorqueRequest::ID()) {
@@ -72,10 +72,10 @@ void Vehsim::nextContainer(odcore::data::Container &a_container)
     // store the requested torque. 1 is left, 2 is right.
     if (a_container.getSenderStamp() ==  leftMotorID) {
       auto torqueContainer = a_container.getData<opendlv::proxy::TorqueRequest>();
-      m_torqueRequest1 = torqueContainer.getTorque();
+      m_torqueRequest1 = 0.0f;//torqueContainer.getTorque();
     } else if(a_container.getSenderStamp() == rightMotorID) {
       auto torqueContainer = a_container.getData<opendlv::proxy::TorqueRequest>();
-      m_torqueRequest2 = torqueContainer.getTorque();
+      m_torqueRequest2 = 0.0f;//torqueContainer.getTorque();
     }
   }
 
@@ -83,7 +83,7 @@ void Vehsim::nextContainer(odcore::data::Container &a_container)
     m_brakeEnabled = true; // Engage Brakes
     // Store the requested deceleration. This will be changed to match brake output
     auto decelContainer = a_container.getData<opendlv::proxy::GroundDecelerationRequest>();
-    m_deceleration = decelContainer.getGroundDeceleration();
+    m_deceleration = 0;//decelContainer.getGroundDeceleration();
   }
 
   if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
@@ -106,7 +106,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
   float wr = kv.getValue<float>("global.vehicle-parameter.wr");   // Track width rear
 
   // Simulation Specific stuff
-  float sampleTime = 1/static_cast<double>(getFrequency()); //1/static_cast<float>(getFrequency());
+  float sampleTime = 0.01;//1/static_cast<double>(getFrequency()); //1/static_cast<float>(getFrequency());
   // use second part to run real time
 
   // States of the vehicle
@@ -148,11 +148,11 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
       std::stringstream ss(row);
       while (ss >> value){
           if (irow == 0 && icol != 0){
-            tireLoad(icol-1) = -1*std::stof(value);
+            tireLoad(icol-1) = std::stof(value);
           } else if (icol == 0 && irow != 0) {
-            tireSlipY(irow-1) = std::stof(value)*PI/180;
+            tireSlipY(irow-1) = std::stof(value);
           } else if (icol != 0 && irow != 0){
-            tireForceY(irow-1,icol-1) = -1*std::stof(value);
+            tireForceY(irow-1,icol-1) = 1*std::stof(value);
           }
           icol ++;
       }
@@ -187,24 +187,23 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
   while (getModuleStateAndWaitForRemainingTimeInTimeslice() ==
       odcore::data::dmcp::ModuleStateMessage::RUNNING) {
         // crate an optimal yawrate based on bicylce model
-        float yawRef = 0.0f; // yawModel(m_aimPoint, x);
+        // yawModel(m_headingRequest, x);
         // Calculate steering angle based on optimal yawrate
         Eigen::Array4f delta(m_delta,m_delta,0,0);
-        // delta << 0.1f,0.1f,0,0;
         // Calculate vertical load on each wheel
         Eigen::ArrayXf Fz = loadTransfer(x, mass, L, lf, lr, wf, wr);
         // Model motor response
         motorTorque = motorModel(sampleTime,motorTorque,omega);
         // Calculate the Fx and the speed of the wheels
         Eigen::ArrayXf Fx = longitudinalControl(Fz, x, tireLoad, tireSlipX,
-          tireForceX, &omega, motorTorque, sampleTime);
+          tireForceX, &omega, motorTorque, sampleTime, mass);
         // Calculate lateral forces
         Eigen::ArrayXf Fy = tireModel(delta,x,Fz, lf, lr, wf, wr, tireLoad,
           tireSlipY, tireForceY);
         // Calculate the accelerations of the vehicle by force equilibriums
         Eigen::ArrayXf dx = motion(delta,Fy,Fx,x, mass, Iz, lf, lr, wf, wr,
           sampleTime);
-
+        
         // Calculate the rotation of the vehicle by integrating and assuming constant accelerations
         X(2) = X(2) + x(2)*sampleTime + dx(2)*(float)pow(sampleTime,2)/2;
 
@@ -221,7 +220,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         opendlv::sim::KinematicState outVel(x(0),x(1),0,0,0,x(2));
         //odcore::data::Container posC(outPos);
         odcore::data::Container velC(outVel);
-        velC.setSenderStamp(0);
+        // velC.setSenderStamp(0);
         //getConference().send(posC);
         getConference().send(velC);
 
@@ -230,15 +229,12 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         odcore::data::Container speedC(outSpeed);
         getConference().send(speedC);
 
-        // send acceleration requests
-        sendAccelerationRequest(yawRef, x);
-
         // update simulation clock
 
-        // if (m_outputData.is_open()) {
-        //   m_outputData << timer << " " << X.transpose() << std::endl;
-        //   m_outputData.flush();
-        // }
+        if (m_outputData.is_open()) {
+          m_outputData << timer << " " << X.transpose() << " " << m_delta << std::endl;
+          m_outputData.flush();
+        }
         timer += sampleTime;
     }
 
@@ -260,27 +256,6 @@ float Vehsim::yawModel(opendlv::logic::action::AimPoint aimPoint, Eigen::ArrayXf
   return r;
 }
 
-// Eigen::ArrayXf Vehsim::calcSteerAngle(float rRef, Eigen::ArrayXf x, float mass, float L, float Ku)
-// {
-//   float maxDelta = PI/6;      // Define a maximum steering output
-//   float u = x(0);             // Vehicle speed
-//   float deltaf = 0.0f;        // pre-allocate delta
-//
-//   if(u>0.1f){ // if the speed is low, dont try to steer
-//       // calculate average steer angle based on bicycle model and the reference yaw rate
-//       deltaf = (L+Ku*mass*(float)pow(u,2.0f))*rRef/u;
-//   }
-//
-//   deltaf = 0.1f;    // Overwrite delta to make specific test case, comment this out later
-//   // saturate steer angle based on maximum allowed value
-//   deltaf = std::max<float>(std::min<float>(deltaf,maxDelta),-maxDelta);
-//
-//   // Calculate steer angle for each wheel
-//   Eigen::ArrayXf delta(4); delta << 1,1,0,0; // decide which wheels steer
-//   delta *= deltaf;
-//
-//   return delta;
-// }
 
 Eigen::ArrayXf Vehsim::loadTransfer(Eigen::ArrayXf x, float mass, float L,
   float lf, float lr, float wf, float wr)
@@ -340,6 +315,11 @@ Eigen::ArrayXf Vehsim::loadTransfer(Eigen::ArrayXf x, float mass, float L,
     }
   }
 
+  if (Fz.sum() > FzStatic.sum()) {
+    Fz *= FzStatic.sum()/Fz.sum();
+  }
+
+
   return Fz;
 }
 
@@ -374,7 +354,7 @@ Eigen::ArrayXf Vehsim::tireModel(Eigen::ArrayXf delta, Eigen::ArrayXf x,
 
   // Calculate forces from look up table. This data has been recorded from the specific tires used.
   // However, the friction in the test environment was extremely high (~2.5-3)
-  float Fy1 = interp2(tireLoad, tireSlipY, tireForceY, Fz(0)+2000, alpha(0));
+  float Fy1 = interp2(tireLoad, tireSlipY, tireForceY, Fz(0), alpha(0));
   float Fy2 = interp2(tireLoad, tireSlipY, tireForceY, Fz(1), alpha(1));
   float Fy3 = interp2(tireLoad, tireSlipY, tireForceY, Fz(2), alpha(2));
   float Fy4 = interp2(tireLoad, tireSlipY, tireForceY, Fz(3), alpha(3));
@@ -409,14 +389,14 @@ Eigen::ArrayXf Vehsim::motorModel(float sampleTime,
         maxTorque = maxPower/std::fabs(motorSpeed(i));
       }
       Torque(i) = std::max(std::min(Torque(i),maxTorque),-maxTorque);
-      }
+    }
   return Torque;
 }
 
 Eigen::ArrayXf Vehsim::longitudinalControl(Eigen::ArrayXf Fz, Eigen::ArrayXf x,
   Eigen::VectorXf tireLoad, Eigen::VectorXf tireSlipX,
   Eigen::MatrixXf tireForceX, Eigen::ArrayXf *wheelSpeed, Eigen::ArrayXf motorTorque,
-  float sampleTime) {
+  float sampleTime, float mass) {
 
   float u = x(0);                   // Vehicle speed
   float const wheelRadius = 0.22f;  // Radius of tires
@@ -434,10 +414,11 @@ Eigen::ArrayXf Vehsim::longitudinalControl(Eigen::ArrayXf Fz, Eigen::ArrayXf x,
   float tr1 = motorTorque(0);    // Get most recent torque requests recieved
   float tr2 = motorTorque(1);    // These can be negative! (Still only from motors, not brakes)
 
+
   Eigen::ArrayXf FxBrakes(4); FxBrakes << 0,0,0,0;
   // Initialize brakes forces, and assign values if brakes are enabled
   if (m_brakeEnabled) {
-    FxBrakes = m_deceleration*brakeDist;
+    FxBrakes = m_deceleration*brakeDist*mass*std::copysign(1,u);
   }
 
   if (abs(u) < 1e-4) {          // Exception if u = 0
@@ -559,48 +540,46 @@ void Vehsim::sendAccelerationRequest(float yawRef, Eigen::ArrayXf x)
 float Vehsim::interp2(Eigen::VectorXf arg_X, Eigen::VectorXf arg_Y, Eigen::MatrixXf arg_V, float arg_xq, float arg_yq)
 {   // 2-d interpolation function. Only works if arg_X is a vector in
     // decending order and arg_Y in ascending order.. (working on chage)
-    // arg_V is the data with arg_X.size() columns and arg_Y.size() rows.
+    // arg_V is the data with arg_X.size() columns and arg_Y.interp2size() rows.
     // arg_xq and arg_yq is at which point data is requested.
     // Currently no solution if arg_xq and arg_yq are not within arg_X and arg_Y
-  Eigen::VectorXf XY(4);
-  Eigen::VectorXf b(4);
-  Eigen::MatrixXf coeffs(4,4);
-  Eigen::VectorXf V(4);
+  Eigen::VectorXf X(2);
+  Eigen::VectorXf Y(2);
+  Eigen::MatrixXf V(2,2);
 
   int i = 1;
   int j = 1;
-  // Find betweem which two points x lies
+  // Find betweem which two poi0nts x lies
   while (arg_xq <= arg_X(i)) {
     if (i >= arg_X.size()-1) {
       // Exception if xq was not found in X
       std::cout << "Interp2: x-value out of bounds. -> " << arg_xq << std::endl;
       std::cout << "X max: " << arg_X(i-1) << std::endl;
-      break;
+      arg_xq = std::copysign(arg_X(i),arg_xq)*0.99f;
+      i=1;
     }
-    i++; // I will decide between which two points in X, xq is
+    i++; // i will decide between which two points in X, xq is
   }
   // Find betweem which two points y lies
   while (arg_yq >= arg_Y(j)) {
     if (j >= arg_Y.size()-1) {
       // Exception, same as X.
-      // std::cout << "Interp2: y-value out of bounds" << std::endl;
-      j = 0;
-      arg_yq = std::copysign(arg_Y(j),arg_yq);
+      std::cout << "Interp2: y-value out of bounds" << std::endl;
+      std::cout << "yq: " << arg_yq << "Y max: " << arg_Y(j) << std::endl;
+      arg_yq = std::copysign(arg_Y(j),arg_yq)*0.99f;
+      j=1;
     }
     j++; // same as i, but in Y vector
   }
 
   // X and Y are weights. V are the four closest data points to V(xq,yq)
-  XY << 1, arg_xq, arg_yq, arg_xq*arg_yq;
-  coeffs << 1, arg_X(i-1), arg_Y(j-1), arg_X(i-1)*arg_Y(j-1),
-            1, arg_X(i-1), arg_Y(j), arg_X(i-1)*arg_Y(j),
-            1, arg_X(i), arg_Y(j-1), arg_X(i)*arg_Y(j-1),
-            1, arg_X(i), arg_Y(j), arg_X(i)*arg_Y(j);
+  X << arg_X(i)-arg_xq, arg_xq-arg_X(i-1);
+  Y << arg_Y(j)-arg_yq, arg_yq-arg_Y(j-1);
+  V << arg_V(j-1,i-1), arg_V(j,i-1),
+      arg_V(j-1,i), arg_V(j,i);
 
-  V << arg_V(j-1,i-1), arg_V(j,i-1), arg_V(j-1,i), arg_V(j,i);
+  float vq = 1/((arg_X(i)-arg_X(i-1))*(arg_Y(j)-arg_Y(j-1)))*X.transpose()*V*Y;
 
-  b = coeffs.inverse().transpose()*XY;
-  float vq = b.transpose()*V;
   return vq;
 }
 
@@ -608,19 +587,20 @@ void Vehsim::setUp()
 {
   std::cout << "vehsim setup" << std::endl;
 
-  // m_outputData.open("/opt/opendlv.data/outputData",std::ofstream::out);
-  //
-  // if (m_outputData.is_open()) {
-  //   m_outputData << "% time\t" << "X\t" << "Y\t" << "Psi\t" << "u\t" << "v\t" << "r" << std::endl;
-  // }
+  m_delta = 0.18;
+  m_outputData.open("/opt/opendlv.data/outputData",std::ofstream::out);
+
+  if (m_outputData.is_open()) {
+    m_outputData << "% time\t" << "X\t" << "Y\t" << "Psi\t" << "u\t" << "v\t" << "r" << std::endl;
+  }
 
   // add aim point infront of the car as initializer
-  m_aimPoint = opendlv::logic::action::AimPoint(0.0f,0.0f,5.0f);
+  m_headingRequest = opendlv::proxy::GroundSteeringRequest(0.0f);
 }
 
 void Vehsim::tearDown()
 {
-//  m_outputData.close();
+  m_outputData.close();
 }
 
 }

@@ -67,7 +67,8 @@ services:
 
     ui-default:
 #        image: chalmersrevere/opendlv-ui-default-amd64
-        image: opendlv-ui-default:v0.0.1
+#        image: opendlv-ui-default:v0.0.1
+        image: oscartis/opendlv-ui-default:latest
         network_mode: "host"
         volumes:
         - ./simulation-map-closed-lap.txt:/srv/http/simulation-map-closed-lap.txt

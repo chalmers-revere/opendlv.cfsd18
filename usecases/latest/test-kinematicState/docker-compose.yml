@@ -33,46 +33,12 @@ services:
         command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=1 --x=0 --y=1.5 --yaw=-2.3"
 
     # microservice for logic-motion
-    cfsd-motion:
+    cfsd-lateral:
         image: ${IMAGE}
         network_mode: "host"
         depends_on:
           - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-motion --cid=${CID} --verbose=0 --id=1"
-
-    # microservice for logic-steering
-    cfsd-steering:
-        image: ${IMAGE}
-        network_mode: "host"
-        depends_on:
-          - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-steering --cid=${CID} --verbose=0 --id=1"
-
-    # microservice for ...
-    logic-cfsd18-perception-detectconelane:
-        image: ${IMAGE}
-        network_mode: "host"
-        depends_on:
-            - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectconelane --cid=${CID} --verbose=0 --id=1"
-
-    # microservice for ...
-    sim-cfsd18-perception-detectcone:
-        image: ${IMAGE}
-        network_mode: "host"
-        depends_on:
-            - odsupercomponent
-        volumes:
-        - .:/opt/opendlv.data
-        command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-perception-detectcone --cid=${CID} --verbose=0 --id=1 --freq=20"
-
-    # microservice for ...
-    logic-cfsd18-cognition-track:
-        image: ${IMAGE}
-        network_mode: "host"
-        depends_on:
-            - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-cognition-track --cid=${CID} --verbose=0 --id=1"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-lateral --cid=${CID} --freq=100 --verbose=0 --id=1"
 
     ui-default:
 #        image: chalmersrevere/opendlv-ui-default-amd64:v0.0.4
@@ -82,13 +48,3 @@ services:
         volumes:
           - ./simulation-map.txt:/srv/http/simulation-map.txt
         command: "--cid=${CID}"
-
-#  microservice for veh-sim
-    cfsd-vehsim:
-        image: ${IMAGE}
-        network_mode: "host"
-        depends_on:
-          - odsupercomponent
-        volumes:
-          - .:/opt/opendlv.data
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-vehsim --cid=${CID} --verbose=0 --freq=100 --id=1"

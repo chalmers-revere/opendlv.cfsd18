@@ -39,25 +39,6 @@ Lateral::~Lateral()
 {
 }
 
-
-
-<<<<<<< HEAD
-void Lateral::nextContainer(odcore::data::Container &a_container)
-{
-  if (a_container.getDataType() == opendlv::logic::cognition::GroundSteeringLimit::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
-  }
-  if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
-    // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
-
-    auto steeringAngle = a_container.getData<opendlv::proxy::GroundSteeringRequest::ID>();
-    odcore::data::Container c1(o1);
-    getConference().send(c1);
-  }
-}
-=======
->>>>>>> 362f5d7788629586a24b751e31b02fcce885baa6
-
 void Lateral::setUp()
 {
   // std::string const exampleConfig =
@@ -91,8 +72,9 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Lateral::body()
   // Todo: actual steering reading
   while (getModuleStateAndWaitForRemainingTimeInTimeslice() ==
       odcore::data::dmcp::ModuleStateMessage::RUNNING) {
-    double steeringRequest = 1;
-    sendGroundSteeringRequest(steeringRequest);
+    opendlv::sim::KinematicState kinStates;
+    odcore::data::Container o1(kinStates);
+    getConference().send(o1);
   }
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
 }

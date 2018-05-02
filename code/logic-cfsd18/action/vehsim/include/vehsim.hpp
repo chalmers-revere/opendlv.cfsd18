@@ -51,7 +51,7 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
     float, float, float, float, Eigen::VectorXf, Eigen::VectorXf, Eigen::MatrixXf);
   Eigen::ArrayXf atanArr(Eigen::ArrayXf);
   Eigen::ArrayXf longitudinalControl(Eigen::ArrayXf, Eigen::ArrayXf, Eigen::VectorXf,
-    Eigen::VectorXf, Eigen::MatrixXf, Eigen::ArrayXf*, Eigen::ArrayXf, float);
+    Eigen::VectorXf, Eigen::MatrixXf, Eigen::ArrayXf*, Eigen::ArrayXf, float, float);
   Eigen::ArrayXf motion(Eigen::ArrayXf,Eigen::ArrayXf,Eigen::ArrayXf,
     Eigen::ArrayXf, float, float, float, float, float, float, float);
   void sendAccelerationRequest(float, Eigen::ArrayXf);
@@ -60,13 +60,13 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
     Eigen::ArrayXf, Eigen::ArrayXf);
 
  private:
-   opendlv::logic::action::AimPoint m_aimPoint;
+   opendlv::proxy::GroundSteeringRequest m_headingRequest;
    float m_torqueRequest1;
    float m_torqueRequest2;
    float m_deceleration;
    bool m_brakeEnabled;
    float m_delta;
-   // std::ofstream m_outputData;
+   std::ofstream m_outputData;
 };
 
 }

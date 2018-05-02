@@ -298,8 +298,8 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
   shortSide << 2.14202, -1.47425,
   5.09234, -3.39936;
     */
-  std::cout<<"longSide accepted cones: "<<longSide<<"\n";
-  std::cout<<"shortSide accepted cones: "<<shortSide<<"\n";
+  // std::cout<<"longSide accepted cones: "<<longSide<<"\n";
+  // std::cout<<"shortSide accepted cones: "<<shortSide<<"\n";
 
 
   if(longSide.rows() > 1)
@@ -332,7 +332,7 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
       getConference().send(cStop2);
     }
     else if(longSide.rows() == 1 && shortSide.rows() == 0)
-    { std::cout<<"1 Cone"<<"\n";
+    { //std::cout<<"1 Cone"<<"\n";
       // 1 cone
       int direction;
       if(leftIsLong)
@@ -364,7 +364,7 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
 
     }
     else
-    { std::cout<<"1 on each side"<<"\n";
+    { //std::cout<<"1 on each side"<<"\n";
       //1 on each side
       opendlv::logic::perception::GroundSurface surface;
       surface.setSurfaceId(1);
@@ -747,7 +747,7 @@ ArrayXXf DetectConeLane::orderAndFilterCones(ArrayXXf cones, ArrayXXf vehicleLoc
     // If no remaining cone was accepted, the algorithm finishes early
     if(closestConeIndex == -1)
     {
-std::cout << "Remove invalid cones" << std::endl;
+// std::cout << "Remove invalid cones" << std::endl;
       break;
     } // End of if
 
@@ -919,7 +919,7 @@ void DetectConeLane::sortIntoSideArrays(MatrixXd extractedCones, int nLeft, int 
     cone = Spherical2Cartesian(extractedCones(0,p), extractedCones(1,p), extractedCones(2,p));
     coneLocal.col(p) = cone;
   }
-std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
+//std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
 
   //if(nLeft > 1 || nRight > 1 )
   //{
@@ -978,7 +978,7 @@ void DetectConeLane::sendMatchedContainer(Eigen::ArrayXXf virtualPointsLong, Eig
 {
 
   int nSurfaces = virtualPointsLong.rows()/2;
-  std::cout << "Sending " << nSurfaces << " surfaces" << std::endl;
+  //std::cout << "Sending " << nSurfaces << " surfaces" << std::endl;
 
   opendlv::logic::perception::GroundSurface surface;
   surface.setSurfaceId(nSurfaces);
