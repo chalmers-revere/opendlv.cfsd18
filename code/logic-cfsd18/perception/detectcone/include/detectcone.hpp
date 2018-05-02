@@ -38,10 +38,10 @@
 #include "opendavinci/generated/odcore/data/CompactPointCloud.h"
 #include <opendavinci/odcore/base/Lock.h>
 
+#include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <opencv2/calib3d/calib3d.hpp>
 
 #include <tiny_dnn/tiny_dnn.h>
 
@@ -79,6 +79,7 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   std::vector <cv::Point> imRegionalMax(cv::Mat, int, double, int);
   int medianVector(std::vector<std::pair<float, int>>);
   void forwardDetection(cv::Mat);
+  void forwardDetectionRoI(cv::Mat, tiny_dnn::network<tiny_dnn::sequential>);
 
   // void matchPoints(Eigen::MatrixXd, Eigen::MatrixXd);
   // void findMatch(Eigen::MatrixXd, Eigen::MatrixXd);
