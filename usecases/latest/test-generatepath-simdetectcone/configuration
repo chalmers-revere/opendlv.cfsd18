@@ -34,3 +34,7 @@ logic-cfsd18-cognition-track.polynomialDegree = 3
 logic-cfsd18-cognition-track.pointsPerSegment = 15
 
 logic-cfsd18-cognition-track.wheelBase = 1.53
+logic-cfsd18-cognition-track.frontToCog = 0.765
+logic-cfsd18-cognition-track.wheelAngleLimit = 25.0f #degrees
+
+logic-cfsd18-cognition-track.receiveTimeLimit = 0.000100
