@@ -91,4 +91,4 @@ services:
           - odsupercomponent
         volumes:
           - .:/opt/opendlv.data
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-vehsim --cid=${CID} --verbose=0 --freq=100 --id=1"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-vehsim --cid=${CID} --verbose=0 --freq=5 --id=1"

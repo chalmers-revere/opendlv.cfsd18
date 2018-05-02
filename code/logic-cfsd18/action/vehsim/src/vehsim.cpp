@@ -106,11 +106,11 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
   float wr = kv.getValue<float>("global.vehicle-parameter.wr");   // Track width rear
 
   // Simulation Specific stuff
-  float sampleTime = 0.01;//1/static_cast<double>(getFrequency()); //1/static_cast<float>(getFrequency());
+  float sampleTime = 1/static_cast<double>(getFrequency()); //1/static_cast<float>(getFrequency());
   // use second part to run real time
 
   // States of the vehicle
-  float u0 = 5.0f; // initial speed
+  float u0 = 1.0f; // initial speed
   // Initial velocities
   Eigen::ArrayXf x(6); x << u0,0,0,0,0,0;
   // Initial position
@@ -203,7 +203,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         // Calculate the accelerations of the vehicle by force equilibriums
         Eigen::ArrayXf dx = motion(delta,Fy,Fx,x, mass, Iz, lf, lr, wf, wr,
           sampleTime);
-        
+
         // Calculate the rotation of the vehicle by integrating and assuming constant accelerations
         X(2) = X(2) + x(2)*sampleTime + dx(2)*(float)pow(sampleTime,2)/2;
 

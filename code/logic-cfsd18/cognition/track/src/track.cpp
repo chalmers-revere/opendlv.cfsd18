@@ -190,14 +190,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
   {
     odcore::base::Lock lockSurface(m_surfaceMutex);
     odcore::base::Lock lockPath(m_pathMutex);
-<<<<<<< HEAD
-    localPath = m_surfaceCollector.topRows(2*surfacesInFrame);
-    // std::cout << "localPath rows: " << localPath.rows() << std::endl;
 
-    m_surfaceCollector = Eigen::MatrixXf::Zero(100,2); // TODO: how big?
-    m_lastObjectId = -1;
-    m_newFrame = true;
-=======
     int I=0;
     for (std::map<double, std::vector<float> >::iterator it = surfaceFrame.begin();it !=surfaceFrame.end();it++){
       v=it->second;
@@ -208,7 +201,6 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
       I++;
     }
     std::cout<<"localPath: "<<localPath<<"\n";
->>>>>>> 55cc50afc995cad16e80538f03a5db543bbcda50
 
   }
   //################ RUN and SEND ##################
@@ -226,17 +218,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
       if (std::abs(localPath(1,0)) <= 0.0001f && std::abs(localPath(1,1)) <= 0.0001f && localPath.rows()<3) {
         localPathCopy = localPath.row(0);
         STOP = true;
-<<<<<<< HEAD
-        // std::cout << "STOP!!! " << std::endl;
-      }
-      else if(localPath.rows()<3){
-        localPathCopy = localPath.row(1);
-        // std::cout << "LocalPath is now one point: " <<localPathCopy<<"\n";
-      }
-      else{
-        if (localPath(0,0)<=0.0f) {
-          // std::cout << "Found negtive path!: " << localPath << std::endl;
-=======
+
         std::cout << "STOP! " << std::endl;
       }
       else if(localPath.rows()<3){
@@ -244,7 +226,6 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
       }
       else{
         if (localPath(0,0)<=0.0f) {
->>>>>>> 55cc50afc995cad16e80538f03a5db543bbcda50
           int i = 0;
           while (localPath(i,0)<=0.0f){
             i++;
@@ -471,28 +452,14 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
   // Angle to aimpoint
   float headingRequest;
   headingRequest = atan2(aimPoint(1),aimPoint(0));
-<<<<<<< HEAD
-  // std::cout << "headingRequest unlimited: "<<headingRequest<<"\n";
-=======
   // Limit heading request due to physical limitations
   float wheelAngleLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.wheelAngleLimit");
->>>>>>> 55cc50afc995cad16e80538f03a5db543bbcda50
   if (headingRequest>=0) {
     headingRequest = std::min(headingRequest,wheelAngleLimit*3.14159265f/180.0f);
   } else {
     headingRequest = std::max(headingRequest,-wheelAngleLimit*3.14159265f/180.0f);
   }
   float distanceToAimPoint=aimPoint.norm();
-<<<<<<< HEAD
-  // std::cout << "AimPoint: "<<aimPoint<<"\n";
-  // std::cout << "distanceToAimPoint: "<<distanceToAimPoint<<"\n";
-  // std::cout << "previewDistance: "<<previewDistance<<"\n";
-=======
-  std::cout << "AimPoint: "<<aimPoint<<"\n";
-  std::cout << "distanceToAimPoint: "<<distanceToAimPoint<<"\n";
-  std::cout << "previewDistance: "<<previewDistance<<"\n";
-
->>>>>>> 55cc50afc995cad16e80538f03a5db543bbcda50
   return std::make_tuple(headingRequest,distanceToAimPoint);
 }
 
@@ -563,10 +530,6 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
     // Limit it dependent on the path length and heading request (heading error)
     if(previewTime*groundSpeedCopy>distanceToAimPoint){
       speedProfile(0)=distanceToAimPoint/previewTime;
-<<<<<<< HEAD
-      // std::cout << "speedProfile(0) limited to: "<<speedProfile(0)<<"\n";
-=======
->>>>>>> 55cc50afc995cad16e80538f03a5db543bbcda50
     }
     float desiredVelocity = speedProfile(0)/(1.0f + headingErrorDependency*std::abs(headingRequest));
     // Calculate distance to desired velocity
@@ -606,12 +569,6 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   else{
     accelerationRequest = 0.0f;
   }
-<<<<<<< HEAD
-  // std::cout << "accelerationRequest Final: " << accelerationRequest << std::endl;
-  // std::cout << "groundSpeedCopy: " << groundSpeedCopy << std::endl;
-=======
-  std::cout << "groundSpeedCopy: " << groundSpeedCopy << std::endl;
->>>>>>> 55cc50afc995cad16e80538f03a5db543bbcda50
   return accelerationRequest;
 }
 
