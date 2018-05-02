@@ -54,7 +54,7 @@ DetectCone::~DetectCone()
 
 void DetectCone::nextContainer(odcore::data::Container &a_container)
 {
-  if (a_container.getDataType() == opendlv::sim::Frame::ID()) 
+  if (a_container.getDataType() == opendlv::sim::Frame::ID())
   {
     auto frame = a_container.getData<opendlv::sim::Frame>();
     float x = frame.getX();
@@ -87,7 +87,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
       headingCopy = m_heading;
     }
     ArrayXXf detectedConesLeft, detectedConesRight, detectedConesSmall, detectedConesBig;
-    
+
     if(fakeSlamActivated)
     {
       detectedConesLeft = DetectCone::simConeDetectorSlam(m_leftCones, locationCopy, headingCopy, nConesFakeSlam);
@@ -318,11 +318,9 @@ ArrayXXf DetectCone::simConeDetectorSlam(ArrayXXf globalMap, ArrayXXf location, 
   // Output: Local coordinates of the upcoming cones
 
   int nCones = globalMap.rows();
-
   MatrixXf rotationMatrix(2,2);
   rotationMatrix << std::cos(-heading),-std::sin(-heading),
                     std::sin(-heading),std::cos(-heading);
-
   ArrayXXf tmpLocation(nCones,2);
   (tmpLocation.col(0)).fill(location(0));
   (tmpLocation.col(1)).fill(location(1));
@@ -361,7 +359,9 @@ ArrayXXf DetectCone::simConeDetectorSlam(ArrayXXf globalMap, ArrayXXf location, 
       {
         VectorXi firstPart = VectorXi::LinSpaced(nCones-closestConeIndex,closestConeIndex,nCones-1);
         VectorXi secondPart = VectorXi::LinSpaced(closestConeIndex,0,closestConeIndex-1);
-        indices << firstPart, secondPart;
+        indices.resize(firstPart.size()+secondPart.size());
+        indices.topRows(firstPart.size()) = firstPart;
+        indices.bottomRows(secondPart.size()) = secondPart;
       } // End of else
     }
     // If the sequence should contain both the end and beginning of the track, do wrap-around
@@ -369,7 +369,9 @@ ArrayXXf DetectCone::simConeDetectorSlam(ArrayXXf globalMap, ArrayXXf location, 
     {
       VectorXi firstPart = VectorXi::LinSpaced(nCones-closestConeIndex,closestConeIndex,nCones-1);
       VectorXi secondPart = VectorXi::LinSpaced(nConesInFakeSlam-(nCones-closestConeIndex),0,nConesInFakeSlam-(nCones-closestConeIndex)-1);
-      indices << firstPart, secondPart;
+      indices.resize(firstPart.size()+secondPart.size());
+      indices.topRows(firstPart.size()) = firstPart;
+      indices.bottomRows(secondPart.size()) =secondPart;
     }
     // Otherwise simply take the closest and the following cones
     else
@@ -398,7 +400,7 @@ ArrayXXf DetectCone::simConeDetectorSlam(ArrayXXf globalMap, ArrayXXf location, 
   {
     std::cout << "Error: No cone found in fake slam detection" << std::endl;
     ArrayXXf detectedCones(0,2);
-  
+
     return detectedCones;
   } // End of else
 } // End of simConeDetectorSlam

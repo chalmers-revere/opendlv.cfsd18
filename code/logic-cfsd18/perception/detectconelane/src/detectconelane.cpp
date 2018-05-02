@@ -41,7 +41,7 @@ DetectConeLane::DetectConeLane(int32_t const &a_argc, char **a_argv) :
 , m_lastTypeId()
 , m_surfaceId()
 {
-    m_coneCollector = Eigen::MatrixXd::Zero(4,20);
+    m_coneCollector = Eigen::MatrixXd::Zero(4,100);
     m_newFrame = true;
     m_timeDiffMilliseconds = 150;
     m_lastTypeId = -1;
@@ -175,7 +175,6 @@ else if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance:
       m_lastTypeId = (m_lastTypeId<objectId)?(objectId):(m_lastTypeId);
       auto type = coneType.getType();
       m_coneCollector(3,objectId) = type;
-
     //newFrameType = m_newFrame;
     }
 
@@ -211,7 +210,6 @@ void DetectConeLane::initializeCollection(int conesInFrame){
   } // End of while
   //std::cout << "m_lastTypeId2: " << m_lastTypeId<< std::endl;
   //std::cout << "conesInFrame2: " << conesInFrame<< std::endl;
-
   Eigen::MatrixXd extractedCones;
   int nLeft = 0;
   int nRight = 0;
@@ -220,7 +218,6 @@ void DetectConeLane::initializeCollection(int conesInFrame){
 
   {
     odcore::base::Lock lockCone(m_coneMutex);
-
     extractedCones = m_coneCollector.leftCols(m_lastTypeId+1);
     for (int i = 0; i < extractedCones.cols(); i++) {
       int type = extractedCones(3,i);
@@ -235,7 +232,7 @@ void DetectConeLane::initializeCollection(int conesInFrame){
     } // End of for
 
     std::cout << "members: " << nLeft << " " << nRight << " " << nSmall << " " << nBig << std::endl;
-    m_coneCollector = Eigen::MatrixXd::Zero(4,20);
+    m_coneCollector = Eigen::MatrixXd::Zero(4,100);
     m_lastTypeId = -1;
     m_newFrame = true;
   }
