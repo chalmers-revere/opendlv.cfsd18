@@ -30,7 +30,7 @@ int32_t main() {
     detector.efficientSlidingWindow("efficientSlidingWindow", m_efficientSlidingWindow, 320, 60);
     detector.slidingWindow("slidingWindow", m_slidingWindow);
     while(1){
-        cv::Mat img = cv::imread("test.png");
+        // cv::Mat img = cv::imread("test.png");
         
         // std::vector<cv::Point3d> pts;
         // pts.push_back(cv::Point3d(-0.319045, 0.164448, 0.787049)*2);
@@ -43,7 +43,9 @@ int32_t main() {
 
         auto startTime = std::chrono::system_clock::now();
         // detector.backwardDetection(img, m_slidingWindow, pts, outputs);
-        detector.forwardDetection(img, m_efficientSlidingWindow);
+        // detector.forwardDetection(img, m_efficientSlidingWindow);
+        // detector.mobilenet("test.png", 0.1f);
+        detector.forwardDetectionRoI("test.png", m_slidingWindow);
         auto endTime = std::chrono::system_clock::now();
         std::chrono::duration<double> diff = endTime-startTime;
         std::cout << "Time: " << diff.count() << " s\n";

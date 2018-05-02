@@ -1,0 +1,126 @@
+# Copyright (C) 2018  Björnborg Nguyen
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+FROM alpine:edge AS builder
+
+ENV OPENCV_VERSION=3.4.1
+
+MAINTAINER Björnborg Nguyen "bjornborg.nguyen@chalmers.se"
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+
+WORKDIR /tmp
+
+ADD . /tmp/sources
+
+RUN apk update && \
+   apk --no-cache add \
+       ca-certificates \
+       bash \
+       cmake \
+       g++ \
+       git \
+       make \
+       upx \
+       ccache \
+       gfortran \
+       openblas-dev \
+       icu \
+       opencv-dev \
+       opencv-libs \
+       libtbb-dev \
+       libtbb \
+       clang-dev \
+       build-base \
+       unzip \
+       wget \
+       linux-headers \
+       opencv
+
+RUN wget https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.zip && \
+    unzip ${OPENCV_VERSION}.zip && \
+    rm -rf ${OPENCV_VERSION}.zip && \
+
+    #wget https://github.com/opencv/opencv_contrib/archive/${OPENCV_VERSION}.zip && \
+    #unzip ${OPENCV_VERSION}.zip && \
+    #rm -rf ${OPENCV_VERSION}.zip && \
+
+    mkdir -p opencv-${OPENCV_VERSION}/build && \
+    cd opencv-${OPENCV_VERSION}/build && \
+    cmake \
+      -D CMAKE_FIND_LIBRARY_SUFFIXES=.a \
+      -D CMAKE_BUILD_TYPE=RELEASE \
+      -D CMAKE_INSTALL_PREFIX=/usr/local \
+      -D BUILD_SHARED_LIBS=OFF \
+      -D WITH_FFMPEG=OFF \
+      -D WITH_1394=OFF \
+      -D WITH_IPP=OFF \
+      -D WITH_QT=OFF \
+      -D WITH_OPENEXR=OFF \
+      #-D WITH_TBB=YES \
+      -D WITH_WEBP=OFF \
+      -D WITH_TIFF=OFF \
+      -D WITH_PNG=OFF \
+      -D WITH_JASPER=OFF \
+      -D BUILD_TBB=OFF \
+      -D BUILD_JPEG=ON \
+      -D BUILD_IPP_IW=OFF \
+      -D BUILD_ZLIB=OFF \
+      -D BUILD_FAT_JAVA_LIB=OFF \
+      -D BUILD_TESTS=OFF \
+      -D BUILD_PERF_TESTS=OFF \
+      -D BUILD_EXAMPLES=OFF \
+      -D BUILD_ANDROID_EXAMPLES=OFF \
+      -D INSTALL_PYTHON_EXAMPLES=OFF \
+      -D BUILD_DOCS=OFF \
+      -D BUILD_opencv_python2=OFF \
+      -D BUILD_opencv_python3=OFF \
+      -D BUILD_opencv_apps=OFF \
+      #-D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-${OPENCV_VERSION}/modules \
+      .. && \
+      #make -j "$(getconf _NPROCESSORS_ONLN)" && \
+      make install && \
+      rm -rf opencv-${OPENCV_VERSION} && \
+      rm -rf opencv_contrib-${OPENCV_VERSION}
+
+RUN git clone https://github.com/tiny-dnn/tiny-dnn.git && \
+  mkdir -p tiny-dnn/build && \
+  cp sources/config.h tiny-dnn/tiny_dnn/config.h && \
+  cd tiny-dnn/build && \
+  cmake .. && \
+  make install
+
+RUN git clone https://github.com/eigenteam/eigen-git-mirror.git && \
+   mkdir -p eigen-git-mirror/build && \
+   cd eigen-git-mirror/build && \
+   cmake .. && \
+   make install
+
+RUN cd sources && \
+   rm -rf build && \
+   mkdir build && \
+   cd build && \
+   cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/tmp/detectcone-dest .. && \
+   make && make install && upx -9 /tmp/detectcone-dest/bin/detectcone
+
+# # # Part to deploy beaglebone.
+FROM alpine:edge
+MAINTAINER Björnborg Nguyen "bjornborg.nguyen@chalmers.se"
+
+WORKDIR /usr/bin
+COPY --from=builder /tmp/detectcone-dest/bin/detectcone .
+COPY --from=builder /usr/local/include/ /usr/include/
+COPY --from=builder /usr/local/lib/ /usr/lib/
+COPY --from=builder /usr/lib/ /usr/lib/
+CMD ["/usr/bin/detectcone"]

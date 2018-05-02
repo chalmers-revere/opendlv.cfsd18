@@ -33,10 +33,13 @@
 #include <ctime>
 #include <chrono>
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/opencv.hpp>
+#include "opencv2/xfeatures2d.hpp"
+
+// #include <opencv2/core.hpp>
+// #include <opencv2/dnn/dict.hpp>
+// #include <opencv2/dnn/layer.hpp>
+// #include <opencv2/dnn/dnn.inl.hpp>
 
 #include <tiny_dnn/tiny_dnn.h>
 
@@ -64,6 +67,8 @@ class DetectCone {
     std::vector <cv::Point> imRegionalMax(cv::Mat, int, double, int);
     // int medianVector(std::vector<std::pair<double, int>>);
     void forwardDetection(cv::Mat, tiny_dnn::network<tiny_dnn::sequential>);
+    // void mobilenet(std::string, float);
+    void forwardDetectionRoI(const std::string&, tiny_dnn::network<tiny_dnn::sequential>);
 };
 
 #endif

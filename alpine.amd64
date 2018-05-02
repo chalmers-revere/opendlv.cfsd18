@@ -14,8 +14,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 FROM alpine:edge AS builder
+
 MAINTAINER Björnborg Nguyen "bjornborg.nguyen@chalmers.se"
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+
+WORKDIR /tmp
+
+ADD . /tmp/sources
+
 RUN apk update && \
    apk --no-cache add \
        ca-certificates \
@@ -33,16 +39,20 @@ RUN apk update && \
        opencv-libs \
        libtbb-dev \
        libtbb \
+       clang-dev \
+       build-base \
+       linux-headers \
        opencv
 
-WORKDIR /tmp
-
-ADD . /tmp/sources
-
-RUN git clone https://github.com/justusc/FindTBB.git && \
-   cp FindTBB/FindTBB.cmake /usr/share/cmake/Modules/ && \
-   cd FindTBB && \
-   ./test.sh
+RUN git clone https://github.com/opencv/opencv.git && \
+    cd opencv && checkout 3.2.0 && \
+    git clone https://github.com/opencv/opencv_contrib.git && \
+    cd ../opencv_contrib && checkout 3.2.0 && cd .. &&\
+    mkdir -p opencv/build && \
+    cd opencv/build && \
+    cmake -D CMAKE_FIND_LIBRARY_SUFFIXES=.a -D BUILD_SHARED_LIBS=OFF -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D BUILD_opencv_gpu=OFF -D WITH_CUDA=OFF -D WITH_TBB=OFF -D WITH_OPENGL=ON -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules .. && \
+    make -j "$(getconf _NPROCESSORS_ONLN)" && \
+    make install
 
 RUN git clone https://github.com/tiny-dnn/tiny-dnn.git && \
   mkdir -p tiny-dnn/build && \
@@ -70,9 +80,6 @@ MAINTAINER Björnborg Nguyen "bjornborg.nguyen@chalmers.se"
 
 WORKDIR /usr/bin
 COPY --from=builder /tmp/detectcone-dest/bin/detectcone .
-#COPY --from=builder /usr/lib/libopencv_imgcodecs.so* /usr/lib/
-#COPY --from=builder /usr/lib/libopencv_imgproc.so* /usr/lib/
-#COPY --from=builder /usr/lib/libopencv_core.so* /usr/lib/
 COPY --from=builder /usr/local/include/ /usr/include/
 COPY --from=builder /usr/local/lib/ /usr/lib/
 COPY --from=builder /usr/lib/ /usr/lib/
