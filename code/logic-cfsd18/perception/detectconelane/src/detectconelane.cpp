@@ -208,7 +208,7 @@ void DetectConeLane::initializeCollection(int conesInFrame){
   */
     if (m_lastTypeId >= conesInFrame-1)
         sleep = false;
-  }
+  } // End of while
   //std::cout << "m_lastTypeId2: " << m_lastTypeId<< std::endl;
   //std::cout << "conesInFrame2: " << conesInFrame<< std::endl;
 
@@ -231,13 +231,15 @@ void DetectConeLane::initializeCollection(int conesInFrame){
       else
       {
         std::cout << "WARNING! Object " << i << " has invalid cone type: " << type << std::endl;
-      }
-    }
+      } // End of else
+    } // End of for
+
     std::cout << "members: " << nLeft << " " << nRight << " " << nSmall << " " << nBig << std::endl;
     m_coneCollector = Eigen::MatrixXd::Zero(4,20);
     m_lastTypeId = -1;
     m_newFrame = true;
   }
+
   //Initialize for next collection
   //std::cout << "Collection done " << extractedCones.rows() << " " << extractedCones.cols() << std::endl;
 //std::cout << "extractedCones: " << extractedCones.transpose() << std::endl;
@@ -246,14 +248,13 @@ void DetectConeLane::initializeCollection(int conesInFrame){
     //std::cout << extractedCones << std::endl;
 
     DetectConeLane::sortIntoSideArrays(extractedCones, nLeft, nRight, nSmall, nBig);
-
-  }
-
-}
+  } // End of if
+} // End of initializeCollection
 
 void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, ArrayXXf location){
-  float distanceThreshold = 3.5; // TODO: Set in configuration
-  float guessDistance = 3.0;
+  auto kv = getKeyValueConfiguration();
+  float const coneWidthSeparationThreshold = kv.getValue<float>("logic-cfsd18-perception-detectconelane.coneWidthSeparationThreshold");
+  float const guessDistance = kv.getValue<float>("logic-cfsd18-perception-detectconelane.guessDistance");
 
   ArrayXXf orderedConesLeft = DetectConeLane::orderAndFilterCones(sideLeft,location);
   ArrayXXf orderedConesRight = DetectConeLane::orderAndFilterCones(sideRight,location);
@@ -274,7 +275,7 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
   if(leftIsLong)
   {
     ArrayXXf tmpLongSide = orderedConesLeft;
-    ArrayXXf tmpShortSide = DetectConeLane::insertNeededGuessedCones(orderedConesLeft, orderedConesRight, location, distanceThreshold,  guessDistance, false);
+    ArrayXXf tmpShortSide = DetectConeLane::insertNeededGuessedCones(orderedConesLeft, orderedConesRight, location, coneWidthSeparationThreshold,  guessDistance, false);
 
     longSide.resize(tmpLongSide.rows(),tmpLongSide.cols());
     longSide = tmpLongSide;
@@ -285,7 +286,7 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
   else
   {
     ArrayXXf tmpLongSide = orderedConesRight;
-    ArrayXXf tmpShortSide = DetectConeLane::insertNeededGuessedCones(orderedConesRight, orderedConesLeft, location, distanceThreshold,  guessDistance, true);
+    ArrayXXf tmpShortSide = DetectConeLane::insertNeededGuessedCones(orderedConesRight, orderedConesLeft, location, coneWidthSeparationThreshold,  guessDistance, true);
 
     longSide.resize(tmpLongSide.rows(),tmpLongSide.cols());
     longSide = tmpLongSide;
@@ -312,7 +313,6 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
   }
   else
   {
-    // TODO: In here a special case surface should be sent
     if(longSide.rows() == 0)
     { std::cout<<"No Cones"<<"\n";
       //No cones
@@ -415,17 +415,16 @@ Eigen::MatrixXd DetectConeLane::Spherical2Cartesian(double azimuth, double zenim
   recievedPoint << xData,
                    yData;
   return recievedPoint;
-}
+} // End of Spherical2Cartesian
 
 
 void DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePointsRight)
 {
-
   ArrayXXf longSide, shortSide;
 
   // Identify the longest side
-  float pathLengthLeft = findTotalPathLength(sidePointsLeft);
-  float pathLengthRight = findTotalPathLength(sidePointsRight);
+  float pathLengthLeft = DetectConeLane::findTotalPathLength(sidePointsLeft);
+  float pathLengthRight = DetectConeLane::findTotalPathLength(sidePointsRight);
   if(pathLengthLeft > pathLengthRight)
   {
     longSide = sidePointsLeft;
@@ -437,11 +436,11 @@ void DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePoi
     shortSide = sidePointsLeft;
   } // End of else
 
-  int nMidPoints = longSide.rows()*3; // TODO: We might have to choose this more carefully
+  int nMidPoints = longSide.rows()*3;
   int nConesShort = shortSide.rows();
 
   // Divide the longest side into segments of equal length
-  ArrayXXf virtualPointsLong = placeEquidistantPoints(longSide,true,nMidPoints,-1);
+  ArrayXXf virtualPointsLong = DetectConeLane::placeEquidistantPoints(longSide,true,nMidPoints,-1);
   ArrayXXf virtualPointsShort(nMidPoints,2);
 
   float shortestDist, tmpDist, factor;
@@ -469,7 +468,7 @@ void DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePoi
 
       if(shortSide.rows() > 1)
       {
-        factor = findFactorToClosestPoint(shortSide.row(0),shortSide.row(1),virtualPointsLong.row(i));
+        factor = DetectConeLane::findFactorToClosestPoint(shortSide.row(0),shortSide.row(1),virtualPointsLong.row(i));
       }
 
       if(shortSide.rows() > 1 && factor > 0 && factor <= 1)
@@ -483,7 +482,7 @@ void DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePoi
     }
     else if(closestConeIndex == nConesShort-1)
     {
-      factor = findFactorToClosestPoint(shortSide.row(nConesShort-2),shortSide.row(nConesShort-1),virtualPointsLong.row(i));
+      factor = DetectConeLane::findFactorToClosestPoint(shortSide.row(nConesShort-2),shortSide.row(nConesShort-1),virtualPointsLong.row(i));
       if(factor > 0 && factor <= 1)
       {
         virtualPointsShort.row(i) = shortSide.row(nConesShort-2)+factor*(shortSide.row(nConesShort-1)-shortSide.row(nConesShort-2));
@@ -495,14 +494,14 @@ void DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePoi
     }
     else
     {
-      factor = findFactorToClosestPoint(shortSide.row(closestConeIndex-1),shortSide.row(closestConeIndex),virtualPointsLong.row(i));
+      factor = DetectConeLane::findFactorToClosestPoint(shortSide.row(closestConeIndex-1),shortSide.row(closestConeIndex),virtualPointsLong.row(i));
       if(factor > 0 && factor <= 1)
       {
         virtualPointsShort.row(i) = shortSide.row(closestConeIndex-1)+factor*(shortSide.row(closestConeIndex)-shortSide.row(closestConeIndex-1));
       }
       else
       {
-        factor = findFactorToClosestPoint(shortSide.row(closestConeIndex),shortSide.row(closestConeIndex+1),virtualPointsLong.row(i));
+        factor = DetectConeLane::findFactorToClosestPoint(shortSide.row(closestConeIndex),shortSide.row(closestConeIndex+1),virtualPointsLong.row(i));
         if(factor > 0 && factor <= 1)
         {
           virtualPointsShort.row(i) = shortSide.row(closestConeIndex)+factor*(shortSide.row(closestConeIndex+1)-shortSide.row(closestConeIndex));
@@ -720,8 +719,9 @@ ArrayXXf DetectConeLane::orderAndFilterCones(ArrayXXf cones, ArrayXXf vehicleLoc
   int closestConeIndex;
   int nAcceptedCones = 0;
 
-  float orderingDistanceThreshold = 5.5; // TODO: There might be an alternative to hard coding this...
-  const float PI = 3.14159265;
+  auto kv = getKeyValueConfiguration();
+  float const coneLengthSeparationThreshold = kv.getValue<float>("logic-cfsd18-perception-detectconelane.coneLengthSeparationThreshold");
+  float const maxConeAngle = kv.getValue<float>("logic-cfsd18-perception-detectconelane.maxConeAngle");
 
   for(int i = 0; i < nCones; i = i+1)
   {
@@ -733,7 +733,7 @@ ArrayXXf DetectConeLane::orderAndFilterCones(ArrayXXf cones, ArrayXXf vehicleLoc
       if(!((found==j).any()))
       {
         tmpDist = ((current-cones.row(j)).matrix()).norm();
-        if(tmpDist < shortestDist && tmpDist < orderingDistanceThreshold)
+        if(tmpDist < shortestDist && tmpDist < coneLengthSeparationThreshold)
         {
           // If it's one of the first two cones, the nearest neighbour is accepted
           if(i < 2)
@@ -751,7 +751,7 @@ ArrayXXf DetectConeLane::orderAndFilterCones(ArrayXXf cones, ArrayXXf vehicleLoc
             line3 = ((cones.row(j)-cones.row(found(i-2))).matrix()).norm();
             angle = std::acos((float)(-std::pow(line3,2)+std::pow(line2,2)+std::pow(line1,2))/(2*line2*line1));
 
-            if(std::abs(angle) > PI/2)
+            if(std::abs(angle) > maxConeAngle)
             {
               shortestDist = tmpDist;
               closestConeIndex = j;
@@ -816,32 +816,34 @@ ArrayXXf DetectConeLane::insertNeededGuessedCones(ArrayXXf longSide, ArrayXXf sh
     {
       if(i == 0)
       {
-        guess = guessCones(longSide.row(0),longSide.row(1),guessDistance,guessToTheLeft,true,false);
+        guess = DetectConeLane::guessCones(longSide.row(0),longSide.row(1),guessDistance,guessToTheLeft,true,false);
         nGuessedCones = nGuessedCones+1;
       }
       else if(i == nConesLong-1)
       {
-        guess = guessCones(longSide.row(nConesLong-2),longSide.row(nConesLong-1),guessDistance,guessToTheLeft,false,true);
+        guess = DetectConeLane::guessCones(longSide.row(nConesLong-2),longSide.row(nConesLong-1),guessDistance,guessToTheLeft,false,true);
         nGuessedCones = nGuessedCones+1;
       }
       else
       {
-        guess = guessCones(longSide.row(i-1),longSide.row(i),guessDistance,guessToTheLeft,false,true);
+        guess = DetectConeLane::guessCones(longSide.row(i-1),longSide.row(i),guessDistance,guessToTheLeft,false,true);
         nGuessedCones = nGuessedCones+1;
         guessedCones.row(nGuessedCones-1) = guess;
-        guess = guessCones(longSide.row(i),longSide.row(i+1),guessDistance,guessToTheLeft,true,false);
+        guess = DetectConeLane::guessCones(longSide.row(i),longSide.row(i+1),guessDistance,guessToTheLeft,true,false);
         nGuessedCones = nGuessedCones+1;
       } // End of else
+
       guessedCones.row(nGuessedCones-1) = guess;
     } // End of if
   } // End of for
+
   // Collect real and guessed cones in the same array, and order them
   ArrayXXf guessedConesFinal = guessedCones.topRows(nGuessedCones);
   ArrayXXf realAndGuessedCones(nConesShort+nGuessedCones,2);
   realAndGuessedCones.topRows(nConesShort) = shortSide;
   realAndGuessedCones.bottomRows(nGuessedCones) = guessedConesFinal;
 
-  ArrayXXf newShortSide = orderCones(realAndGuessedCones,vehicleLocation);
+  ArrayXXf newShortSide = DetectConeLane::orderCones(realAndGuessedCones,vehicleLocation);
   return newShortSide;
 } // End of insertNeededGuessedCones
 
@@ -926,74 +928,67 @@ float DetectConeLane::findFactorToClosestPoint(ArrayXXf p1, ArrayXXf p2, ArrayXX
 
 void DetectConeLane::sortIntoSideArrays(MatrixXd extractedCones, int nLeft, int nRight, int nSmall, int nBig)
 {
-
   int coneNum = extractedCones.cols();
   //Convert to cartesian
   Eigen::MatrixXd cone;
   Eigen::MatrixXd coneLocal = Eigen::MatrixXd::Zero(2,coneNum);
+
   for(int p = 0; p < coneNum; p++)
   {
-    cone = Spherical2Cartesian(extractedCones(0,p), extractedCones(1,p), extractedCones(2,p));
+    cone = DetectConeLane::Spherical2Cartesian(extractedCones(0,p), extractedCones(1,p), extractedCones(2,p));
     coneLocal.col(p) = cone;
-  }
-//std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
+  } // End of for
+std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
 
-  //if(nLeft > 1 || nRight > 1 )
-  //{
+  Eigen::MatrixXd coneLeft = Eigen::MatrixXd::Zero(2,nLeft);
+  Eigen::MatrixXd coneRight = Eigen::MatrixXd::Zero(2,nRight);
+  Eigen::MatrixXd coneSmall = Eigen::MatrixXd::Zero(2,nSmall);
+  Eigen::MatrixXd coneBig = Eigen::MatrixXd::Zero(2,nBig);
+  int a = 0;
+  int b = 0;
+  int c = 0;
+  int d = 0;
+  int type;
 
-    Eigen::MatrixXd coneLeft = Eigen::MatrixXd::Zero(2,nLeft);
-    Eigen::MatrixXd coneRight = Eigen::MatrixXd::Zero(2,nRight);
-    Eigen::MatrixXd coneSmall = Eigen::MatrixXd::Zero(2,nSmall);
-    Eigen::MatrixXd coneBig = Eigen::MatrixXd::Zero(2,nBig);
-    int a = 0;
-    int b = 0;
-    int c = 0;
-    int d = 0;
-    int type;
-
-    for(int k = 0; k < coneNum; k++){
-      type = static_cast<int>(extractedCones(3,k));
-      if(type == 1)
-      {
-        coneLeft.col(a) = coneLocal.col(k);
-        a++;
-      }
-      else if(type == 2)
-      {
-        coneRight.col(b) = coneLocal.col(k);
-        b++;
-      }
-      else if(type == 3)
-      {
-        coneSmall.col(c) = coneLocal.col(k);
-        c++;
-      }
-      else if(type == 4)
-      {
-        coneBig.col(d) = coneLocal.col(k);
-        d++;
-      }
-    } // End of for
+  for(int k = 0; k < coneNum; k++){
+    type = static_cast<int>(extractedCones(3,k));
+    if(type == 1)
+    {
+      coneLeft.col(a) = coneLocal.col(k);
+      a++;
+    }
+    else if(type == 2)
+    {
+      coneRight.col(b) = coneLocal.col(k);
+      b++;
+    }
+    else if(type == 3)
+    {
+      coneSmall.col(c) = coneLocal.col(k);
+      c++;
+    }
+    else if(type == 4)
+    {
+      coneBig.col(d) = coneLocal.col(k);
+      d++;
+    } // End of else
+  } // End of for
 
 
-    ArrayXXf location(1,2);
-    location << 0,0;
+  ArrayXXf location(1,2);
+  location << 0,0;
 
-    MatrixXf coneLeft_f = coneLeft.cast <float> ();
-    MatrixXf coneRight_f = coneRight.cast <float> ();
-    ArrayXXf sideLeft = coneLeft_f.transpose().array();
-    ArrayXXf sideRight = coneRight_f.transpose().array();
+  MatrixXf coneLeft_f = coneLeft.cast <float> ();
+  MatrixXf coneRight_f = coneRight.cast <float> ();
+  ArrayXXf sideLeft = coneLeft_f.transpose().array();
+  ArrayXXf sideRight = coneRight_f.transpose().array();
 
-// -- TODO: Add sending messages for orange cones --
-    generateSurfaces(sideLeft, sideRight, location);
-
-  //} // End of if
+  DetectConeLane::generateSurfaces(sideLeft, sideRight, location);
 } // End of sortIntoSideArrays
 
 
 void DetectConeLane::sendMatchedContainer(Eigen::ArrayXXf virtualPointsLong, Eigen::ArrayXXf virtualPointsShort)
 {
-
   int nSurfaces = virtualPointsLong.rows()/2;
   std::cout << "Sending " << nSurfaces << " surfaces" << std::endl;
 
@@ -1003,8 +998,7 @@ void DetectConeLane::sendMatchedContainer(Eigen::ArrayXXf virtualPointsLong, Eig
   surface.setProperty(property);
   odcore::data::Container c0(surface);
   getConference().send(c0);
-  //std::cout << "virtualPointsLong: " << virtualPointsLong<< std::endl;
-  //std::cout << "virtualPointsShort: " << virtualPointsShort<< std::endl;
+
   for(int n = 0; n < nSurfaces; n++)
   {
     opendlv::logic::perception::GroundSurfaceArea surfaceArea;
