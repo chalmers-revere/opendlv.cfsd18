@@ -13,59 +13,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-FROM alpine:edge AS builder
+FROM liweim/opencv3.2.0:latest AS builder
 
-MAINTAINER Björnborg Nguyen "bjornborg.nguyen@chalmers.se"
+MAINTAINER Weiming Li "liweim@student.chalmers.se"
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
 
 WORKDIR /tmp
 
 ADD . /tmp/sources
-
-RUN apk update && \
-   apk --no-cache add \
-       ca-certificates \
-       bash \
-       cmake \
-       g++ \
-       git \
-       make \
-       upx \
-       ccache \
-       gfortran \
-       openblas-dev \
-       icu \
-       opencv-dev \
-       opencv-libs \
-       libtbb-dev \
-       libtbb \
-       clang-dev \
-       build-base \
-       linux-headers \
-       opencv
-
-RUN git clone https://github.com/opencv/opencv.git && \
-    cd opencv && checkout 3.2.0 && \
-    git clone https://github.com/opencv/opencv_contrib.git && \
-    cd ../opencv_contrib && checkout 3.2.0 && cd .. &&\
-    mkdir -p opencv/build && \
-    cd opencv/build && \
-    cmake -D CMAKE_FIND_LIBRARY_SUFFIXES=.a -D BUILD_SHARED_LIBS=OFF -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D BUILD_opencv_gpu=OFF -D WITH_CUDA=OFF -D WITH_TBB=OFF -D WITH_OPENGL=ON -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules .. && \
-    make -j "$(getconf _NPROCESSORS_ONLN)" && \
-    make install
-
-RUN git clone https://github.com/tiny-dnn/tiny-dnn.git && \
-  mkdir -p tiny-dnn/build && \
-  cp sources/config.h tiny-dnn/tiny_dnn/config.h && \
-  cd tiny-dnn/build && \
-  cmake .. && \
-  make install
-
-RUN git clone https://github.com/eigenteam/eigen-git-mirror.git && \
-   mkdir -p eigen-git-mirror/build && \
-   cd eigen-git-mirror/build && \
-   cmake .. && \
-   make install
 
 RUN cd sources && \
    rm -rf build && \
@@ -76,7 +31,7 @@ RUN cd sources && \
 
 # # # Part to deploy beaglebone.
 FROM alpine:edge
-MAINTAINER Björnborg Nguyen "bjornborg.nguyen@chalmers.se"
+MAINTAINER Weiming Li "liweim@student.chalmers.se"
 
 WORKDIR /usr/bin
 COPY --from=builder /tmp/detectcone-dest/bin/detectcone .

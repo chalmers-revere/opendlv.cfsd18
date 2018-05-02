@@ -546,7 +546,7 @@ void DetectCone::forwardDetectionRoI(const std::string& img_path, tiny_dnn::netw
   cv::Mat img_hsv;
   cv::cvtColor(img, img_hsv, cv::COLOR_BGR2HSV);
 
-  cv::Ptr<cv::Feature2D> detector = cv::xfeatures2d::SIFT::create(15);
+  cv::Ptr<cv::Feature2D> detector = cv::ORB::create(15);
   std::vector<cv::KeyPoint> keypoints;
   detector->detect(img_hsv, keypoints);
 
