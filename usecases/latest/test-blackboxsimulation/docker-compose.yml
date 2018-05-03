@@ -1,0 +1,74 @@
+# docker-compose.yml - Composition of micro-services to run OpenDLV software.
+# Copyright (C) 2016 Christian Berger
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version  of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Date: 2016-10-13
+
+version: '2'
+
+services:
+    odsupercomponent:
+        image: ${IMAGE}
+        network_mode: "host"
+        volumes:
+        - .:/opt/opendlv.data
+        command: "/opt/od4/bin/odsupercomponent --cid=${CID} --verbose=1 --configuration=/opt/opendlv.data/configuration"
+
+    sim-global:
+        image: chalmersrevere/opendlv-sim-global-amd64:v0.0.5
+        network_mode: "host"
+        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=0 --x=0 --y=1.5 --yaw=-2.3"
+
+
+    # microservice for ...
+    sim-cfsd18-cognition-blackbox:
+        image: ${IMAGE}
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-cognition-blackbox --cid=${CID} --verbose=1 --id=1"
+
+    # microservice for ...
+    sim-cfsd18-perception-detectcone:
+        image: ${IMAGE}
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        volumes:
+        - .:/opt/opendlv.data
+        command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-perception-detectcone --cid=${CID} --verbose=1 --id=1 --freq=20"
+
+    # microservice for ...
+    logic-cfsd18-cognition-track:
+        image: ${IMAGE}
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-cognition-track --cid=${CID} --verbose=1 --id=1"
+
+    sim-lynx-vehicle:
+        image: seresearch/opendlv-lynx-on-opendlv-core-on-opendavinci-on-base:latest
+        network_mode: "host"
+        depends_on:
+            - odsupercomponent
+        command: "/opt/opendlv.lynx/bin/opendlv-sim-lynx-bicyclemodel --cid=${CID} --freq=100"
+
+    ui-default:
+#        image: chalmersrevere/opendlv-ui-default-amd64
+        image: opendlv-ui-default:v0.0.1
+        network_mode: "host"
+        volumes:
+        - ./simulation-map-closed-lap.txt:/srv/http/simulation-map-closed-lap.txt
+        command: "--cid=${CID}"
