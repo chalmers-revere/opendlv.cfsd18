@@ -82,9 +82,9 @@ void DetectCone::tearDown()
 void DetectCone::nextContainer(odcore::data::Container &a_container)
 {
   //Just for my testing
-  odcore::data::TimeStamp startTime;
-  cv::Mat img = cv::imread("test.png");
-  forwardDetectionRoI(img, m_slidingWindow);
+  // odcore::data::TimeStamp startTime;
+  // cv::Mat img = cv::imread("test.png");
+  // forwardDetectionRoI(img, m_slidingWindow);
 
   // forwardDetection(img);
   // std::vector<cv::Point3f> pts;
@@ -97,9 +97,10 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
   
   // std::vector<int> outputs;
   // backwardDetection(img, pts, outputs);
-  odcore::data::TimeStamp endTime;
-  double timeElapsed = abs(static_cast<double>(endTime.toMicroseconds()-startTime.toMicroseconds())/1000.0);
-  std::cout << "Time elapsed for camera detection: " << timeElapsed << std::endl;
+  
+  // odcore::data::TimeStamp endTime;
+  // double timeElapsed = abs(static_cast<double>(endTime.toMicroseconds()-startTime.toMicroseconds())/1000.0);
+  // std::cout << "Time elapsed for camera detection: " << timeElapsed << std::endl;
 
 
   if (a_container.getDataType() == odcore::data::image::SharedImage::ID()) {
@@ -410,7 +411,7 @@ void DetectCone::slidingWindow(const std::string &dictionary) {
 void DetectCone::backwardDetection(cv::Mat img, std::vector<cv::Point3f> pts, std::vector<int>& outputs){
   //Given RoI in 3D world, project back to the camera frame and then detect
   float_t threshold = 0.7;
-  cv::Mat Q, disp, rectified, XYZ;
+  cv::Mat disp, Q, rectified, XYZ;
   reconstruction(img, Q, disp, rectified, XYZ);
   std::vector<tiny_dnn::tensor_t> inputs;
   std::vector<int> verifiedIndex;
