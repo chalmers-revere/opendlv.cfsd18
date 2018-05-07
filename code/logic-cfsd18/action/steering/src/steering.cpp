@@ -67,7 +67,7 @@ float Steering::calcRackPosition(float delta) {
 }
 
 float Steering::calcSteering(float azimuth) {
-  float Kp = 2.0f;
+  float Kp = 1.0f;
   float delta = Kp*azimuth;
   float deltaMax = 3.14/180*22;
 

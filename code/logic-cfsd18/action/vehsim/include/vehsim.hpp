@@ -68,6 +68,7 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
    bool m_brakeEnabled;
    float m_delta;
    std::ofstream m_outputData;
+   opendlv::logic::action::AimPoint m_aimPoint;
 };
 
 }

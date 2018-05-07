@@ -48,6 +48,7 @@ Vehsim::Vehsim(int32_t const &a_argc, char **a_argv) :
   m_brakeEnabled(),
   m_delta(),
   m_outputData()
+  , m_aimPoint()
   {
   }
 
@@ -90,6 +91,10 @@ void Vehsim::nextContainer(odcore::data::Container &a_container)
     auto deltaContainer = a_container.getData<opendlv::proxy::GroundSteeringRequest>();
     m_delta = deltaContainer.getGroundSteering();
   }
+
+  if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
+    m_aimPoint = a_container.getData<opendlv::logic::action::AimPoint>();
+  }
 }
 
 odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
@@ -110,7 +115,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
   // use second part to run real time
 
   // States of the vehicle
-  float u0 = 0.5f; // initial speed
+  float u0 = 1.5f; // initial speed
   // Initial velocities
   Eigen::ArrayXf x(6); x << u0,0,0,0,0,0;
   // Initial position
@@ -229,7 +234,8 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         // update simulation clock
 
         if (m_outputData.is_open()) {
-          m_outputData << timer << " " << X.transpose() << " " << m_delta << " " << Fy.transpose() << " " << Fx.transpose() << " " << motorTorque.transpose() << std::endl;
+          m_outputData << timer << " " << X.transpose() << " " << m_delta << " " << Fy.transpose() << " " << Fx.transpose() << " " <<
+          m_aimPoint.getAzimuthAngle() << " " << m_aimPoint.getDistance() << std::endl;
           m_outputData.flush();
         }
         timer += sampleTime;
@@ -237,22 +243,6 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
 
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
 }
-
-float Vehsim::yawModel(opendlv::logic::action::AimPoint aimPoint, Eigen::ArrayXf x)
-{
-
-  float headingReq = aimPoint.getAzimuthAngle();  // Angle to the aim point
-  float dist  = aimPoint.getDistance();           // Distance to the aim point
-  float u = x(0);                                 // Vehicle speed
-
-  // Approximate a curvature between vehicle position and the aim point
-  float R = dist/(float)(sqrt(2.0f*(1.0f-(float)cos(2.0f*headingReq))));
-  // Calculate the average yaw rate to turn for that specific curve
-  float r = std::copysign(u/R,headingReq);
-
-  return r;
-}
-
 
 Eigen::ArrayXf Vehsim::loadTransfer(Eigen::ArrayXf x, float mass, float L,
   float lf, float lr, float wf, float wr)

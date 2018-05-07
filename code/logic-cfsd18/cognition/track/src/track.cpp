@@ -279,11 +279,11 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
     getConference().send(c1);
 
     //Send for Ui TODO: Remove
-    opendlv::logic::action::AimPoint o4;
-    o4.setAzimuthAngle(headingRequest);
-    o4.setDistance(distanceToAimPoint);
-    odcore::data::Container c4(o4);
-    getConference().send(c4);
+    // opendlv::logic::action::AimPoint o4;
+    // o4.setAzimuthAngle(headingRequest);
+    // o4.setDistance(distanceToAimPoint);
+    // odcore::data::Container c4(o4);
+    // getConference().send(c4);
 
     if (accelerationRequest >= 0.0f) {
 // std::cout << "Sending accelerationRequest: " << accelerationRequest << std::endl;
@@ -435,6 +435,7 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
       distanceP1AimPoint = distanceP1P2 - overshoot;
       // Linear interpolation
       aimPoint = (localPath.row(k+1)-localPath.row(k))*(distanceP1AimPoint/distanceP1P2) + localPath.row(k);
+      std::cout << "AimPoint: " << aimPoint.transpose() << std::endl;
     }
     else {// not needed if sumPoints is initialized as zero, (and previewDistance>0)
       /*
@@ -453,12 +454,12 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
   float headingRequest;
   headingRequest = atan2(aimPoint(1),aimPoint(0));
   // Limit heading request due to physical limitations
-  float wheelAngleLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.wheelAngleLimit");
-  if (headingRequest>=0) {
-    headingRequest = std::min(headingRequest,wheelAngleLimit*3.14159265f/180.0f);
-  } else {
-    headingRequest = std::max(headingRequest,-wheelAngleLimit*3.14159265f/180.0f);
-  }
+  // float wheelAngleLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.wheelAngleLimit");
+  // if (headingRequest>=0) {
+  //   headingRequest = std::min(headingRequest,wheelAngleLimit*3.14159265f/180.0f);
+  // } else {
+  //   headingRequest = std::max(headingRequest,-wheelAngleLimit*3.14159265f/180.0f);
+  // }
   float distanceToAimPoint=aimPoint.norm();
   return std::make_tuple(headingRequest,distanceToAimPoint);
 }

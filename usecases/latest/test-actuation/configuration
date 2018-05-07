@@ -109,6 +109,13 @@ sim-cfsd18-perception-detectcone.mapFilename = simulation-map.txt
 sim-cfsd18-perception-detectcone.startX = 0
 sim-cfsd18-perception-detectcone.startY = 1.5
 sim-cfsd18-perception-detectcone.startHeading = -2.3
+sim-cfsd18-perception-detectcone.fakeSlamActivated = 0
+sim-cfsd18-perception-detectcone.nConesFakeSlam = 3
+
+logic-cfsd18-perception-detectconelane.coneWidthSeparationThreshold = 3.5
+logic-cfsd18-perception-detectconelane.guessDistance = 3.0
+logic-cfsd18-perception-detectconelane.coneLengthSeparationThreshold = 5.5
+logic-cfsd18-perception-detectconelane.maxConeAngle = 1.570796325
 
 
 sim-lynx-bicyclemodel.mass = 188.0
