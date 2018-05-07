@@ -11,8 +11,9 @@ var id;
 var g_conePosition = new Array([],[]);
 
 const DEG2RAD = Math.PI/180; // PI/180.0
-const g_scale_cones = 100;
+const g_scale_cones = 80;
 const g_x_move = 300;
+const g_y_move = 800;
 
 function addSimulationConeViewData(d, data){
 // ObjectDirection 1133
@@ -102,16 +103,13 @@ function drawMap(){
   var context = canvas.getContext("2d");
 
   context.clearRect(0, 0, canvas.width, canvas.height);
-  context.save();
-  context.beginPath();
-  context.rect(100, 100, 20, 10);
-  context.stroke();
-  context.restore();
   
   for(var i = 0; i < g_coneNum; i++ ){
     context.save();
     context.beginPath();
-    context.rect(g_x_move + g_scale_cones*g_conePosition[0][i], g_scale_cones*g_conePosition[1][i], 10, 10);
+    context.arc(g_x_move + g_scale_cones*g_conePosition[0][i], g_y_move - g_scale_cones*g_conePosition[1][i], 8, 0, 2 * Math.PI);
+    context.fillStyle = "blue";
+    context.fill();
     context.stroke();
     context.restore();
   }
