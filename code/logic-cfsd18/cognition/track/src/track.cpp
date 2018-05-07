@@ -89,12 +89,12 @@ void Track::nextContainer(odcore::data::Container &a_container)
       double timeStamp = containerStamp.toMicroseconds();
       if (m_newId) { // TODO: does it need to be global? can it be initialized in another way?
         m_objectId = (objectId!=m_lastObjectId)?(objectId):(-1);
-        // std::cout << "newId, m_objectId: " <<m_objectId <<std::endl;
+        //std::cout << "newId, m_objectId: " <<m_objectId <<std::endl;
         m_newId=(m_objectId !=-1)?(false):(true);
       }
-      // std::cout << "objectId: " <<objectId <<std::endl;
-      // std::cout << "m_objectId: " <<m_objectId <<std::endl;
-      // std::cout << "m_lastObjectId: " <<m_lastObjectId <<std::endl;
+      //std::cout << "objectId: " <<objectId <<std::endl;
+      //std::cout << "m_objectId: " <<m_objectId <<std::endl;
+      //std::cout << "m_lastObjectId: " <<m_lastObjectId <<std::endl;
       float x1 = groundSurfaceArea.getX1();
       float y1 = groundSurfaceArea.getY1();
       float x2 = groundSurfaceArea.getX2();
@@ -110,26 +110,26 @@ void Track::nextContainer(odcore::data::Container &a_container)
       v[3] = (y3+y4)/2.0f;
 
       if (objectId == m_objectId) {
-        // std::cout << "objectId in frame: " <<objectId <<std::endl;
+        //std::cout << "objectId in frame: " <<objectId <<std::endl;
         m_surfaceFrame[timeStamp] = v;
-        // std::cout << "Surfaces in frame: " <<m_surfaceFrame.size() <<std::endl;
-        for (std::map<double, std::vector<float> >::iterator it = m_surfaceFrame.begin();it !=m_surfaceFrame.end();it++){
+        //std::cout << "Surfaces in frame: " <<m_surfaceFrame.size() <<std::endl;
+        /*for (std::map<double, std::vector<float> >::iterator it = m_surfaceFrame.begin();it !=m_surfaceFrame.end();it++){
           v = it->second;
-          // for (size_t i = 0; i < 4; i++) {
-          //   std::cout<<v[i]<<"\n";
-          // }
-        }
+          for (size_t i = 0; i < 4; i++) {
+            std::cout<<v[i]<<"\n";
+          }
+        }*/
         m_timeReceived = std::chrono::system_clock::now();
       } else if (objectId != m_lastObjectId){
-        // std::cout << "objectId in buffer: " <<objectId <<std::endl;
+        //std::cout << "objectId in buffer: " <<objectId <<std::endl;
         m_surfaceFrameBuffer[timeStamp] = v;
-        // std::cout << "Surfaces in buffer: " <<m_surfaceFrameBuffer.size() <<std::endl;
-        for (std::map<double, std::vector<float> >::iterator it = m_surfaceFrame.begin();it !=m_surfaceFrame.end();it++){
+        //std::cout << "Surfaces in buffer: " <<m_surfaceFrameBuffer.size() <<std::endl;
+        /*for (std::map<double, std::vector<float> >::iterator it = m_surfaceFrame.begin();it !=m_surfaceFrame.end();it++){
           v = it->second;
           for (size_t i = 0; i < 4; i++) {
             // std::cout<<v[i]<<"\n";
           }
-        }
+        }*/
       }
     }
     auto wait = std::chrono::system_clock::now();
@@ -138,8 +138,8 @@ void Track::nextContainer(odcore::data::Container &a_container)
     double receiveTimeLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.receiveTimeLimit");
 
     if ((m_surfaceFrame.size()==m_nSurfacesInframe || duration>receiveTimeLimit)) { //!m_newFrame && objectId==m_surfaceId &&
-      // std::cout<<"Run condition OK "<<"\n";
-      // std::cout << "duration: " <<duration <<std::endl;
+      //std::cout<<"Run condition OK "<<"\n";
+      //std::cout << "duration: " <<duration <<std::endl;
       std::map< double, std::vector<float> > surfaceFrame;
       {
       odcore::base::Lock lockSurface(m_surfaceMutex);
@@ -149,9 +149,9 @@ void Track::nextContainer(odcore::data::Container &a_container)
         m_surfaceFrameBuffer.clear();
         m_lastObjectId = m_objectId;
         m_newId = true;
-        // std::cout << "Cleared buffer " <<std::endl;
+        //std::cout << "Cleared buffer " <<std::endl;
       }
-      // std::cout << "Run " << surfaceFrame.size() << " surfaces"<< std::endl;
+      //std::cout << "Run " << surfaceFrame.size() << " surfaces"<< std::endl;
       std::thread surfaceCollector(&Track::collectAndRun, this, surfaceFrame);
       surfaceCollector.detach();
     }
@@ -186,7 +186,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
   //std::vector<double> timeStamps(surfaceFrame.size());
   std::vector<float> v;
   Eigen::MatrixXf localPath(surfaceFrame.size()*2,2);
-  // std::cout<<"localPath.rows(): "<<localPath.rows()<<"\n";
+  //std::cout<<"localPath.rows(): "<<localPath.rows()<<"\n";
   {
     odcore::base::Lock lockSurface(m_surfaceMutex);
     odcore::base::Lock lockPath(m_pathMutex);
@@ -200,7 +200,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
       localPath(2*I+1,1)=v[3];
       I++;
     }
-    // std::cout<<"localPath: "<<localPath<<"\n";
+    //std::cout<<"localPath: "<<localPath<<"\n";
 
   }
   //################ RUN and SEND ##################
@@ -250,7 +250,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
             localPathCopy.block(1,0,localPath.rows(),2) = localPath;
           } else{localPathCopy = localPath;}
           localPathCopy = Track::placeEquidistantPoints(localPathCopy,false,-1,distanceBetweenPoints);
-          // std::cout << "LocalPathCopy: " <<localPathCopy<<"\n";
+          //std::cout << "LocalPathCopy: " <<localPathCopy<<"\n";
         }
       }
     }
