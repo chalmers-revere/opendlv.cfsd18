@@ -40,7 +40,7 @@ class Steering : public odcore::base::module::DataTriggeredConferenceClientModul
  private:
   void setUp();
   void tearDown();
-  float calcSteering(float, float);
+  float calcSteering(float);
   float calcRackPosition(float);
  private:
 };

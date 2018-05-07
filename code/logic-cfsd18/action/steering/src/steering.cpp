@@ -47,8 +47,7 @@ void Steering::nextContainer(odcore::data::Container &a_container)
   if (a_container.getDataType() == opendlv::logic::action::AimPoint::ID()) {
     auto steering = a_container.getData<opendlv::logic::action::AimPoint>();
     float azimuth = steering.getAzimuthAngle();
-    float distance = steering.getDistance();
-    float delta = calcSteering(azimuth, distance);
+    float delta = calcSteering(azimuth);
     float rackPosition = calcRackPosition(delta);
     (void) rackPosition; // Ask Dan if we send rack pos or delta
     opendlv::proxy::GroundSteeringRequest out1(delta);
@@ -67,9 +66,9 @@ float Steering::calcRackPosition(float delta) {
   return rackPosition;
 }
 
-float Steering::calcSteering(float azimuth, float distance) {
+float Steering::calcSteering(float azimuth) {
   float Kp = 2.0f;
-  float delta = Kp*azimuth*distance;
+  float delta = Kp*azimuth;
   float deltaMax = 3.14/180*22;
 
   delta = std::min(std::max(delta,-deltaMax),deltaMax);

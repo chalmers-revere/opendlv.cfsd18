@@ -50,14 +50,15 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
   Eigen::ArrayXf tireModel(Eigen::ArrayXf, Eigen::ArrayXf, Eigen::ArrayXf,
     float, float, float, float, Eigen::VectorXf, Eigen::VectorXf, Eigen::MatrixXf);
   Eigen::ArrayXf atanArr(Eigen::ArrayXf);
-  Eigen::ArrayXf longitudinalControl(Eigen::ArrayXf, Eigen::ArrayXf, Eigen::VectorXf,
-    Eigen::VectorXf, Eigen::MatrixXf, Eigen::ArrayXf*, Eigen::ArrayXf, float, float);
-  Eigen::ArrayXf motion(Eigen::ArrayXf,Eigen::ArrayXf,Eigen::ArrayXf,
+  Eigen::ArrayXf longitudinalControl(Eigen::ArrayXf, Eigen::ArrayXf,
+    Eigen::ArrayXf*, Eigen::ArrayXf, float, float);
+    Eigen::ArrayXf motion(Eigen::ArrayXf,Eigen::ArrayXf,Eigen::ArrayXf,
     Eigen::ArrayXf, float, float, float, float, float, float, float);
   void sendAccelerationRequest(float, Eigen::ArrayXf);
   float interp2(Eigen::VectorXf, Eigen::VectorXf, Eigen::MatrixXf, float, float);
   Eigen::ArrayXf motorModel(float,
     Eigen::ArrayXf, Eigen::ArrayXf);
+  float magicTireFormula(float,float);
 
  private:
    opendlv::proxy::GroundSteeringRequest m_headingRequest;

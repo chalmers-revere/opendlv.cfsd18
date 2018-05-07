@@ -63,7 +63,7 @@ void Track::nextContainer(odcore::data::Container &a_container)
   }
 
   if(a_container.getDataType() == opendlv::logic::perception::GroundSurfaceProperty::ID()){
-      std::cout << "TRACK RECIEVED A SURFACE!" << std::endl;
+      // std::cout << "TRACK RECIEVED A SURFACE!" << std::endl;
   //    m_lastTimeStamp = a_container.getSampleTimeStamp();
       auto surfaceProperty = a_container.getData<opendlv::logic::perception::GroundSurfaceProperty>();
       int surfaceId = surfaceProperty.getSurfaceId();
@@ -72,8 +72,8 @@ void Track::nextContainer(odcore::data::Container &a_container)
       if (m_newFrame) {
         m_nSurfacesInframe = std::stoul(nSurfacesInframe);
         m_surfaceId = surfaceId;
-        std::cout << "SurfaceId: " << surfaceId<<std::endl;
-        std::cout << "nSurfacesInframe: " << nSurfacesInframe<<std::endl;
+        // std::cout << "SurfaceId: " << surfaceId<<std::endl;
+        // std::cout << "nSurfacesInframe: " << nSurfacesInframe<<std::endl;
         m_newFrame = false;
       }
 
@@ -89,12 +89,12 @@ void Track::nextContainer(odcore::data::Container &a_container)
       double timeStamp = containerStamp.toMicroseconds();
       if (m_newId) { // TODO: does it need to be global? can it be initialized in another way?
         m_objectId = (objectId!=m_lastObjectId)?(objectId):(-1);
-        std::cout << "newId, m_objectId: " <<m_objectId <<std::endl;
+        // std::cout << "newId, m_objectId: " <<m_objectId <<std::endl;
         m_newId=(m_objectId !=-1)?(false):(true);
       }
-      std::cout << "objectId: " <<objectId <<std::endl;
-      std::cout << "m_objectId: " <<m_objectId <<std::endl;
-      std::cout << "m_lastObjectId: " <<m_lastObjectId <<std::endl;
+      // std::cout << "objectId: " <<objectId <<std::endl;
+      // std::cout << "m_objectId: " <<m_objectId <<std::endl;
+      // std::cout << "m_lastObjectId: " <<m_lastObjectId <<std::endl;
       float x1 = groundSurfaceArea.getX1();
       float y1 = groundSurfaceArea.getY1();
       float x2 = groundSurfaceArea.getX2();
@@ -110,24 +110,24 @@ void Track::nextContainer(odcore::data::Container &a_container)
       v[3] = (y3+y4)/2.0f;
 
       if (objectId == m_objectId) {
-        std::cout << "objectId in frame: " <<objectId <<std::endl;
+        // std::cout << "objectId in frame: " <<objectId <<std::endl;
         m_surfaceFrame[timeStamp] = v;
-        std::cout << "Surfaces in frame: " <<m_surfaceFrame.size() <<std::endl;
+        // std::cout << "Surfaces in frame: " <<m_surfaceFrame.size() <<std::endl;
         for (std::map<double, std::vector<float> >::iterator it = m_surfaceFrame.begin();it !=m_surfaceFrame.end();it++){
           v = it->second;
-          for (size_t i = 0; i < 4; i++) {
-            std::cout<<v[i]<<"\n";
-          }
+          // for (size_t i = 0; i < 4; i++) {
+          //   std::cout<<v[i]<<"\n";
+          // }
         }
         m_timeReceived = std::chrono::system_clock::now();
       } else if (objectId != m_lastObjectId){
-        std::cout << "objectId in buffer: " <<objectId <<std::endl;
+        // std::cout << "objectId in buffer: " <<objectId <<std::endl;
         m_surfaceFrameBuffer[timeStamp] = v;
-        std::cout << "Surfaces in buffer: " <<m_surfaceFrameBuffer.size() <<std::endl;
+        // std::cout << "Surfaces in buffer: " <<m_surfaceFrameBuffer.size() <<std::endl;
         for (std::map<double, std::vector<float> >::iterator it = m_surfaceFrame.begin();it !=m_surfaceFrame.end();it++){
           v = it->second;
           for (size_t i = 0; i < 4; i++) {
-            std::cout<<v[i]<<"\n";
+            // std::cout<<v[i]<<"\n";
           }
         }
       }
@@ -138,20 +138,20 @@ void Track::nextContainer(odcore::data::Container &a_container)
     double receiveTimeLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.receiveTimeLimit");
 
     if ((m_surfaceFrame.size()==m_nSurfacesInframe || duration>receiveTimeLimit)) { //!m_newFrame && objectId==m_surfaceId &&
-      std::cout<<"Run condition OK "<<"\n";
-      std::cout << "duration: " <<duration <<std::endl;
+      // std::cout<<"Run condition OK "<<"\n";
+      // std::cout << "duration: " <<duration <<std::endl;
       std::map< double, std::vector<float> > surfaceFrame;
       {
       odcore::base::Lock lockSurface(m_surfaceMutex);
         m_newFrame = true;
         surfaceFrame = m_surfaceFrame;
-        m_surfaceFrame = m_surfaceFrameBuffer;
+        // m_surfaceFrame = m_surfaceFrameBuffer;
         m_surfaceFrameBuffer.clear();
         m_lastObjectId = m_objectId;
         m_newId = true;
-        std::cout << "Cleared buffer " <<std::endl;
+        // std::cout << "Cleared buffer " <<std::endl;
       }
-      std::cout << "Run " << surfaceFrame.size() << " surfaces"<< std::endl;
+      // std::cout << "Run " << surfaceFrame.size() << " surfaces"<< std::endl;
       std::thread surfaceCollector(&Track::collectAndRun, this, surfaceFrame);
       surfaceCollector.detach();
     }
@@ -186,7 +186,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
   //std::vector<double> timeStamps(surfaceFrame.size());
   std::vector<float> v;
   Eigen::MatrixXf localPath(surfaceFrame.size()*2,2);
-  std::cout<<"localPath.rows(): "<<localPath.rows()<<"\n";
+  // std::cout<<"localPath.rows(): "<<localPath.rows()<<"\n";
   {
     odcore::base::Lock lockSurface(m_surfaceMutex);
     odcore::base::Lock lockPath(m_pathMutex);
@@ -200,7 +200,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
       localPath(2*I+1,1)=v[3];
       I++;
     }
-    std::cout<<"localPath: "<<localPath<<"\n";
+    // std::cout<<"localPath: "<<localPath<<"\n";
 
   }
   //################ RUN and SEND ##################
@@ -219,7 +219,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
         localPathCopy = localPath.row(0);
         STOP = true;
 
-        std::cout << "STOP! " << std::endl;
+        // std::cout << "STOP! " << std::endl;
       }
       else if(localPath.rows()<3){
         localPathCopy = localPath.row(1);
@@ -740,7 +740,7 @@ std::vector<float> Track::curvaturePolyFit(Eigen::MatrixXf localPath){ // TODO: 
   for (size_t m = 0; m < curveRadii.size(); m++) {
     //std::cout<<curveRadii[m]<<" ";
   }
-  std::cout<<"\n";
+  // std::cout<<"\n";
   return curveRadii;
 } // end curvaturePolyFit
 

@@ -77,7 +77,7 @@ services:
     ui-default:
 #        image: chalmersrevere/opendlv-ui-default-amd64:v0.0.4
 #        image: opendlv-ui-default:v0.0.1
-        image: oscartis/opendlv-ui-default
+        image: oscartis/opendlv-ui-default:v0.0.1
         network_mode: "host"
         volumes:
           - ./simulation-map.txt:/srv/http/simulation-map.txt
@@ -91,4 +91,4 @@ services:
           - odsupercomponent
         volumes:
           - .:/opt/opendlv.data
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-vehsim --cid=${CID} --verbose=0 --freq=5 --id=1"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-vehsim --cid=${CID} --verbose=0 --freq=100 --id=1"
