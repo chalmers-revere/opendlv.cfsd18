@@ -237,7 +237,7 @@ void Attention::SaveOneCPCPointNoIntensity(const int &pointIndex,const uint16_t 
   }
   double distance = 0.0;
   switch (distanceEncoding) {
-      case CompactPointCloud::CM : distance = static_cast<double>(distanceCPCPoint / 100.0f); //convert to meter from resolution 1 cm
+      case CompactPointCloud::CM : distance = static_cast<double>(distanceCPCPoint / 500.0f); //convert to meter from resolution 1 cm
                                    break;
       case CompactPointCloud::MM : distance = static_cast<double>(distanceCPCPoint / 500.0f); //convert to meter from resolution 2 mm
                                    break;
@@ -399,24 +399,58 @@ void Attention::ConeDetection(){
   odcore::data::TimeStamp processTime;
   double timeElapsed = abs(static_cast<double>(processTime.toMicroseconds()-startTime.toMicroseconds())/1000000.0);
   //std::cout << "Time elapsed for Extract RoI: " << timeElapsed << std::endl;
-  std::cout << "number of points after ROI are:"<< pointCloudConeROI.rows() << std::endl;
-  startTime = processTime;
 
   //std::cout << "RANSAC" << std::endl;
+  //std::cout << "number of points after ROI are:"<< pointCloudConeROI.rows() << std::endl;
   Eigen::MatrixXd pcRefit = RANSACRemoveGround(pointCloudConeROI);
+  std::cout << "RANSACSIZE: " << pcRefit.rows() << std::endl;
+
+
+  startTime = processTime;
+  vector<int32_t> notFloorIndex;
+  /*double minZ = pointCloudConeROI(0,2);
+
+  for(uint32_t i = 1; i < pointCloudConeROI.rows(); i++){
+
+    //std::cout << "minZ: " << minZ <<  "pc i: " << pointCloudConeROI(i,2) << std::endl;
+
+    if( pointCloudConeROI(i,2) < minZ){
+      minZ = pointCloudConeROI(i,2);
+    }
+
+  }
+
+  //std::cout << "minZ is: " <<  minZ << std::endl;
+
+  for(uint32_t i = 0; i < pointCloudConeROI.rows(); i++){
+
+    if(pointCloudConeROI(i,2) > (minZ + m_inlierRangeThreshold)){
+      notFloorIndex.push_back(i);
+      //std::cout << "notFloorIndex: " << i << std::endl;
+    }
+  }
+  Eigen::MatrixXd pcRefitter = Eigen::MatrixXd::Zero(notFloorIndex.size(),3);
+
+  for(uint32_t i = 0; i < notFloorIndex.size(); i++){
+    pcRefit(i,0) = pointCloudConeROI(notFloorIndex[i],0);
+    pcRefit(i,1) = pointCloudConeROI(notFloorIndex[i],1);
+    pcRefit(i,2) = pointCloudConeROI(notFloorIndex[i],2);
+  }*/
+  //std::cout << "minZ size: " << pcRefit.rows() << std::endl;
   odcore::data::TimeStamp processTime2;
+  
   timeElapsed = abs(static_cast<double>(processTime2.toMicroseconds()-startTime.toMicroseconds())/1000000.0);
   std::cout << "Time elapsed for RANSAC: " << timeElapsed << std::endl;
   startTime = processTime2;
 
   double numOfPointsAfterRANSAC = pcRefit.rows();
-  std::cout << "points After RANSAC" << std::endl;
-  std::cout << numOfPointsAfterRANSAC << std::endl;
-  /*
-  std::cout << "points before RANSAC" << std::endl;
+  //std::cout << "points After RANSAC" << std::endl;
+  //std::cout << numOfPointsAfterRANSAC << std::endl;
+  
+  /*std::cout << "points before RANSAC" << std::endl;
   double pcRaw = m_pointCloud.rows();
   std::cout << pcRaw << std::endl;*/
-  if (numOfPointsAfterRANSAC <= 1000.0)
+  if (numOfPointsAfterRANSAC <= 1000.0 && numOfPointsAfterRANSAC > 0)
   {
     vector<vector<uint32_t>> objectIndexList = NNSegmentation(pcRefit, m_connectDistanceThreshold); //out from ransac pointCloudConeROI to pointCloudFilt
     odcore::data::TimeStamp processTime3;
@@ -438,6 +472,7 @@ void Attention::ConeDetection(){
 
 vector<vector<uint32_t>> Attention::NNSegmentation(Eigen::MatrixXd &pointCloudConeROI, const double &connectDistanceThreshold){
   uint32_t numberOfPointConeROI = pointCloudConeROI.rows();
+  //std::cout << "pc in NN: " << pointCloudConeROI.rows() << std::endl;
   vector<uint32_t> restPointsList(numberOfPointConeROI);
   for (uint32_t i = 0; i < numberOfPointConeROI; i++)
   {
@@ -492,14 +527,15 @@ vector<vector<uint32_t>> Attention::NNSegmentation(Eigen::MatrixXd &pointCloudCo
 vector<vector<uint32_t>> Attention::FindConesFromObjects(Eigen::MatrixXd &pointCloudConeROI, vector<vector<uint32_t>> &objectIndexList, const double &minNumOfPointsForCone, const double &maxNumOfPointsForCone, const double &nearConeRadiusThreshold, const double &farConeRadiusThreshold, const double &zRangeThreshold)
 {
   uint32_t numberOfObjects = objectIndexList.size();
-
+  //std::cout << "pc in findcones: " << pointCloudConeROI.rows() << std::endl;
   // Select those objects with reasonable number of points and save the object list in a new vector
   vector<vector<uint32_t>> objectIndexListWithNumOfPointsLimit;
   for (uint32_t i = 0; i < numberOfObjects; i ++)
   {
     vector<uint32_t> objectIndex = objectIndexList[i];
     uint32_t numberOfPointsOnObject = objectIndex.size();
-
+    
+  //std::cout << "object: "<< i << " : points: "<< numberOfPointsOnObject << numberOfObjects << std::endl;
     bool numberOfPointsLimitation = ((numberOfPointsOnObject >= minNumOfPointsForCone) && (numberOfPointsOnObject <= maxNumOfPointsForCone));
     if (numberOfPointsLimitation)
     {
@@ -521,13 +557,14 @@ vector<vector<uint32_t>> Attention::FindConesFromObjects(Eigen::MatrixXd &pointC
 
     double coneRadius = CalculateConeRadius(potentialConePointCloud);
     double zRange = GetZRange(potentialConePointCloud);
+    //cout << "Cone size: " << coneRadius << endl;
     bool condition1 = (coneRadius < farConeRadiusThreshold); //Far point cones
     bool condition2 = (coneRadius>= farConeRadiusThreshold && coneRadius <= nearConeRadiusThreshold);
     bool condition3 = (zRange >= zRangeThreshold);  // Near point cones have to cover a larger Z range
     if (condition1 || (condition2 && condition3))
     {
       coneIndexList.push_back(selectedObjectIndex);
-      cout << "Cone size: " << coneRadius << endl;
+      
     }
 
   }
@@ -641,7 +678,7 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
     //std::cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << std::endl;
   }
 
-  std::cout << "Detected Cones are: " << conePoints << std::endl;
+  //std::cout << "Detected Cones are: " << conePoints << std::endl;
 
 
 }
@@ -662,15 +699,12 @@ opendlv::logic::sensation::Point Attention::Cartesian2Spherical(double &x, doubl
 Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC)
 {
 
-  //std::cout << "RANSAC Start" << std::endl;
-
-  Eigen::MatrixXd foundPlane(1,4), planeBest(1,4), planeBestBest(1,4), normal(1,3), pointOnPlane(1,3), indexRangeBest,indexDotter ,indexOutliers(pointCloudInRANSAC.rows(),1);
+  Eigen::MatrixXd foundPlane(1,4), planeBest(1,4), planeBestBest(1,4), normal(1,3), pointOnPlane(1,3), indexRangeBest ,indexOutliers(pointCloudInRANSAC.rows(),1);
   foundPlane << 0,0,0,0;
   normal << 0,0,1;
   double d;
   double indexDotFound = 0;
   int planeCounter = 0;
-
   int M = 1;
   int sizeCloud = pointCloudInRANSAC.rows()-1;
   Eigen::MatrixXd drawnSamples = Eigen::MatrixXd::Zero(3,3);
@@ -681,20 +715,17 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
   Vector3d planeFromSamples, v0, v1, v2, crossVec1, crossVec2, crossCoefficients;
   double outliersFound, inliersFound, normalBest, normalBestLast;
   normalBestLast = 10000;
-
   for(int i = 0; i < m_ransacIterations; i++)
   {
     outliersFound = 0;
     inliersFound = 0;
     indexOutliers = Eigen::MatrixXd::Zero(pointCloudInRANSAC.rows(),1);
-
     for(int j = 0; j < 3; j++){
 
       int indexShuffle = M + rand() / (RAND_MAX / (sizeCloud - M + 1) + 1);
 
       drawnSamples.row(j) = pointCloudInRANSAC.row(indexShuffle);
     }
-
     v0 << drawnSamples(0,0), drawnSamples(0,1), drawnSamples(0,2);
     v1 << drawnSamples(1,0), drawnSamples(1,1), drawnSamples(1,2);
     v2 << drawnSamples(2,0), drawnSamples(2,1), drawnSamples(2,2);
@@ -704,7 +735,6 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
     crossCoefficients = crossCoefficients.normalized();
     d = v0.dot(crossCoefficients);
     d = d*-1;
-
     foundPlane << crossCoefficients(0), crossCoefficients(1), crossCoefficients(2), d;
     //Calculate perpendicular distance to found plane
     for(int p = 0; p < pointCloudInRANSAC.rows(); p++){
@@ -717,7 +747,6 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
       }
 
     }
-
     if(outliersFound > 0){
       Eigen::MatrixXd indexRange = Eigen::MatrixXd::Zero(outliersFound,1);
       indexRange = indexOutliers.topRows(outliersFound+1);
@@ -749,12 +778,10 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
     }
     //std::cout << "NUmber of iterations is: " << i << std::endl;
   }
-
   if(planeCounter == 0){
 
     planeBestBest = m_lastBestPlane;
   }
-
   for(int p = 0; p < pointCloudInRANSAC.rows(); p++){
 
     dotProd(p,0) = planeBestBest(0,0)*(pointCloudInRANSAC(p,0)-pointOnPlane(0,0)) + planeBestBest(0,1)*(pointCloudInRANSAC(p,1)-pointOnPlane(0,1)) + planeBestBest(0,2)*(pointCloudInRANSAC(p,2)-pointOnPlane(0,2));
@@ -765,15 +792,28 @@ Eigen::MatrixXd Attention::RANSACRemoveGround(Eigen::MatrixXd pointCloudInRANSAC
       indexDotFound++;
     }
   }
-  indexDotter.resize(indexDot.rows(),indexDot.cols());
+
+  Eigen::MatrixXd sortedIndex;
+  if(indexDotFound > 0 && indexRangeBest.rows() > 0){
+  Eigen::MatrixXd indexDotter = Eigen::MatrixXd::Zero(indexDot.rows(),indexDot.cols());
   indexDotter = indexDot.topRows(indexDotFound+1);
-
-  Eigen::MatrixXd index2Keep(indexDotter.rows()+indexRangeBest.rows(),1);
-
-  index2Keep << indexRangeBest,
+  sortedIndex = Eigen::MatrixXd::Zero(indexDotter.rows()+indexRangeBest.rows(),1); //index2Keep
+  sortedIndex << indexRangeBest,  //index2Keep
                  indexDotter;
+  }else if(indexDotFound < 0.1 && indexRangeBest.rows() > 0){
+
+    sortedIndex = Eigen::MatrixXd::Zero(indexRangeBest.rows(),1); //index2Keep
+    sortedIndex << indexRangeBest;  //index2Keep
+                  
+  }else if(indexDotFound > 0 && indexRangeBest.rows() < 0.1){
+    Eigen::MatrixXd indexDotter = Eigen::MatrixXd::Zero(indexDot.rows(),indexDot.cols());
+    indexDotter = indexDot.topRows(indexDotFound+1);
+
+      sortedIndex = Eigen::MatrixXd::Zero(indexDotter.rows(),1); //index2Keep
+    sortedIndex << indexDotter;  //index2Keep
+  }
   //Remove duplicates
-  Eigen::MatrixXd sortedIndex = RemoveDuplicates(index2Keep);
+  //Eigen::MatrixXd sortedIndex = RemoveDuplicates(index2Keep);
   //Remove found inlier index from
   Eigen::MatrixXd pcRefit = Eigen::MatrixXd::Zero(sortedIndex.rows(),3); //sortedIndex
   for(int i = 0; i < sortedIndex.rows(); i++){
