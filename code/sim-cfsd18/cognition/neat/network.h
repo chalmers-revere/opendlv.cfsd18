@@ -33,6 +33,10 @@ namespace NEAT {
 
 		friend class Genome;
 
+	private:
+
+		Network& operator=(const Network&);
+
 	//protected:
 	public:
 

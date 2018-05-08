@@ -32,6 +32,9 @@ namespace NEAT {
 	// ---------------------------------------------  
 	class Organism {
 
+	private:
+		Organism& operator=(const Organism&);
+
 	public:
 		double fitness;  //A measure of fitness for the Organism
 		double orig_fitness;  //A fitness measure that won't change during adjustments

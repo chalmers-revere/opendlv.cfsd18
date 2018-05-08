@@ -54,6 +54,10 @@ namespace NEAT {
 		friend class Network;
 		friend class Genome;
 
+	private:
+
+		NNode& operator=(const NNode&);
+
 	protected:
 
 		int activation_count;  // keeps track of which activation the node is currently in
@@ -62,13 +66,13 @@ namespace NEAT {
 		// This is necessary for a special recurrent case when the innode
 		// of a recurrent link is one time step ahead of the outnode.
 		// The innode then needs to send from TWO time steps ago
-
+		
 		Trait *nodetrait; // Points to a trait of parameters
 
 		int trait_id;  // identify the trait derived by this node
-
+		
 		NNode *dup;       // Used for Genome duplication
-
+		
 		NNode *analogue;  // Used for Gene decoding
 
 		bool override; // The NNode cannot compute its own output- something is overriding it
@@ -133,7 +137,7 @@ namespace NEAT {
 		double get_active_out_td();
 
 		// Returns the type of the node, NEURON or SENSOR
-		const nodetype get_type();
+		/*const jonas*/ nodetype get_type();
 
 		// Allows alteration between NEURON and SENSOR.  Returns its argument
 		nodetype set_type(nodetype);

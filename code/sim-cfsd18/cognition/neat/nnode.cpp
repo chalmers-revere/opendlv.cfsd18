@@ -156,7 +156,7 @@ NNode::~NNode() {
 }
 
 //Returns the type of the node, NEURON or SENSOR
-const nodetype NNode::get_type() {
+/*jonas const*/ nodetype NNode::get_type() {
 	return type;
 }
 

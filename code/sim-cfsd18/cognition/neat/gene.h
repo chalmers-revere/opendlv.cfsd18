@@ -24,6 +24,11 @@
 namespace NEAT {
 
 	class Gene {
+
+	private:
+
+		Gene& operator=(const Gene&);
+
 	public:
 
 		Link *lnk;

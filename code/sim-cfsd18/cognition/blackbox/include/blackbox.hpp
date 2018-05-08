@@ -34,6 +34,18 @@
 //#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 //#include <odvdcfsd18/GeneratedHeaders_ODVDcfsd18.h>
 
+#include <iomanip>
+#include <sstream>
+#include <list>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include "../../neat/neat.h"
+#include "../../neat/network.h"
+#include "../../neat/population.h"
+#include "../../neat/organism.h"
+#include "../../neat/genome.h"
+#include "../../neat/species.h"
 
 namespace opendlv {
 namespace sim {
@@ -53,8 +65,8 @@ class BlackBox : public odcore::base::module::DataTriggeredConferenceClientModul
   void tearDown();
 
   void initializeCollection(int);
+  void sortIntoSideArrays(MatrixXd, int, int, int, int);
   void generateSurfaces(ArrayXXf, ArrayXXf, ArrayXXf);
-  //void CheckContainer(uint32_t);
   Eigen::MatrixXd Spherical2Cartesian(double, double, double);
 
 
@@ -65,21 +77,11 @@ class BlackBox : public odcore::base::module::DataTriggeredConferenceClientModul
   int m_timeDiffMilliseconds;
   int m_lastTypeId;
   int m_surfaceId;
+  NEAT::Network* m_net;
 
   const double DEG2RAD = 0.017453292522222; // PI/180.0
 
-  void findSafeLocalPath(ArrayXXf, ArrayXXf);
-  ArrayXXf placeEquidistantPoints(ArrayXXf, bool, int, float);
-  ArrayXXf traceBackToClosestPoint(ArrayXXf, ArrayXXf, ArrayXXf);
-  ArrayXXf orderCones(ArrayXXf, ArrayXXf);
-  ArrayXXf orderAndFilterCones(ArrayXXf, ArrayXXf);
-  ArrayXXf insertNeededGuessedCones(ArrayXXf, ArrayXXf, ArrayXXf, float, float, bool);
-  ArrayXXf guessCones(ArrayXXf, ArrayXXf, float, bool, bool, bool);
-  float findTotalPathLength(ArrayXXf);
-  float findFactorToClosestPoint(ArrayXXf, ArrayXXf, ArrayXXf);
 
-  void sortIntoSideArrays(MatrixXd, int, int, int, int);
-  void sendMatchedContainer(Eigen::ArrayXXf, Eigen::ArrayXXf);
 
 };
 

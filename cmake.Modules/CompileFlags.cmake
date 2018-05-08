@@ -17,13 +17,13 @@
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
   set(COMPILER_FLAGS "-fstack-protector-all -fPIC -Werror -pedantic-errors -Wall -Wextra -O2")
   set(C_COMPILER_FLAGS "-std=c99")
-  set(CXX_COMPILER_FLAGS "-std=c++14 -Weffc++")
+  set(CXX_COMPILER_FLAGS "-std=c++14 -Weffc++")#jonas -Weffc++
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   set(CXX_PICKY_ERRORS "-Warray-bounds -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wdouble-promotion -Wfloat-equal -Wformat-nonliteral -Wformat-security -Wformat-y2k -Wformat=2 -Winline -Winvalid-pch -Wlogical-op -Wlong-long -Wmissing-braces -Wmissing-declarations -Wmissing-format-attribute -Wmissing-include-dirs -Wmissing-noreturn -Wno-deprecated -Wno-maybe-uninitialized -Wnormalized=nfc -Woverloaded-virtual -Wpacked -Wpointer-arith -Wredundant-decls -Wshadow -Wstack-protector -Wstrict-aliasing=2 -Wsuggest-attribute=const -Wswitch-default -Wswitch-enum -Wsync-nand -Wtrampolines -Wunreachable-code -Wunsafe-loop-optimizations -Wunused -Wvarargs -Wvariadic-macros -Wvector-operation-performance -Wvla -Wwrite-strings")
 
   set(COMPILER_FLAGS "-fstack-protector-all -fPIC -Werror -pedantic-errors -Wall -Wextra")
   set(C_COMPILER_FLAGS "-std=c99")
-  set(CXX_COMPILER_FLAGS "-std=c++14 -Weffc++ ${CXX_PICKY_ERRORS}")
+  set(CXX_COMPILER_FLAGS "-std=c++14 -Weffc++ ${CXX_PICKY_ERRORS}")#jonas -Weffc++
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
   set(COMPILER_FLAGS "/MP /Gy /GR- /Zi /W4 /WX /wd\"4100\" /wd\"4127\" /wd\"4244\" /wd\"4512\" /wd\"4701\" /wd\"4702\" /wd\"4996\"")
 endif()

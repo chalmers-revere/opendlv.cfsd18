@@ -42,6 +42,9 @@ namespace NEAT {
 	//    link-building.
 
 	class Genome {
+	
+	private:
+		Genome& operator=(const Genome&);
 
 	public:
 		int genome_id;
