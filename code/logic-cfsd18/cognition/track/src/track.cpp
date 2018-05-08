@@ -69,7 +69,7 @@ void Track::nextContainer(odcore::data::Container &a_container)
       int surfaceId = surfaceProperty.getSurfaceId();
       auto nSurfacesInframe = surfaceProperty.getProperty();
 
-      if (m_newFrame) {
+      if (m_newFrame) { // If true, a frame has just been sent
         m_nSurfacesInframe = std::stoul(nSurfacesInframe);
         m_surfaceId = surfaceId;
         std::cout << "SurfaceId: " << surfaceId<<std::endl;
@@ -86,16 +86,16 @@ void Track::nextContainer(odcore::data::Container &a_container)
       auto groundSurfaceArea = a_container.getData<opendlv::logic::perception::GroundSurfaceArea>();
       objectId = groundSurfaceArea.getSurfaceId();
       odcore::data::TimeStamp containerStamp = a_container.getReceivedTimeStamp();
-      double timeStamp = containerStamp.toMicroseconds();
+      double timeStamp = containerStamp.toMicroseconds(); // Save timeStamp for sorting purposes;
       if (m_newId) { // TODO: does it need to be global? can it be initialized in another way?
-        m_objectId = (objectId!=m_lastObjectId)?(objectId):(-1);
+        m_objectId = (objectId!=m_lastObjectId)?(objectId):(-1); // Update object id if it is not remains from an already run frame
         //std::cout << "newId, m_objectId: " <<m_objectId <<std::endl;
-        m_newId=(m_objectId !=-1)?(false):(true);
+        m_newId=(m_objectId !=-1)?(false):(true); // Set new id to false while collecting current frame id, or keep as true if current id is from an already run frame
       }
       //std::cout << "objectId: " <<objectId <<std::endl;
       //std::cout << "m_objectId: " <<m_objectId <<std::endl;
       //std::cout << "m_lastObjectId: " <<m_lastObjectId <<std::endl;
-      float x1 = groundSurfaceArea.getX1();
+      float x1 = groundSurfaceArea.getX1(); //Unpack message
       float y1 = groundSurfaceArea.getY1();
       float x2 = groundSurfaceArea.getX2();
       float y2 = groundSurfaceArea.getY2();
@@ -119,10 +119,10 @@ void Track::nextContainer(odcore::data::Container &a_container)
             std::cout<<v[i]<<"\n";
           }
         }*/
-        m_timeReceived = std::chrono::system_clock::now();
-      } else if (objectId != m_lastObjectId){
+        m_timeReceived = std::chrono::system_clock::now(); //Store time for latest message recieved
+      } else if (objectId != m_lastObjectId){ // If message doesn't belong to current or previous frame.
         std::cout << "objectId in buffer: " <<objectId <<std::endl;
-        m_surfaceFrameBuffer[timeStamp] = v;
+        m_surfaceFrameBuffer[timeStamp] = v; // Place message content coordinates in buffer
         std::cout << "Surfaces in buffer: " <<m_surfaceFrameBuffer.size() <<std::endl;
         /*for (std::map<double, std::vector<float> >::iterator it = m_surfaceFrame.begin();it !=m_surfaceFrame.end();it++){
           v = it->second;
@@ -132,27 +132,28 @@ void Track::nextContainer(odcore::data::Container &a_container)
         }*/
       }
     }
-    auto wait = std::chrono::system_clock::now();
-    std::chrono::duration<double> dur = wait-m_timeReceived;
-    double duration = (m_objectId!=-1)?(dur.count()):(-1.0);
+    auto wait = std::chrono::system_clock::now(); // Time point now
+    std::chrono::duration<double> dur = wait-m_timeReceived; // Duration since last message recieved to m_surfaceFrame
+    double duration = (m_objectId!=-1)?(dur.count()):(-1.0); // Duration value of type double in seconds OR -1 which prevents running the surface while ignoring messages from an already run frame
     double receiveTimeLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.receiveTimeLimit");
 
+    // Run if frame is full or if we have waited to long for the remaining messages
     if ((m_surfaceFrame.size()==m_nSurfacesInframe || duration>receiveTimeLimit)) { //!m_newFrame && objectId==m_surfaceId &&
       std::cout<<"Run condition OK "<<"\n";
       std::cout << "duration: " <<duration <<std::endl;
       std::map< double, std::vector<float> > surfaceFrame;
       {
       odcore::base::Lock lockSurface(m_surfaceMutex);
-        m_newFrame = true;
-        surfaceFrame = m_surfaceFrame;
-        m_surfaceFrame = m_surfaceFrameBuffer;
-        m_surfaceFrameBuffer.clear();
-        m_lastObjectId = m_objectId;
-        m_newId = true;
+        m_newFrame = true; // Allow for new surface property
+        surfaceFrame = m_surfaceFrame; // Copy frame
+        m_surfaceFrame = m_surfaceFrameBuffer; // Add buffer to new frame
+        m_surfaceFrameBuffer.clear(); // Clear buffer
+        m_lastObjectId = m_objectId; // Update last object id to ignore late messages
+        m_newId = true; // Allow for new messages to be placed in m_surfaceFrame
         std::cout << "Cleared buffer " <<std::endl;
       }
       std::cout << "Run " << surfaceFrame.size() << " surfaces"<< std::endl;
-      std::thread surfaceCollector(&Track::collectAndRun, this, surfaceFrame);
+      std::thread surfaceCollector(&Track::collectAndRun, this, surfaceFrame); // Run the surface in a thread
       surfaceCollector.detach();
     }
   }
