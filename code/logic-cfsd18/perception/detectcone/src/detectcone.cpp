@@ -117,29 +117,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
       m_recievedFirstImg = true;
     }
 
-
-
-    int width = 640;
-    int height = 1000;
-    double resultResize = 50;
-    cv::Mat result[2] = cv::Mat::zeros(height, width, CV_8UC3), coResult;
-    for (int i = 0; i < m_finalPointCloud.cols(); i++){
-      int x = int(m_finalPointCloud(0,i) * resultResize + width/2);
-      int y = int(m_finalPointCloud(1,i) * resultResize);
-      if (x >= 0 && x <= width && y >= 0 && y <= height){
-        cv::circle(result[0], cv::Point (x,y), 5, cv::Scalar (255, 255, 255), -1);
-      }
-    }
-    cv::circle(result[0], cv::Point (int(width/2),0), 5, cv::Scalar (0, 0, 255), -1);
-    cv::flip(result[0], result[0], 0);
-    cv::Mat rectified = m_img.colRange(0,1280);
-    cv::resize(rectified, rectified, cv::Size(640, 360));
-    // rectified.convertTo(rectified, CV_8UC3);
-    rectified.copyTo(result[1].rowRange(320,680));
-    // result[1].rowRange(320,680) = rectified;
-    cv::hconcat(result[1], result[0], coResult);
-    cv::imwrite("results/"+std::to_string(m_count++)+".png", coResult);
-
+    forwardDetectionRoI(m_img, m_slidingWindow);
 
     // if (((timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds()) > m_checkLiarMilliseconds*1000)){
     //   std::cout << "Lidar fails! Camera detection only! " << std::endl;
@@ -809,6 +787,11 @@ void DetectCone::forwardDetectionRoI(cv::Mat imgSource, tiny_dnn::network<tiny_d
   std::ofstream savefile;
   savefile.open("results/"+std::to_string(m_count)+".csv");
 
+  int resultWidth = 672;
+  int resultHeight = 600;
+  double resultResize = 30;
+  cv::Mat result[2] = cv::Mat::zeros(resultHeight, resultWidth, CV_8UC3), coResult;
+
   if(inputs.size()>0){
     auto prob = nn.predict(inputs);
     for(size_t i = 0; i < inputs.size(); i++){
@@ -839,18 +822,31 @@ void DetectCone::forwardDetectionRoI(cv::Mat imgSource, tiny_dnn::network<tiny_d
 
       if (labelName == "background"){
         std::cout << "No cone detected" << std::endl;
-        cv::circle(imgSource, position, 2, cv::Scalar (0,0,0), -1);
+        cv::circle(imgSource, position, 3, cv::Scalar (0,0,0), -1);
       } 
       else{
         std::cout << "Find one " << labelName << " cone"<< std::endl;
         if (labelName == "blue")
-          cv::circle(imgSource, position, 2, cv::Scalar (175,238,238), -1);
+          cv::circle(imgSource, position, 3, cv::Scalar (175,238,238), -1);
         else if (labelName == "yellow")
-          cv::circle(imgSource, position, 2, cv::Scalar (0,255,255), -1);
+          cv::circle(imgSource, position, 3, cv::Scalar (0,255,255), -1);
         else if (labelName == "orange")
-          cv::circle(imgSource, position, 2, cv::Scalar (0,165,255), -1);
+          cv::circle(imgSource, position, 3, cv::Scalar (0,165,255), -1);
         else if (labelName == "big orange")
-          cv::circle(imgSource, position, 4, cv::Scalar (0,0,255), -1);
+          cv::circle(imgSource, position, 6, cv::Scalar (0,0,255), -1);
+
+        int xt = int(point3D.x * float(resultResize) + resultWidth/2);
+        int yt = int((point3D.z-1.872f) * float(resultResize));
+        if (xt >= 0 && xt <= resultWidth && yt >= 0 && yt <= resultHeight){
+          if (labelName == "blue")
+            cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (255,0,0), -1);
+          else if (labelName == "yellow")
+            cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (0,255,255), -1);
+          else if (labelName == "orange")
+            cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (0,165,255), -1);
+          else if (labelName == "big orange")
+            cv::circle(result[0], cv::Point (xt,yt), 10, cv::Scalar (0,0,255), -1);
+        }
 
         std::cout << position << " " << labelName << " " << point3D << std::endl;
         savefile << std::to_string(position.x)+","+std::to_string(position.y)+","
@@ -861,8 +857,18 @@ void DetectCone::forwardDetectionRoI(cv::Mat imgSource, tiny_dnn::network<tiny_d
 
   for(int i = 0; i < m_finalPointCloud.cols(); i++){
     savefile << std::to_string(m_finalPointCloud(0,i))+","+std::to_string(m_finalPointCloud(1,i))+","+std::to_string(m_finalPointCloud(2,i))+"\n";
+    int x = int(m_finalPointCloud(0,i) * resultResize + resultWidth/2);
+    int y = int(m_finalPointCloud(1,i) * resultResize);
+    if (x >= 0 && x <= resultWidth && y >= 0 && y <= resultHeight){
+      cv::circle(result[0], cv::Point (x,y), 5, cv::Scalar (255, 255, 255), -1);
+    }
   }
-  cv::imwrite("results/"+std::to_string(m_count++)+".png", imgSource);
+
+  cv::circle(result[0], cv::Point (int(resultWidth/2),0), 5, cv::Scalar (0, 0, 255), -1);
+  cv::flip(result[0], result[0], 0);
+  imgSource.copyTo(result[1].rowRange(resultHeight-376,resultHeight));
+  cv::hconcat(result[1], result[0], coResult);
+  cv::imwrite("results/"+std::to_string(m_count++)+".png", coResult);
 
   // cv::namedWindow("img", cv::WINDOW_NORMAL);
   // cv::imshow("img", img);

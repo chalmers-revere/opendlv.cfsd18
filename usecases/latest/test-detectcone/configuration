@@ -100,7 +100,7 @@ logic-cfsd18-sensation-attention.coneHeight = 2 #[m]
 logic-cfsd18-sensation-attention.connectDistanceThreshold = 0.5 #[m] 0.5
 logic-cfsd18-sensation-attention.layerRangeThreshold = 0.06   #[m]
 logic-cfsd18-sensation-attention.minNumOfPointsForCone = 2
-logic-cfsd18-sensation-attention.maxNumOfPointsForCone = 80   #80
+logic-cfsd18-sensation-attention.maxNumOfPointsForCone = 150   #80
 logic-cfsd18-sensation-attention.farConeRadiusThreshold = 0.2
 logic-cfsd18-sensation-attention.nearConeRadiusThreshold = 0.25
 logic-cfsd18-sensation-attention.zRangeThreshold = 0.08  #[m]
@@ -108,7 +108,7 @@ logic-cfsd18-sensation-attention.senderStamp = 116
 
 %RANSAC
 
-logic-cfsd18-sensation-attention.inlierRangeTreshold = 0.06 #[m] 0.06
+logic-cfsd18-sensation-attention.inlierRangeTreshold = 0.04 #[m] 0.06
 logic-cfsd18-sensation-attention.dotThreshold = 0.2
 logic-cfsd18-sensation-attention.inlierFoundTreshold = 500 #Number of inliers
 logic-cfsd18-sensation-attention.numberOfIterations =  10
