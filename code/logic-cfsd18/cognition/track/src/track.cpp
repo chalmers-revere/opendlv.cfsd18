@@ -110,9 +110,9 @@ void Track::nextContainer(odcore::data::Container &a_container)
       v[3] = (y3+y4)/2.0f;
 
       if (objectId == m_objectId) {
-        //std::cout << "objectId in frame: " <<objectId <<std::endl;
+        std::cout << "objectId in frame: " <<objectId <<std::endl;
         m_surfaceFrame[timeStamp] = v;
-        //std::cout << "Surfaces in frame: " <<m_surfaceFrame.size() <<std::endl;
+        std::cout << "Surfaces in frame: " <<m_surfaceFrame.size() <<std::endl;
         /*for (std::map<double, std::vector<float> >::iterator it = m_surfaceFrame.begin();it !=m_surfaceFrame.end();it++){
           v = it->second;
           for (size_t i = 0; i < 4; i++) {
@@ -121,9 +121,9 @@ void Track::nextContainer(odcore::data::Container &a_container)
         }*/
         m_timeReceived = std::chrono::system_clock::now();
       } else if (objectId != m_lastObjectId){
-        //std::cout << "objectId in buffer: " <<objectId <<std::endl;
+        std::cout << "objectId in buffer: " <<objectId <<std::endl;
         m_surfaceFrameBuffer[timeStamp] = v;
-        //std::cout << "Surfaces in buffer: " <<m_surfaceFrameBuffer.size() <<std::endl;
+        std::cout << "Surfaces in buffer: " <<m_surfaceFrameBuffer.size() <<std::endl;
         /*for (std::map<double, std::vector<float> >::iterator it = m_surfaceFrame.begin();it !=m_surfaceFrame.end();it++){
           v = it->second;
           for (size_t i = 0; i < 4; i++) {
@@ -138,8 +138,8 @@ void Track::nextContainer(odcore::data::Container &a_container)
     double receiveTimeLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.receiveTimeLimit");
 
     if ((m_surfaceFrame.size()==m_nSurfacesInframe || duration>receiveTimeLimit)) { //!m_newFrame && objectId==m_surfaceId &&
-      //std::cout<<"Run condition OK "<<"\n";
-      //std::cout << "duration: " <<duration <<std::endl;
+      std::cout<<"Run condition OK "<<"\n";
+      std::cout << "duration: " <<duration <<std::endl;
       std::map< double, std::vector<float> > surfaceFrame;
       {
       odcore::base::Lock lockSurface(m_surfaceMutex);
@@ -149,9 +149,9 @@ void Track::nextContainer(odcore::data::Container &a_container)
         m_surfaceFrameBuffer.clear();
         m_lastObjectId = m_objectId;
         m_newId = true;
-        //std::cout << "Cleared buffer " <<std::endl;
+        std::cout << "Cleared buffer " <<std::endl;
       }
-      //std::cout << "Run " << surfaceFrame.size() << " surfaces"<< std::endl;
+      std::cout << "Run " << surfaceFrame.size() << " surfaces"<< std::endl;
       std::thread surfaceCollector(&Track::collectAndRun, this, surfaceFrame);
       surfaceCollector.detach();
     }
@@ -238,7 +238,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
           localPath.resize(localPath.rows()-i,2);
           localPath = localPathTmp;
         }
-        if (!STOP){
+        if (!STOP && localPath.size()>1){
           float const distanceBetweenPoints = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.distanceBetweenPoints");
           bool const traceBack = getKeyValueConfiguration().getValue<bool>("logic-cfsd18-cognition-track.traceBack");
           if (traceBack) {
@@ -249,7 +249,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
           } else{localPathCopy = localPath;}
           localPathCopy = Track::placeEquidistantPoints(localPathCopy,false,-1,distanceBetweenPoints);
           //std::cout << "LocalPathCopy: " <<localPathCopy<<"\n";
-        }
+        } else if (!STOP && localPath.size()<2) {localPathCopy = localPath;}
       }
     }
 
@@ -408,7 +408,6 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
     localPath = localPath-foo;*/
   // Calculate the distance between vehicle and aimpoint;
   float previewDistance = std::abs(groundSpeedCopy)*previewTime;
-  std::cout<<"previewDistance: "<<previewDistance<<" m \n";
   //Distance to aimpoint is currently calculated only on path, Not from vehicle
   float sumPoints = localPath.row(0).norm(); //TODO
   // Sum the distance between all path points until passing previewDistance

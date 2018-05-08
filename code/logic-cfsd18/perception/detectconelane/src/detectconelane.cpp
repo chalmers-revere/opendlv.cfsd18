@@ -332,7 +332,7 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
       odcore::data::Container cStop2(surfaceArea);
       getConference().send(cStop2);
       std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
-      int rndmId;
+      int rndmId = rand();
       while (m_surfaceId == rndmId){rndmId = rand();}
       m_surfaceId = rndmId;
     }
@@ -368,7 +368,7 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
       odcore::data::Container cGo2(surfaceArea);
       getConference().send(cGo2);
       std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
-      int rndmId;
+      int rndmId = rand();
       while (m_surfaceId == rndmId){rndmId = rand();}
       m_surfaceId = rndmId;
     }
@@ -394,7 +394,7 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
       odcore::data::Container cGo4(surfaceArea);
       getConference().send(cGo4);
       std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
-      int rndmId;
+      int rndmId = rand();
       while (m_surfaceId == rndmId){rndmId = rand();}
       m_surfaceId = rndmId;
     }
@@ -840,7 +840,7 @@ ArrayXXf DetectConeLane::insertNeededGuessedCones(ArrayXXf longSide, ArrayXXf sh
   realAndGuessedCones.topRows(nConesShort) = shortSide;
   realAndGuessedCones.bottomRows(nGuessedCones) = guessedConesFinal;
 
-  ArrayXXf newShortSide = DetectConeLane::orderCones(realAndGuessedCones,vehicleLocation);
+  ArrayXXf newShortSide = DetectConeLane::orderCones(realAndGuessedCones, vehicleLocation);
   return newShortSide;
 } // End of insertNeededGuessedCones
 
@@ -973,7 +973,7 @@ std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
 
 
   ArrayXXf location(1,2);
-  location << 0,0;
+  location << -3,0;
 
   MatrixXf coneLeft_f = coneLeft.cast <float> ();
   MatrixXf coneRight_f = coneRight.cast <float> ();
@@ -1012,7 +1012,7 @@ void DetectConeLane::sendMatchedContainer(Eigen::ArrayXXf virtualPointsLong, Eig
     getConference().send(c1);
   } // End of for
   std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
-  int rndmId;
+  int rndmId = rand();
   while (m_surfaceId == rndmId){rndmId = rand();}
   m_surfaceId = rndmId;
 } // End of sendMatchedContainer
