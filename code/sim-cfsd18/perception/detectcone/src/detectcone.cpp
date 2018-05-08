@@ -153,7 +153,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
     auto finishRight = std::chrono::system_clock::now();
     auto timeSend = std::chrono::duration_cast<std::chrono::microseconds>(finishRight - startLeft);
     // std::cout << "sendTime:" << timeSend.count() << std::endl;
-
+  } // End of while
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;
 } // End of body
 

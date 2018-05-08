@@ -105,7 +105,7 @@ opendlv-logic-cfsd18-action-steering.control-parameter.Kp = 2
 ################ COGNITION SETUP, A LOT OF REDUNDANCY ####################
 sim-cfsd18-perception-detectcone.detectRange = 11.5
 sim-cfsd18-perception-detectcone.detectWidth = 5.0
-sim-cfsd18-perception-detectcone.mapFilename = simulation-map.txt
+sim-cfsd18-perception-detectcone.mapFilename = simulation-map-closed-lap.txt
 sim-cfsd18-perception-detectcone.startX = 0
 sim-cfsd18-perception-detectcone.startY = 1.5
 sim-cfsd18-perception-detectcone.startHeading = -2.3

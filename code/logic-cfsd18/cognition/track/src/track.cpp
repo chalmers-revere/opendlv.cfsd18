@@ -45,6 +45,10 @@ Track::Track(int32_t const &a_argc, char **a_argv) :
   m_timeReceived{},
   m_lastObjectId{},
   m_newId{true}
+  , m_outputFile()
+  , m_X()
+  , m_Y()
+  , m_Yaw()
 {
 
 }
@@ -55,6 +59,12 @@ Track::~Track()
 
 void Track::nextContainer(odcore::data::Container &a_container)
 {
+  if (a_container.getDataType() == opendlv::sim::Frame::ID()){
+    auto pos = a_container.getData<opendlv::sim::Frame>();
+    m_X = pos.getX();
+    m_Y = pos.getY();
+    m_Yaw = pos.getYaw();
+  }
   if (a_container.getDataType() == opendlv::proxy::GroundSpeedReading::ID()) {
     odcore::base::Lock lockGroundSpeed(m_groundSpeedMutex);
     auto groundSpeed = a_container.getData<opendlv::proxy::GroundSpeedReading>();
@@ -175,10 +185,12 @@ void Track::nextContainer(odcore::data::Container &a_container)
 
 void Track::setUp()
 {
+  m_outputFile.open("/opt/opendlv.data/localPath",std::ofstream::out);
 }
 
 void Track::tearDown()
 {
+  m_outputFile.close();
 }
 
 void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
@@ -200,7 +212,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
       localPath(2*I+1,1)=v[3];
       I++;
     }
-    //std::cout<<"localPath: "<<localPath<<"\n";
+    // std::cout<<"localPath: "<<localPath<<"\n";
 
   }
   //################ RUN and SEND ##################
@@ -250,7 +262,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
             localPathCopy.block(1,0,localPath.rows(),2) = localPath;
           } else{localPathCopy = localPath;}
           localPathCopy = Track::placeEquidistantPoints(localPathCopy,false,-1,distanceBetweenPoints);
-          //std::cout << "LocalPathCopy: " <<localPathCopy<<"\n";
+          std::cout << "LocalPathCopy: " <<localPathCopy<<"\n";
         }
       }
     }
@@ -277,6 +289,11 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
     o1.setDistance(distanceToAimPoint);
     odcore::data::Container c1(o1);
     getConference().send(c1);
+
+    if (m_outputFile.is_open()){
+      m_outputFile << localPathCopy.transpose() << std::endl;
+      m_outputFile << m_X << " " << m_Y << " " << m_Yaw << " " << distanceToAimPoint << " " << headingRequest << std::endl;
+    }
 
     //Send for Ui TODO: Remove
     // opendlv::logic::action::AimPoint o4;
@@ -435,7 +452,6 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
       distanceP1AimPoint = distanceP1P2 - overshoot;
       // Linear interpolation
       aimPoint = (localPath.row(k+1)-localPath.row(k))*(distanceP1AimPoint/distanceP1P2) + localPath.row(k);
-      std::cout << "AimPoint: " << aimPoint.transpose() << std::endl;
     }
     else {// not needed if sumPoints is initialized as zero, (and previewDistance>0)
       /*

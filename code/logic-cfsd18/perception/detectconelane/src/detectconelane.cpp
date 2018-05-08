@@ -331,7 +331,7 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
       surfaceArea.setY4(0.0f);
       odcore::data::Container cStop2(surfaceArea);
       getConference().send(cStop2);
-      std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
+      // std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
       int rndmId;
       while (m_surfaceId == rndmId){rndmId = rand();}
       m_surfaceId = rndmId;
@@ -367,7 +367,7 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
       surfaceArea.setY4(longSide(0,1)+1.5f*direction);
       odcore::data::Container cGo2(surfaceArea);
       getConference().send(cGo2);
-      std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
+      // std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
       int rndmId;
       while (m_surfaceId == rndmId){rndmId = rand();}
       m_surfaceId = rndmId;
@@ -393,7 +393,7 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
       surfaceArea.setY4(shortSide(0,1));
       odcore::data::Container cGo4(surfaceArea);
       getConference().send(cGo4);
-      std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
+      // std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
       int rndmId;
       while (m_surfaceId == rndmId){rndmId = rand();}
       m_surfaceId = rndmId;
@@ -935,7 +935,7 @@ void DetectConeLane::sortIntoSideArrays(MatrixXd extractedCones, int nLeft, int 
     cone = DetectConeLane::Spherical2Cartesian(extractedCones(0,p), extractedCones(1,p), extractedCones(2,p));
     coneLocal.col(p) = cone;
   } // End of for
-std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
+// std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
 
   Eigen::MatrixXd coneLeft = Eigen::MatrixXd::Zero(2,nLeft);
   Eigen::MatrixXd coneRight = Eigen::MatrixXd::Zero(2,nRight);
@@ -1011,7 +1011,7 @@ void DetectConeLane::sendMatchedContainer(Eigen::ArrayXXf virtualPointsLong, Eig
     odcore::data::Container c1(surfaceArea);
     getConference().send(c1);
   } // End of for
-  std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
+  // std::cout<<"Sending with ID: "<<m_surfaceId<<"\n";
   int rndmId;
   while (m_surfaceId == rndmId){rndmId = rand();}
   m_surfaceId = rndmId;

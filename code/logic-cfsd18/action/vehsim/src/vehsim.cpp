@@ -591,7 +591,7 @@ void Vehsim::setUp()
 {
   std::cout << "vehsim setup" << std::endl;
 
-  m_outputData.open("/opt/opendlv.data/outputData",std::ofstream::out);
+  m_outputData.open("/output.data/outputData",std::ofstream::out);
 
   if (m_outputData.is_open()) {
     m_outputData << "% time\t" << "X\t" << "Y\t" << "Psi\t" << "u\t" << "v\t" << "r" << std::endl;

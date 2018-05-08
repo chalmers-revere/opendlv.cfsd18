@@ -72,15 +72,17 @@ services:
         network_mode: "host"
         depends_on:
             - odsupercomponent
+        volumes:
+          - ~/Desktop:/opt/opendlv.data
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-cognition-track --cid=${CID} --verbose=0 --id=1"
 
     ui-default:
-#        image: chalmersrevere/opendlv-ui-default-amd64:v0.0.4
+#        image: chalmersrevere/opendlv-ui-default-amd64
 #        image: opendlv-ui-default:v0.0.1
-        image: oscartis/opendlv-ui-default:v0.0.0
+        image: oscartis/opendlv-ui-default:latest
         network_mode: "host"
         volumes:
-          - ./simulation-map.txt:/srv/http/simulation-map.txt
+        - ./simulation-map-closed-lap.txt:/srv/http/simulation-map-closed-lap.txt
         command: "--cid=${CID}"
 
 #  microservice for veh-sim
@@ -91,4 +93,5 @@ services:
           - odsupercomponent
         volumes:
           - .:/opt/opendlv.data
+          - ~/Desktop:/output.data
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-vehsim --cid=${CID} --verbose=0 --freq=100 --id=1"
