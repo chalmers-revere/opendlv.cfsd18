@@ -436,14 +436,14 @@ Eigen::ArrayXf Vehsim::longitudinalControl(Eigen::ArrayXf Fz, Eigen::ArrayXf x,
 
 float Vehsim::magicTireFormula(float Fz,float slip)
 {
-  float Fz0 = 1500;
-  float mu0 = 1.4;
-  float mu1 = -2.3862e-04;
+  float Fz0 = 535.7143;
+  float mu0 = 1.5;
+  float mu1 = 1.9405e-04;
   float mu = mu0*(1-mu1*(Fz-Fz0));
-  float B = 10;
-  float C = 1.5;
+  float B = 1.621;
+  float C = 9.307;
   float D = mu*Fz;
-  float E = 1;
+  float E = 14.81;
 
   float Fx =  D*(float)sin(C*(float)atan((B*slip - E*(B*slip - (float)atan(B*slip)))));
 
