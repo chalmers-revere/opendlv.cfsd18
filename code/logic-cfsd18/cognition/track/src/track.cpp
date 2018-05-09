@@ -45,6 +45,10 @@ Track::Track(int32_t const &a_argc, char **a_argv) :
   m_timeReceived{},
   m_lastObjectId{},
   m_newId{true}
+  , m_outputFile()
+  , m_X()
+  , m_Y()
+  , m_Yaw()
 {
 
 }
@@ -55,6 +59,12 @@ Track::~Track()
 
 void Track::nextContainer(odcore::data::Container &a_container)
 {
+  if (a_container.getDataType() == opendlv::sim::Frame::ID()) {
+    auto pos = a_container.getData<opendlv::sim::Frame>();
+    m_X = pos.getX();
+    m_Y = pos.getY();
+    m_Yaw = pos.getYaw();
+  }
   if (a_container.getDataType() == opendlv::proxy::GroundSpeedReading::ID()) {
     odcore::base::Lock lockGroundSpeed(m_groundSpeedMutex);
     auto groundSpeed = a_container.getData<opendlv::proxy::GroundSpeedReading>();
@@ -175,10 +185,12 @@ void Track::nextContainer(odcore::data::Container &a_container)
 
 void Track::setUp()
 {
+  m_outputFile.open("/opt/opendlv.data/localPath",std::ofstream::out);
 }
 
 void Track::tearDown()
 {
+  m_outputFile.close();
 }
 
 void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
@@ -248,7 +260,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
             localPathCopy.block(1,0,localPath.rows(),2) = localPath;
           } else{localPathCopy = localPath;}
           localPathCopy = Track::placeEquidistantPoints(localPathCopy,false,-1,distanceBetweenPoints);
-          //std::cout << "LocalPathCopy: " <<localPathCopy<<"\n";
+          std::cout << "LocalPathCopy: " <<localPathCopy<<"\n";
         }
       }
     }
@@ -280,6 +292,11 @@ std::cout << "Sending headingRequest: " << headingRequest << std::endl;
     o4.setDistance(distanceToAimPoint);
     odcore::data::Container c4(o4);
     getConference().send(c4);
+
+    if (m_outputFile.is_open()){
+      m_outputFile << localPath.transpose() << std::endl;
+      m_outputFile << m_X << " " << m_Y << " " << m_Yaw << " " << distanceToAimPoint << " " << headingRequest << std::endl;
+    }
 
     if (accelerationRequest >= 0.0f) {
 std::cout << "Sending accelerationRequest: " << accelerationRequest << std::endl;

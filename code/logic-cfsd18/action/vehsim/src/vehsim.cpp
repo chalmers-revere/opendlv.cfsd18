@@ -49,6 +49,9 @@ Vehsim::Vehsim(int32_t const &a_argc, char **a_argv) :
   m_delta(),
   m_outputData()
   , m_aimPoint()
+  , m_X(0)
+  , m_Y(1.5)
+  , m_Yaw(-2.3)
   {
   }
 
@@ -62,6 +65,13 @@ void Vehsim::nextContainer(odcore::data::Container &a_container)
   // Load sender stamps for left and right motor
   uint32_t leftMotorID = kv.getValue<uint32_t>("global.sender-stamp.left-motor");
   uint32_t rightMotorID = kv.getValue<uint32_t>("global.sender-stamp.right-motor");
+
+  if (a_container.getDataType() == opendlv::sim::Frame::ID()) {
+    auto pos = a_container.getData<opendlv::sim::Frame>();
+    m_X = pos.getX();
+    m_Y = pos.getY();
+    m_Yaw = pos.getYaw();
+  }
 
   if (a_container.getDataType() == opendlv::proxy::GroundSteeringRequest::ID()) {
     // Get the heading request. Change to use steering output instead
@@ -162,27 +172,6 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
     }
   }
   irow = 0;
-
-  // Longitudinal
-  // if (fileX.is_open()){
-  //   while(fileX.good()){
-  //     icol = 0;
-  //     getline ( fileX, row);
-  //     std::stringstream ss(row);
-  //     while (ss >> value){
-  //         if (irow == 0 && icol != 0){
-  //           //tireLoad(icol-1) = -1*std::stof(value);
-  //         } else if (icol == 0 && irow != 0) {
-  //           tireSlipX(irow-1) = std::stof(value);
-  //         } else if (icol != 0 && irow != 0){
-  //           tireForceX(irow-1,icol-1) = 1*std::stof(value);
-  //         }
-  //         icol ++;
-  //     }
-  //     irow ++;
-  //   }
-  // }
-
   // Initialize a simulation clock
   float timer = 0.0f;
 
@@ -234,8 +223,9 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode Vehsim::body()
         // update simulation clock
 
         if (m_outputData.is_open()) {
-          m_outputData << timer << " " << X.transpose() << " " << m_delta << " " << Fy.transpose() << " " << Fx.transpose() << " " <<
-          m_aimPoint.getAzimuthAngle() << " " << m_aimPoint.getDistance() << std::endl;
+          m_outputData << timer << " " << m_X << " " << m_Y << " " << m_Yaw << " " << x.head(3).transpose() <<
+           " " << m_delta << " " << Fy.transpose() << " " << Fx.transpose() << " " << m_aimPoint.getAzimuthAngle() <<
+           " " << m_aimPoint.getDistance() << " " << m_torqueRequest1 << std::endl;
           m_outputData.flush();
         }
         timer += sampleTime;
@@ -384,7 +374,8 @@ Eigen::ArrayXf Vehsim::longitudinalControl(Eigen::ArrayXf Fz, Eigen::ArrayXf x,
 
   float u = x(0);                   // Vehicle speed
   float const wheelRadius = 0.22f;  // Radius of tires
-  float const Iwy = 2.0f;           // Inertia of a wheel
+  float const IwyFront = 5.0f;           // Inertia of a wheel
+  float const IwyRear = 15.0f;           // Inertia of a wheel
   Eigen::ArrayXf omega = *wheelSpeed; // Wheel rotational speed
 
 
@@ -432,10 +423,10 @@ Eigen::ArrayXf Vehsim::longitudinalControl(Eigen::ArrayXf Fz, Eigen::ArrayXf x,
 
 
   // Moment equilibriums for wheels. Calculates the rotational acceleration of the wheels
-  omegaDot(0) = wheelRadius*(FxBrakes(0)-Fx(0))/Iwy;
-  omegaDot(1) = wheelRadius*(FxBrakes(1)-Fx(1))/Iwy;
-  omegaDot(2) = (tr1 + wheelRadius*(FxBrakes(2)-Fx(2)))/Iwy;
-  omegaDot(3) = (tr2 + wheelRadius*(FxBrakes(3)-Fx(3)))/Iwy;
+  omegaDot(0) = wheelRadius*(FxBrakes(0)-Fx(0))/IwyFront;
+  omegaDot(1) = wheelRadius*(FxBrakes(1)-Fx(1))/IwyFront;
+  omegaDot(2) = (tr1 + wheelRadius*(FxBrakes(2)-Fx(2)))/IwyRear;
+  omegaDot(3) = (tr2 + wheelRadius*(FxBrakes(3)-Fx(3)))/IwyRear;
 
   // Calculate the wheel speed. This is neccessary to calculate slip in the next iteration
   *wheelSpeed = omega + omegaDot*sampleTime;

@@ -94,4 +94,4 @@ services:
         volumes:
           - .:/opt/opendlv.data
           - ~/Desktop:/output.data
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-vehsim --cid=${CID} --verbose=0 --freq=100 --id=1"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-action-vehsim --cid=${CID} --verbose=0 --freq=200 --id=1"

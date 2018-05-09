@@ -69,6 +69,9 @@ class Vehsim : public odcore::base::module::TimeTriggeredConferenceClientModule 
    float m_delta;
    std::ofstream m_outputData;
    opendlv::logic::action::AimPoint m_aimPoint;
+   float m_X;
+   float m_Y;
+   float m_Yaw;
 };
 
 }

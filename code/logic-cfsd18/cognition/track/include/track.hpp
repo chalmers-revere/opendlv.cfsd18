@@ -28,6 +28,7 @@
 #include <odvdopendlvstandardmessageset/GeneratedHeaders_ODVDOpenDLVStandardMessageSet.h>
 #include <map>
 #include <chrono>
+#include <fstream>
 namespace opendlv {
 namespace logic {
 namespace cfsd18 {
@@ -67,6 +68,10 @@ class Track : public odcore::base::module::DataTriggeredConferenceClientModule {
   std::chrono::time_point<std::chrono::system_clock> m_timeReceived;
   int m_lastObjectId;
   bool m_newId;
+  std::ofstream m_outputFile;
+  float m_X;
+  float m_Y;
+  float m_Yaw;
 };
 
 }
