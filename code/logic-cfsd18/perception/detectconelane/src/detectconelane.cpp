@@ -19,6 +19,9 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <mutex>
+#include <condition_variable>
+
 
 #include <opendavinci/odcore/data/TimeStamp.h>
 #include <opendavinci/odcore/strings/StringToolbox.h>
@@ -33,19 +36,33 @@ namespace perception {
 
 DetectConeLane::DetectConeLane(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-perception-detectconelane")
-, m_lastTimeStamp()
-, m_coneCollector()
-, m_coneMutex()
-, m_newFrame()
-, m_timeDiffMilliseconds()
-, m_lastTypeId()
-, m_surfaceId()
+, m_newFrame{true}
+, m_directionOK{false}
+, m_distanceOK {false}
+, m_runOK{true}
+, m_directionFrame{}
+, m_distanceFrame{}
+, m_typeFrame{}
+, m_directionFrameBuffer{}
+, m_distanceFrameBuffer{}
+, m_typeFrameBuffer{}
+, m_lastDirectionId{}
+, m_lastDistanceId{}
+, m_lastTypeId{}
+, m_newDirectionId{true}
+, m_newDistanceId{true}
+, m_newTypeId{true}
+, m_directionTimeReceived{}
+, m_distanceTimeReceived{}
+, m_typeTimeReceived{}
+, m_nConesInFrame{}
+, m_objectPropertyId{}
+, m_directionId{}
+, m_distanceId{}
+, m_typeId{}
+, m_surfaceId{}
 {
-    m_coneCollector = Eigen::MatrixXd::Zero(4,100);
-    m_newFrame = true;
-    m_timeDiffMilliseconds = 150;
-    m_lastTypeId = -1;
-    m_surfaceId = rand();
+  m_surfaceId = rand();
 }
 
 DetectConeLane::~DetectConeLane()
@@ -54,13 +71,6 @@ DetectConeLane::~DetectConeLane()
 
 void DetectConeLane::setUp()
 {
-  // std::string const exampleConfig =
-  //   getKeyValueConfiguration().getValue<std::string>(
-  //     "logic-cfsd18-perception-detectconelane.example-config");
-
-  // if (isVerbose()) {
-  //   std::cout << "Example config is " << exampleConfig << std::endl;
-  // }
 }
 
 void DetectConeLane::tearDown()
@@ -70,157 +80,228 @@ void DetectConeLane::tearDown()
 
 void DetectConeLane::nextContainer(odcore::data::Container &a_container)
 {
-/*
-    if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID()) {
-        auto coneDirection = a_container.getData<opendlv::logic::perception::ObjectDirection>();
-	    uint32_t objectId = coneDirection.getObjectId();
+if(a_container.getDataType() == opendlv::logic::perception::ObjectProperty::ID()){
+    std::cout << "RECIEVED AN OBJECTPROPERY!" << std::endl;
+    auto object = a_container.getData<opendlv::logic::perception::ObjectProperty>();
+    int objectId = object.getObjectId();
+    auto nConesInFrame = object.getProperty();
 
-        CheckContainer(objectId);
-        m_coneCollector(0,objectId) = coneDirection.getAzimuthAngle();
-	    m_coneCollector(1,objectId) = coneDirection.getZenithAngle();
-	    coneNum++;
-
-	}
-
-	if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID()){
-        auto coneDistance = a_container.getData<opendlv::logic::perception::ObjectDistance>();
-        uint32_t objectId = coneDistance.getObjectId();
-
-        //CheckContainer(objectId);
-        m_coneCollector(2,objectId) = coneDistance.getDistance();
-	    m_coneCollector(3,objectId) = 0;
-	}
-*/
-
-if(a_container.getDataType() == opendlv::logic::perception::Object::ID()){
-    std::cout << "RECIEVED AN OBJECT!" << std::endl;
-    m_lastTimeStamp = a_container.getSampleTimeStamp();
-    auto coneObject = a_container.getData<opendlv::logic::perception::Object>();
-    int conesInFrame = coneObject.getObjectId();
-
-    //std::cout << "FRAME: " << m_newFrame << std::endl;
-    //Check last timestamp if they are from same message
-    //std::cout << "Message Recieved " << std::endl;
-    if (m_newFrame){
-       m_newFrame = false;
-       std::thread coneCollector(&DetectConeLane::initializeCollection, this, conesInFrame);
-       coneCollector.detach();
-       //initializeCollection();
+    if (m_newFrame) { // If true, a frame has just been sent for processing
+      m_newFrame = false;
+      m_nConesInFrame = std::stoul(nConesInFrame);
+      m_objectPropertyId = objectId; // Currently not used.
     }
-
-  }
-
+}
 
 if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID()) {
-    //std::cout << "Recieved Direction" << std::endl;
-    //Retrive data and timestamp
-    m_lastTimeStamp = a_container.getSampleTimeStamp();
-    auto coneDirection = a_container.getData<opendlv::logic::perception::ObjectDirection>();
-    uint32_t objectId = coneDirection.getObjectId();
-  //bool newFrameDir = false;
+    int objectId;
     {
-      odcore::base::Lock lockCone(m_coneMutex);
-      //std::cout << "Message Recieved " << std::endl;
-      m_coneCollector(0,objectId) = coneDirection.getAzimuthAngle();
-      m_coneCollector(1,objectId) = coneDirection.getZenithAngle();
+      odcore::base::Lock lockDirection(m_directionMutex);
+      auto object = a_container.getData<opendlv::logic::perception::ObjectDirection>();
+      objectId = object.getObjectId();
+      odcore::data::TimeStamp containerStamp = a_container.getReceivedTimeStamp();
+      double timeStamp = containerStamp.toMicroseconds(); // Save timeStamp for sorting purposes;
 
-	//std::cout << "FRAME BEFORE LOCAL: " << m_newFrame << std::endl;
-    //newFrameDir = m_newFrame;
+        if (m_newDirectionId) {
+          m_directionId = (objectId!=m_lastDirectionId)?(objectId):(-1); // Update object id if it is not remains from an already run frame
+          m_newDirectionId=(m_directionId !=-1)?(false):(true); // Set new id to false while collecting current frame id, or keep as true if current id is from an already run frame
+        }
+
+        float angle = object.getAzimuthAngle(); //Unpack message
+
+        if (objectId == m_directionId) {
+          m_directionFrame[timeStamp] = angle;
+          m_directionTimeReceived = std::chrono::system_clock::now(); //Store time for latest message recieved
+        } else if (objectId != m_lastDirectionId){ // If message doesn't belong to current or previous frame.
+          m_directionFrameBuffer[timeStamp] = angle; // Place message content coordinates in buffer
+        }
     }
-
-	//std::cout << "FRAME: " << m_newFrame << std::endl;
-   /* if (newFrameDir){
-
-      std::thread coneCollector (&DetectConeLane::initializeCollection,this);
-      coneCollector.detach();
-
+    auto wait = std::chrono::system_clock::now(); // Time point now
+    std::chrono::duration<double> dur = wait-m_directionTimeReceived; // Duration since last message recieved to m_surfaceFrame
+    double duration = (m_directionId!=-1)?(dur.count()):(-1.0); // Duration value of type double in seconds OR -1 which prevents running the surface while ignoring messages from an already run frame
+    double receiveTimeLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-perception-detectconelane.receiveTimeLimit");
+    if (duration>receiveTimeLimit) { //Only for debug
+      std::cout<<"DURATION TIME DIRECTION EXCEEDED"<<std::endl;
     }
-   */
+    // Run if frame is full or if we have waited to long for the remaining messages
+    if ((m_directionFrame.size()==m_nConesInFrame || duration>receiveTimeLimit)) { //!m_newFrame && objectId==m_surfaceId &&
+      m_directionOK=true;
+      std::cout<<m_directionFrame.size()<<" directionFrames to run"<<"\n";
+      std::cout<<m_directionFrameBuffer.size()<<" directionFrames in buffer"<<"\n";
+      /*std::cout<<"m_directionOK"<<"\n";*/
+    }
 }
 
 else if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID()){
+  int objectId;
+  {
+    odcore::base::Lock lockDistance(m_distanceMutex);
+    auto object = a_container.getData<opendlv::logic::perception::ObjectDistance>();
+    objectId = object.getObjectId();
+    odcore::data::TimeStamp containerStamp = a_container.getReceivedTimeStamp();
+    double timeStamp = containerStamp.toMicroseconds(); // Save timeStamp for sorting purposes;
 
-    m_lastTimeStamp = a_container.getSampleTimeStamp();
-    auto coneDistance = a_container.getData<opendlv::logic::perception::ObjectDistance>();
-    uint32_t objectId = coneDistance.getObjectId();
-  //bool newFrameDist = false;
-    {
-      odcore::base::Lock lockCone(m_coneMutex);
-      m_coneCollector(2,objectId) = coneDistance.getDistance();
-
-	//std::cout << "FRAME BEFORE LOCAL: " << m_newFrame << std::endl;
-    //newFrameDist = m_newFrame;
+    if (m_newDistanceId) {
+      m_distanceId = (objectId!=m_lastDistanceId)?(objectId):(-1); // Update object id if it is not remains from an already run frame
+      m_newDistanceId=(m_distanceId !=-1)?(false):(true); // Set new id to false while collecting current frame id, or keep as true if current id is from an already run frame
     }
 
-    //std::cout << "FRAME: " << m_newFrame << std::endl;
-    //Check last timestamp if they are from same message
-    //std::cout << "Message Recieved " << std::endl;
-   /* if (newFrameDist){
-       std::thread coneCollector(&DetectConeLane::initializeCollection, this);
-       coneCollector.detach();
-       //initializeCollection();
+    float distance = object.getDistance(); //Unpack message
+
+    if (objectId == m_distanceId) {
+      m_distanceFrame[timeStamp] = distance;
+      m_distanceTimeReceived = std::chrono::system_clock::now(); //Store time for latest message recieved
+    } else if (objectId != m_lastDistanceId){ // If message doesn't belong to current or previous frame.
+      m_distanceFrameBuffer[timeStamp] = distance; // Place message content coordinates in buffer
     }
-   */
   }
+  auto wait = std::chrono::system_clock::now(); // Time point now
+  std::chrono::duration<double> dur = wait-m_distanceTimeReceived; // Duration since last message recieved to m_surfaceFrame
+  double duration = (m_distanceId!=-1)?(dur.count()):(-1.0); // Duration value of type double in seconds OR -1 which prevents running the surface while ignoring messages from an already run frame
+  double receiveTimeLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-perception-detectconelane.receiveTimeLimit");
+  if (duration>receiveTimeLimit) { //Only for debug
+    std::cout<<"DURATION TIME DISTANCE EXCEEDED"<<std::endl;
+  }
+  // Run if frame is full or if we have waited to long for the remaining messages
+  if ((m_distanceFrame.size()==m_nConesInFrame || duration>receiveTimeLimit)) { //!m_newFrame && objectId==m_surfaceId &&
+    m_distanceOK=true;
+    std::cout<<m_distanceFrame.size()<<" distanceFrames to run"<<"\n";
+    std::cout<<m_distanceFrameBuffer.size()<<" distanceFrames in buffer"<<"\n";
+    /*std::cout<<"m_distanceOK"<<"\n";*/
+  }
+}
 
   else if(a_container.getDataType() == opendlv::logic::perception::ObjectType::ID()){
-
-    //std::cout << "Recieved Type" << std::endl;
-    m_lastTimeStamp = a_container.getSampleTimeStamp();
-    auto coneType = a_container.getData<opendlv::logic::perception::ObjectType>();
-    int objectId = coneType.getObjectId();
-  //bool newFrameType =false;
+    int objectId;
     {
-      odcore::base::Lock lockCone(m_coneMutex);
-      m_lastTypeId = (m_lastTypeId<objectId)?(objectId):(m_lastTypeId);
-      auto type = coneType.getType();
-      m_coneCollector(3,objectId) = type;
-    //newFrameType = m_newFrame;
+      odcore::base::Lock lockType(m_typeMutex);
+      auto object = a_container.getData<opendlv::logic::perception::ObjectType>();
+      objectId = object.getObjectId();
+      odcore::data::TimeStamp containerStamp = a_container.getReceivedTimeStamp();
+      double timeStamp = containerStamp.toMicroseconds(); // Save timeStamp for sorting purposes;
+
+      if (m_newTypeId) {
+        m_typeId = (objectId!=m_lastTypeId)?(objectId):(-1); // Update object id if it is not remains from an already run frame
+        m_newTypeId=(m_typeId !=-1)?(false):(true); // Set new id to false while collecting current frame id, or keep as true if current id is from an already run frame
+      }
+
+      int type = object.getType(); //Unpack message
+
+      if (objectId == m_typeId) {
+        m_typeFrame[timeStamp] = type;
+        m_typeTimeReceived = std::chrono::system_clock::now(); //Store time for latest message recieved
+      } else if (objectId != m_lastTypeId){ // If message doesn't belong to current or previous frame.
+        m_typeFrameBuffer[timeStamp] = type; // Place message content in buffer
+      }
     }
-
-    //std::cout << "FRAME: " << m_newFrame << std::endl;
-    //Check last timestamp if they are from same message
-    //std::cout << "Message Recieved " << std::endl;
-   /* if (newFrameType){
-      std::thread coneCollector (&DetectConeLane::initializeCollection,this); //just sleep instead maybe since this is unclear how it works
-      coneCollector.detach();
-      //initializeCollection();
-
+    auto wait = std::chrono::system_clock::now(); // Time point now
+    std::chrono::duration<double> dur = wait-m_typeTimeReceived; // Duration since last message recieved to m_surfaceFrame
+    double duration = (m_typeId!=-1)?(dur.count()):(-1.0); // Duration value of type double in seconds OR -1 which prevents running the surface while ignoring messages from an already run frame
+    double receiveTimeLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-perception-detectconelane.receiveTimeLimit");
+    if (duration>receiveTimeLimit) { //Only for debug
+      std::cout<<"DURATION TIME TYPE EXCEEDED"<<std::endl;
     }
-   */
+    // Run if frame is full or if we have waited to long for the remaining messages
+    if ((m_typeFrame.size()==m_nConesInFrame || duration>receiveTimeLimit) && m_runOK) { //!m_newFrame && objectId==m_surfaceId &&
+      if (m_directionOK && m_distanceOK) {
+        m_runOK = false;
+        std::cout<<"m_runOK"<<std::endl;
+        std::thread coneCollector(&DetectConeLane::initializeCollection, this);
+        coneCollector.detach();
+      }
+      std::cout<<m_typeFrame.size()<<" typeFrames to run"<<"\n";
+      std::cout<<m_typeFrameBuffer.size()<<" typeFrames in buffer"<<"\n";
+    }
 }
-
 }
+void DetectConeLane::initializeCollection(){
+  /*std::cout<< "directionFrames in initializeCollection2: "<<m_directionFrame.size()<<"\n";
+  std::cout<< "distanceFrames in initializeCollection2: "<<m_distanceFrame.size()<<"\n";
+  std::cout<< "typeFrames in initializeCollection2: "<<m_typeFrame.size()<<"\n";*/
+  std::map< double, float > directionFrame;
+  std::map< double, float > distanceFrame;
+  std::map< double, int > typeFrame;
 
-void DetectConeLane::initializeCollection(int conesInFrame){
-  //std::this_thread::sleep_for(std::chrono::duration 1s); //std::chrono::milliseconds(m_timeDiffMilliseconds)
-  bool sleep = true;
-  //auto start = std::chrono::system_clock::now();
-  //std::cout << "m_lastTypeId1: " << m_lastTypeId<< std::endl;
-  //std::cout << "conesInFrame1: " << conesInFrame<< std::endl;
-  while(sleep) // Can probably be rewritten nicer
-  {
-  /*  auto now = std::chrono::system_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - start);
-    if ( elapsed.count() > m_timeDiffMilliseconds*1000 )
-        sleep = false;
-  */
-    if (m_lastTypeId >= conesInFrame-1)
-        sleep = false;
-  } // End of while
-  //std::cout << "m_lastTypeId2: " << m_lastTypeId<< std::endl;
-  //std::cout << "conesInFrame2: " << conesInFrame<< std::endl;
-  Eigen::MatrixXd extractedCones;
+  if (m_directionFrame.size() == m_distanceFrame.size() && m_directionFrame.size() == m_typeFrame.size()) {
+    {
+      odcore::base::Lock lockDirection(m_directionMutex);
+      odcore::base::Lock lockDistance(m_distanceMutex);
+      odcore::base::Lock lockType(m_typeMutex);
+      m_newFrame = true;
+      m_directionOK = false;
+      m_distanceOK = false;
+      directionFrame = m_directionFrame;
+      distanceFrame = m_distanceFrame;
+      typeFrame = m_typeFrame;
+      m_directionFrame = m_directionFrameBuffer;
+      m_distanceFrame = m_distanceFrameBuffer;
+      m_typeFrame = m_typeFrameBuffer;
+      m_directionFrameBuffer.clear(); // Clear buffer
+      m_distanceFrameBuffer.clear(); // Clear buffer
+      m_typeFrameBuffer.clear(); // Clear buffer
+      m_lastDirectionId = m_directionId; // Update last object id to ignore late messages
+      m_lastDistanceId = m_distanceId; // Update last object id to ignore late messages
+      m_lastTypeId = m_typeId; // Update last object id to ignore late messages
+      m_newDirectionId = true;
+      m_newDistanceId = true;
+      m_newTypeId = true;
+    }
+  }
+  else {
+    {
+      odcore::base::Lock lockDirection(m_directionMutex);
+      odcore::base::Lock lockDistance(m_distanceMutex);
+      odcore::base::Lock lockType(m_typeMutex);
+      m_newFrame = true;
+      m_directionOK = false;
+      m_distanceOK = false;
+      m_directionFrame = m_directionFrameBuffer;
+      m_distanceFrame = m_distanceFrameBuffer;
+      m_typeFrame = m_typeFrameBuffer;
+      m_directionFrameBuffer.clear(); // Clear buffer
+      m_distanceFrameBuffer.clear(); // Clear buffer
+      m_typeFrameBuffer.clear(); // Clear buffer
+      m_lastDirectionId = m_directionId; // Update last object id to ignore late messages
+      m_lastDistanceId = m_distanceId; // Update last object id to ignore late messages
+      m_lastTypeId = m_typeId; // Update last object id to ignore late messages
+      m_newDirectionId = true;
+      m_newDistanceId = true;
+      m_newTypeId = true;
+      m_runOK = true;
+    }
+    return;
+  }
+  // Unpack
+  Eigen::MatrixXd extractedCones(3,directionFrame.size());
+  float dir;
+  float dis;
+  int tpe;
+  int I=0;
+  for (std::map<double, float >::iterator it = directionFrame.begin();it !=directionFrame.end();it++){
+    dir=it->second;
+    extractedCones(0,I) = static_cast<double>(dir);
+    I++;
+  }
+  I=0;
+  for (std::map<double, float >::iterator it = distanceFrame.begin();it !=distanceFrame.end();it++){
+    dis=it->second;
+    extractedCones(1,I) = static_cast<double>(dis);
+    I++;
+  }
+  I=0;
+  for (std::map<double, int >::iterator it = typeFrame.begin();it !=typeFrame.end();it++){
+    tpe=it->second;
+    extractedCones(2,I) = static_cast<double>(tpe);
+    I++;
+  }
+  std::cout<<"extractedCones"<<extractedCones<<std::endl;
   int nLeft = 0;
   int nRight = 0;
   int nSmall = 0;
   int nBig = 0;
 
-  {
-    odcore::base::Lock lockCone(m_coneMutex);
-    extractedCones = m_coneCollector.leftCols(m_lastTypeId+1);
     for (int i = 0; i < extractedCones.cols(); i++) {
-      int type = extractedCones(3,i);
+      int type = extractedCones(2,i);
       if(type == 1){ nLeft++; }
       else if(type == 2){ nRight++; }
       else if(type == 3){ nSmall++; }
@@ -232,10 +313,7 @@ void DetectConeLane::initializeCollection(int conesInFrame){
     } // End of for
 
     std::cout << "members: " << nLeft << " " << nRight << " " << nSmall << " " << nBig << std::endl;
-    m_coneCollector = Eigen::MatrixXd::Zero(4,100);
-    m_lastTypeId = -1;
-    m_newFrame = true;
-  }
+
 
   //Initialize for next collection
   //std::cout << "Collection done " << extractedCones.rows() << " " << extractedCones.cols() << std::endl;
@@ -246,15 +324,24 @@ void DetectConeLane::initializeCollection(int conesInFrame){
 
     DetectConeLane::sortIntoSideArrays(extractedCones, nLeft, nRight, nSmall, nBig);
   } // End of if
+  m_runOK = true;
 } // End of initializeCollection
 
 void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, ArrayXXf location){
   auto kv = getKeyValueConfiguration();
   float const coneWidthSeparationThreshold = kv.getValue<float>("logic-cfsd18-perception-detectconelane.coneWidthSeparationThreshold");
   float const guessDistance = kv.getValue<float>("logic-cfsd18-perception-detectconelane.guessDistance");
+  bool const fakeSlamActivated = kv.getValue<bool>("logic-cfsd18-perception-detectconelane.fakeSlamActivated");
+  ArrayXXf orderedConesLeft;
+  ArrayXXf orderedConesRight;
+  if (fakeSlamActivated) {
+    orderedConesLeft = DetectConeLane::orderAndFilterCones(sideLeft,location);
+    orderedConesRight = DetectConeLane::orderAndFilterCones(sideRight,location);
+  }else{
+    orderedConesLeft = DetectConeLane::orderCones(sideLeft,location);
+    orderedConesRight = DetectConeLane::orderCones(sideRight,location);
+  }
 
-  ArrayXXf orderedConesLeft = DetectConeLane::orderAndFilterCones(sideLeft,location);
-  ArrayXXf orderedConesRight = DetectConeLane::orderAndFilterCones(sideRight,location);
 
   float pathLengthLeft = DetectConeLane::findTotalPathLength(orderedConesLeft);
   float pathLengthRight = DetectConeLane::findTotalPathLength(orderedConesRight);
@@ -730,7 +817,7 @@ ArrayXXf DetectConeLane::orderAndFilterCones(ArrayXXf cones, ArrayXXf vehicleLoc
       if(!((found==j).any()))
       {
         tmpDist = ((current-cones.row(j)).matrix()).norm();
-        if(tmpDist < shortestDist && tmpDist < coneLengthSeparationThreshold)
+        if(tmpDist < shortestDist && ((tmpDist < coneLengthSeparationThreshold && i>0) || (tmpDist < coneLengthSeparationThreshold+3.5f && i<1)) )
         {
           // If it's one of the first two cones, the nearest neighbour is accepted
           if(i < 2)
@@ -932,7 +1019,7 @@ void DetectConeLane::sortIntoSideArrays(MatrixXd extractedCones, int nLeft, int 
 
   for(int p = 0; p < coneNum; p++)
   {
-    cone = DetectConeLane::Spherical2Cartesian(extractedCones(0,p), extractedCones(1,p), extractedCones(2,p));
+    cone = DetectConeLane::Spherical2Cartesian(extractedCones(0,p), 0.0, extractedCones(1,p));
     coneLocal.col(p) = cone;
   } // End of for
 std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
@@ -948,7 +1035,7 @@ std::cout << "ConeLocal: " << coneLocal.transpose() << std::endl;
   int type;
 
   for(int k = 0; k < coneNum; k++){
-    type = static_cast<int>(extractedCones(3,k));
+    type = static_cast<int>(extractedCones(2,k));
     if(type == 1)
     {
       coneLeft.col(a) = coneLocal.col(k);

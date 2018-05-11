@@ -52,6 +52,7 @@ class DetectCone : public odcore::base::module::TimeTriggeredConferenceClientMod
   bool m_orangeVisibleInSlam;
   uint32_t m_senderStamp = 1;
   odcore::base::Mutex m_locationMutex;
+  int m_sendId;
   const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD
 
   odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode body();
