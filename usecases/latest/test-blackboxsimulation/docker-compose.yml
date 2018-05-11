@@ -40,7 +40,8 @@ services:
 #            - odsupercomponent
         volumes:
         - .:/opt/opendlv.data
-        command: "/usr/bin/opendlv-sim-cfsd18-cognition-blackbox --cid=${CID}"
+#        command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-cognition-blackbox --cid=${CID} --verbose=1 --id=1"
+        command: "/usr/bin/opendlv-sim-cfsd18-cognition-blackbox --cid=${CID} --maxSteering=25.0 --maxAcceleration=5.0 --maxDeceleration=5.0 --receiveTimeLimit"
 
     # microservice for ...
     sim-cfsd18-perception-detectcone:
@@ -51,6 +52,14 @@ services:
         volumes:
         - .:/opt/opendlv.data
         command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-perception-detectcone --cid=${CID} --verbose=1 --id=1 --freq=20"
+
+    # microservice for ...
+#    logic-cfsd18-cognition-track:
+#        image: ${IMAGE}
+#        network_mode: "host"
+#        depends_on:
+#            - odsupercomponent
+#        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-cognition-track --cid=${CID} --verbose=1 --id=1"
 
     sim-lynx-vehicle:
         image: seresearch/opendlv-lynx-on-opendlv-core-on-opendavinci-on-base:latest
