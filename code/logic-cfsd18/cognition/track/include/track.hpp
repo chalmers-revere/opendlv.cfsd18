@@ -59,7 +59,6 @@ class Track : public odcore::base::module::DataTriggeredConferenceClientModule {
   int m_objectId;
   odcore::base::Mutex m_groundSpeedMutex;
   odcore::base::Mutex m_surfaceMutex;
-  odcore::base::Mutex m_pathMutex;
   std::map< double, std::vector<float> > m_surfaceFrame;
   std::map< double, std::vector<float> > m_surfaceFrameBuffer;
   uint64_t m_nSurfacesInframe;

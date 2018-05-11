@@ -43,7 +43,9 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_bigCones()
 , m_orangeVisibleInSlam()
 , m_locationMutex()
+, m_sendId()
 {
+  m_sendId = rand();
 }
 
 DetectCone::~DetectCone()
@@ -133,23 +135,28 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
     MatrixXd detectedConesSmallMat = ((detectedConesSmall.matrix()).transpose()).cast <double> ();
     MatrixXd detectedConesBigMat = ((detectedConesBig.matrix()).transpose()).cast <double> ();
 
-    opendlv::logic::perception::Object numberOfCones;
-    numberOfCones.setObjectId(detectedConesLeftMat.cols()+detectedConesRightMat.cols()+detectedConesSmallMat.cols()+detectedConesBigMat.cols());
+    opendlv::logic::perception::ObjectProperty cones;
+    std::string property = std::to_string(detectedConesLeftMat.cols()+detectedConesRightMat.cols()+detectedConesSmallMat.cols()+detectedConesBigMat.cols());
+    cones.setProperty(property);
+    cones.setObjectId(m_sendId);
 
-    odcore::data::Container c0(numberOfCones);
+    odcore::data::Container c0(cones);
     c0.setSenderStamp(m_senderStamp);
     getConference().send(c0);
 
     int type = 1;
     auto startLeft = std::chrono::system_clock::now();
-    sendMatchedContainer(detectedConesLeftMat, type, 0);
+    sendMatchedContainer(detectedConesLeftMat, type, m_sendId);
     type = 2;
-    sendMatchedContainer(detectedConesRightMat, type, detectedConesLeftMat.cols());
+    sendMatchedContainer(detectedConesRightMat, type, m_sendId);
     type = 3;
-    sendMatchedContainer(detectedConesSmallMat, type, detectedConesLeftMat.cols()+detectedConesRightMat.cols());
+    sendMatchedContainer(detectedConesSmallMat, type, m_sendId);
     type = 4;
-    sendMatchedContainer(detectedConesBigMat, type, detectedConesLeftMat.cols()+detectedConesRightMat.cols()+detectedConesSmallMat.cols());
-
+    sendMatchedContainer(detectedConesBigMat, type, m_sendId);
+    std::cout<<"Sending with ID: "<<m_sendId<<"\n";
+    int rndmId = rand();
+    while (m_sendId == rndmId){rndmId = rand();}
+    m_sendId = rndmId;
     auto finishRight = std::chrono::system_clock::now();
     auto timeSend = std::chrono::duration_cast<std::chrono::microseconds>(finishRight - startLeft);
     std::cout << "sendTime:" << timeSend.count() << std::endl;
@@ -417,7 +424,7 @@ std::cout << "Sending " << cones.cols() << " of type " << type << std::endl;
     Cartesian2Spherical(cones(0,n), cones(1,n), 0, conePoint);
 
     opendlv::logic::perception::ObjectDirection coneDirection;
-    coneDirection.setObjectId(n+startID);
+    coneDirection.setObjectId(startID);
     coneDirection.setAzimuthAngle(conePoint.getAzimuthAngle());
     coneDirection.setZenithAngle(conePoint.getZenithAngle());
     odcore::data::Container c2(coneDirection);
@@ -425,14 +432,14 @@ std::cout << "Sending " << cones.cols() << " of type " << type << std::endl;
     getConference().send(c2);
 
     opendlv::logic::perception::ObjectDistance coneDistance;
-    coneDistance.setObjectId(n+startID);
+    coneDistance.setObjectId(startID);
     coneDistance.setDistance(conePoint.getDistance());
     odcore::data::Container c3(coneDistance);
     c3.setSenderStamp(m_senderStamp);
     getConference().send(c3);
 
     opendlv::logic::perception::ObjectType coneType;
-    coneType.setObjectId(n+startID);
+    coneType.setObjectId(startID);
     coneType.setType(type);
     odcore::data::Container c4(coneType);
     c3.setSenderStamp(m_senderStamp);
