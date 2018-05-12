@@ -32,7 +32,7 @@ function setupSimulationView() {
     return xmlHttp.responseText;
   }
 
-var map = getResourceFrom("simulation-map-closed-lap.txt");
+var map = getResourceFrom("track6.csv");
 map.trim().split("\n").forEach(function(wall) {
   const wallArray = wall.trim().split(",");
   if (wallArray.length == 3) {
