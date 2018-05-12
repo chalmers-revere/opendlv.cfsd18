@@ -111,13 +111,13 @@ void Track::nextContainer(odcore::data::Container &a_container)
       if (objectId == m_objectId) {
         //std::cout << "objectId in frame: " <<objectId <<std::endl;
         m_surfaceFrame[timeStamp] = v;
-        std::cout << "Surfaces in frame: " <<m_surfaceFrame.size() <<std::endl;
+        /*std::cout << "Surfaces in frame: " <<m_surfaceFrame.size() <<std::endl;
         for (std::map<double, std::vector<float> >::iterator it = m_surfaceFrame.begin();it !=m_surfaceFrame.end();it++){
           v = it->second;
           for (size_t i = 0; i < 4; i++) {
             std::cout<<v[i]<<"\n";
           }
-        }
+        }*/
         m_timeReceived = std::chrono::system_clock::now(); //Store time for latest message recieved
       } else if (objectId != m_lastObjectId){ // If message doesn't belong to current or previous frame.
         //std::cout << "objectId in buffer: " <<objectId <<std::endl;
