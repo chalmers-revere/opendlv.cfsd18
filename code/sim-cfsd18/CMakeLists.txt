@@ -37,14 +37,13 @@ include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 include_directories(SYSTEM ${OPENDAVINCI_INCLUDE_DIRS})
 include_directories(SYSTEM ${ODVDOPENDLVSTANDARDMESSAGESET_INCLUDE_DIRS})
 
-set(LIBRARIES 
+set(LIBRARIES
   ${OPENDAVINCI_LIBRARIES}
-  ${Wt_LIBRARY} ${Wt_HTTP_LIBRARY} ${Wt_EXT_LIBRARY}  
+  ${Wt_LIBRARY} ${Wt_HTTP_LIBRARY} ${Wt_EXT_LIBRARY}
   ${ODVDOPENDLVSTANDARDMESSAGESET_LIBRARIES})
 
 ### MICROSERVICE BEGIN ###
 add_subdirectory(perception/detectcone)
-add_subdirectory(cognition/blackbox)
 ### MICROSERVICE END ###
 
 set(CHANGELOG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../ChangeLog")
