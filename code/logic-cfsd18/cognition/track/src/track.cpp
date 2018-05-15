@@ -525,10 +525,10 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   float accelerationRequest;
   Eigen::VectorXf speedProfile;
   std::vector<float> curveRadii;
-  float ayFactor = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.ayFactor");
+  float axSpeedProfile = std::max(axLimitPositive,-axLimitNegative);//= getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.axSpeedProfile");
   int step;
   float g = 9.81f;
-  float ayLimit = mu*g*ayFactor;
+  float ayLimit = sqrtf(powf(mu*g,2)-powf(axSpeedProfile,2));
 
   if ((!STOP) && (localPath.rows() > 2)){
     // Caluclate curvature of path
@@ -597,7 +597,7 @@ std::cout << "speedProfile = " << speedProfile.transpose() << "\n";
 
     if(brakeTime<=0.0f){
       accelerationRequest = axLimitNegative;
-      if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= powf(g*mu,2)) {
+      if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = -sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;
         std::cout<<"accreq limited: "<<accelerationRequest<<std::endl;
       }
@@ -608,20 +608,20 @@ std::cout << "speedProfile = " << speedProfile.transpose() << "\n";
       }else{*/
         accelerationRequest = std::max((speedProfile(idx)-groundSpeedCopy)/(2*distanceToCriticalPoint[idx]),axLimitNegative);
       //}
-      if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= powf(g*mu,2)) {
+      if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = -sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;
         std::cout<<"accreq limited: "<<accelerationRequest<<std::endl;
       }
-      if (accelerationRequest>rollResistance) {
+      if (accelerationRequest>rollResistance*g) {
         accelerationRequest = 0.0f;
       }
     }
-    else if((speedProfile(accIdx)-groundSpeedCopy) < -1 ){
+    else if((speedProfile(accIdx)-groundSpeedCopy) < 0.5f ){
       accelerationRequest = 0.0f;
     }
     else{
       accelerationRequest = axLimitPositive;
-      if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= powf(g*mu,2)) {
+      if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;
         std::cout<<"accreq limited: "<<accelerationRequest<<std::endl;
       }
@@ -634,7 +634,7 @@ std::cout << "speedProfile = " << speedProfile.transpose() << "\n";
 
     /*---------------------------------------------------------------------------*/
     /*// Back propagate the whole path and lower velocities if deceleration cannot
-    // be achieved.
+    // be achieved. //TODO not pow g*mu
     for (int k = speedProfile.size()-1; k > 0 ; k-=1) {
       // Distance between considered path points
       float pointDistance = (localPath.row(k+step)-localPath.row(k+step-1)).norm();

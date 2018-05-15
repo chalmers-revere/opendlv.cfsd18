@@ -269,6 +269,7 @@ void DetectConeLane::initializeCollection(){
       m_newTypeId = true;
       m_runOK = true;
     }
+    std::cout<<"return 0"<<std::endl;
     return;
   }
   // Unpack
@@ -334,7 +335,7 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
   bool const fakeSlamActivated = kv.getValue<bool>("logic-cfsd18-perception-detectconelane.fakeSlamActivated");
   ArrayXXf orderedConesLeft;
   ArrayXXf orderedConesRight;
-  if (fakeSlamActivated) {
+  if (!fakeSlamActivated) {
     orderedConesLeft = DetectConeLane::orderAndFilterCones(sideLeft,location);
     orderedConesRight = DetectConeLane::orderAndFilterCones(sideRight,location);
   }else{

@@ -1,11 +1,16 @@
 sim-cfsd18-perception-detectcone.detectRange = 11.5
 sim-cfsd18-perception-detectcone.detectWidth = 5.0
-sim-cfsd18-perception-detectcone.mapFilename = simulation-map-closed-lap.txt
-sim-cfsd18-perception-detectcone.startX = 0
-sim-cfsd18-perception-detectcone.startY = 1.5
-sim-cfsd18-perception-detectcone.startHeading = -2.3
+sim-cfsd18-perception-detectcone.mapFilename = track9.csv
+sim-cfsd18-perception-detectcone.pathFilename = path9.csv
+sim-lynx-bicyclemodel.filename = Speed_blackbox_01.csv
+sim-cfsd18-perception-detectcone.crashFilename = Crash_blackbox_01.csv
+sim-cfsd18-perception-detectcone.xyFilename = XY_blackbox_01.csv
+sim-cfsd18-perception-detectcone.startX = 0.5839
+sim-cfsd18-perception-detectcone.startY = -1.3817
+sim-cfsd18-perception-detectcone.startHeading = 0.39986
 sim-cfsd18-perception-detectcone.fakeSlamActivated = 1
 sim-cfsd18-perception-detectcone.nConesFakeSlam = 5
+sim-cfsd18-perception-detectcone.timeLimit = 20
 
 # x=-4.14 --y=50.209 --yaw=-0.785 >> top right
 # x=0 --y=1.5 --yaw=-2.3"         >>start position
