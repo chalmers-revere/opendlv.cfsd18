@@ -9,27 +9,31 @@ services:
         command: "/opt/od4/bin/odsupercomponent --cid=${CID} --verbose=1 --configuration=/opt/opendlv.data/configuration"
 
     # microservice for perception-detectcone
-    logic-cfsd18-perception-detectcone:
-        image: ${IMAGE}
-        working_dir: /opt/tmp
-        depends_on:
-          - odsupercomponent
-        ipc: host
-        user: odv
-        network_mode: host
-        environment:
-           - DISPLAY=$DISPLAY
-        volumes:
-          - /tmp/.X11-unix:/tmp/.X11-unix
-          - .:/opt/tmp
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectcone --cid=${CID} --id=1"
+#    logic-cfsd18-perception-detectcone:
+#        image: ${IMAGE}
+#        working_dir: /opt/tmp
+#        depends_on:
+#          - odsupercomponent
+#        ipc: host
+#        user: odv
+#        network_mode: host
+#        environment:
+#           - DISPLAY=$DISPLAY
+#        volumes:
+#          - /tmp/.X11-unix:/tmp/.X11-unix
+#          - .:/opt/tmp
+#        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectcone --cid=${CID} --id=1"
     
     # microservice for cfsd18-sensation-attention
     cfsd18-sensation-attention:
         image: ${IMAGE}
         network_mode: "host"
+        working_dir: /opt/tmp
         ipc: host
         user: odv
+        volumes:
+          - /tmp/.X11-unix:/tmp/.X11-unix
+          - .:/opt/tmp
         depends_on:
         - odsupercomponent
         command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-sensation-attention --cid=${CID} --id=1"

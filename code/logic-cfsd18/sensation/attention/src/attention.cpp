@@ -28,7 +28,6 @@
 #include <opendavinci/odcore/base/Lock.h>
 
 
-
 #include "attention.hpp"
 
 
@@ -42,6 +41,7 @@ using namespace odcore::base;
 using namespace odcore::data;
 using namespace odcore::wrapper;
 
+class Cone;
 
 Attention::Attention(int32_t const &a_argc, char **a_argv) :
   DataTriggeredConferenceClientModule(a_argc, a_argv, "logic-cfsd18-sensation-attention")
@@ -82,6 +82,7 @@ Attention::Attention(int32_t const &a_argc, char **a_argv) :
   , m_ransacIterations()
   , m_dotThreshold()
   , m_lastBestPlane()
+  , m_coneFrame()
   {
   //#############################################################################
   // Following part are prepared to decode CPC of HDL32 3 parts
@@ -632,8 +633,29 @@ double Attention::CalculateXYDistance(Eigen::MatrixXd &pointCloud, const uint32_
 void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector<vector<uint32_t>> &coneIndexList)
 {
 
+  int resultWidth = 672;
+  int resultHeight = 600;
+  double resultResize = 30;
+  cv::Mat result = cv::Mat::zeros(resultHeight, resultWidth, CV_8UC3);
+
+
+  int m = 0;
+  double posShiftX = 0;
+  double posShiftY = 0;
   uint32_t numberOfCones = coneIndexList.size();
-  Eigen::MatrixXd conePoints = Eigen::MatrixXd::Zero(numberOfCones,3);
+  std::vector<uint32_t> removeIndex;
+  //Eigen::MatrixXd conePoints = Eigen::MatrixXd::Zero(numberOfCones,3);
+    m_validCones = 0;
+    for(uint32_t i1 = 0; i1 < m_coneFrame.size(); i1++){
+
+      if(m_coneFrame[i1].second.isValid()){
+
+        m_validCones++;
+      }
+    }  
+    if(m_validCones == 0){
+      m_coneFrame.clear();
+    }
   for (uint32_t i = 0; i < numberOfCones; i++)
   {
     uint32_t numberOfPointsOnCone = coneIndexList[i].size();
@@ -649,38 +671,140 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
     conePositionX = conePositionX / numberOfPointsOnCone;
     conePositionY = conePositionY / numberOfPointsOnCone;
     conePositionZ = conePositionZ / numberOfPointsOnCone;
-    conePoints.row(i) << conePositionX,conePositionY,conePositionZ;
+    //conePoints.row(i) << conePositionX,conePositionY,conePositionZ;
 
-		opendlv::logic::sensation::Point conePoint = Cartesian2Spherical(conePositionX,conePositionY,conePositionZ);
+    Cone objectToValidate = Cone(conePositionX,conePositionY,conePositionZ);
+    std::pair<bool, Cone> objectPair = std::pair<bool, Cone>(false,objectToValidate);
 
-    //ObjectID
-    /*opendlv::logic::perception::Object coneID;
-    coneID.setObjectID(i);
-    odcore::data::Container c1(coneID);
-    getConference().send(c1);*/
+    if(m_validCones == 0){
+        std::cout << "in empty frame" << std::endl;
+        //m_coneFrame.clear();
+        m_coneFrame.push_back(objectPair);
+    }else{ 
 
-    //ConeDirection
-    opendlv::logic::perception::ObjectDirection coneDirection;
-    coneDirection.setObjectId(i);
-    coneDirection.setAzimuthAngle(-conePoint.getAzimuthAngle());   //Set Negative to make it inline with coordinate system used
-    coneDirection.setZenithAngle(conePoint.getZenithAngle());
-    odcore::data::Container c2(coneDirection);
-    c2.setSenderStamp(m_senderStamp);
-    getConference().send(c2);
 
-    opendlv::logic::perception::ObjectDistance coneDistance;
-    coneDistance.setObjectId(i);
-    coneDistance.setDistance(conePoint.getDistance());
-    odcore::data::Container c3(coneDistance);
-    c3.setSenderStamp(m_senderStamp);
-    getConference().send(c3);
-    //std::cout << "Cone Sent" << std::endl;
+      int k = 0;
+      int frameSize = m_coneFrame.size();
+      bool foundMatch = false;
+      if(objectPair.second.isThisMe(m_coneFrame[k].second.getX(),m_coneFrame[k].second.getY())){
+        posShiftX += m_coneFrame[k].second.getX() - objectPair.second.getX();
+        posShiftY += m_coneFrame[k].second.getY() - objectPair.second.getY();
+        m++;
+        std::cout << "found match" << std::endl;
+            m_coneFrame[k].second.setX(objectPair.second.getX());
+            m_coneFrame[k].second.setY(objectPair.second.getY());
+            m_coneFrame[k].second.addHit();
+            m_coneFrame[k].first = true;
+            foundMatch = true;
+      }
+      while( k < frameSize && !foundMatch){
+
+        if(!m_coneFrame[k].first && objectPair.second.isThisMe(m_coneFrame[k].second.getX(),m_coneFrame[k].second.getY())){
+            posShiftX += m_coneFrame[k].second.getX() - objectPair.second.getX();
+            posShiftY += m_coneFrame[k].second.getY() - objectPair.second.getY();
+            m++;
+        std::cout << "found match" << std::endl;
+            m_coneFrame[k].second.setX(objectPair.second.getX());
+            m_coneFrame[k].second.setY(objectPair.second.getY());
+            m_coneFrame[k].second.addHit();
+            m_coneFrame[k].first = true;
+            foundMatch = true;  
+        }
+        k++;
+      }
+
+      if(!foundMatch){
+
+        m_coneFrame.push_back(objectPair);
+
+      }
+
+    }   //std::cout << "Cone Sent" << std::endl;
     //std::cout << "a point sent out with distance: " <<conePoint.getDistance() <<"; azimuthAngle: " << conePoint.getAzimuthAngle() << "; and zenithAngle: " << conePoint.getZenithAngle() << std::endl;
   }
 
-  //std::cout << "Detected Cones are: " << conePoints << std::endl;
+    for(uint32_t i = 0; i < m_coneFrame.size(); i++){
+
+      if(m_coneFrame[i].second.isValid()){
+
+        if(m_coneFrame[i].first == false && m_coneFrame[i].second.shouldBeInFrame() == true ){  
+
+          std::cout << "is not matched but should be in frame | curr X: " << m_coneFrame[i].second.getX() << " shift: "  << posShiftX/m<< std::endl;
+          double x = m_coneFrame[i].second.getX() - posShiftX/m;
+          double y = m_coneFrame[i].second.getY() - posShiftY/m;
+          double z = m_coneFrame[i].second.getZ();
+
+          opendlv::logic::sensation::Point conePoint = Cartesian2Spherical(x,y,z);
+          opendlv::logic::perception::ObjectDirection coneDirection;
+          coneDirection.setObjectId(i);
+          coneDirection.setAzimuthAngle(-conePoint.getAzimuthAngle());   //Set Negative to make it inline with coordinate system used
+          coneDirection.setZenithAngle(conePoint.getZenithAngle());
+          odcore::data::Container c2(coneDirection);
+          c2.setSenderStamp(m_senderStamp);
+          getConference().send(c2);
+
+          opendlv::logic::perception::ObjectDistance coneDistance;
+          coneDistance.setObjectId(i);
+          coneDistance.setDistance(conePoint.getDistance());
+          odcore::data::Container c3(coneDistance);
+          c3.setSenderStamp(m_senderStamp);
+          getConference().send(c3);
+
+                
+                int xPlot = int(x * resultResize + resultWidth/2);
+                int yPlot = int(y * resultResize);
+            if (xPlot >= 0 && xPlot <= resultWidth && yPlot >= 0 && yPlot <= resultHeight){
+                cv::circle(result, cv::Point (xPlot,yPlot), 5, cv::Scalar (255, 255, 255), -1);
+            }
+            
+        }else if(m_coneFrame[i].first == true){
 
 
+          std::cout << "send matched cone" << std::endl;
+          double x = m_coneFrame[i].second.getX();
+          double y = m_coneFrame[i].second.getY();
+          double z = m_coneFrame[i].second.getZ();
+
+          opendlv::logic::sensation::Point conePoint = Cartesian2Spherical(x,y,z);
+          opendlv::logic::perception::ObjectDirection coneDirection;
+          coneDirection.setObjectId(i);
+          coneDirection.setAzimuthAngle(-conePoint.getAzimuthAngle());   //Set Negative to make it inline with coordinate system used
+          coneDirection.setZenithAngle(conePoint.getZenithAngle());
+          odcore::data::Container c2(coneDirection);
+          c2.setSenderStamp(m_senderStamp);
+          getConference().send(c2);
+
+          opendlv::logic::perception::ObjectDistance coneDistance;
+          coneDistance.setObjectId(i);
+          coneDistance.setDistance(conePoint.getDistance());
+          odcore::data::Container c3(coneDistance);
+          c3.setSenderStamp(m_senderStamp);
+          getConference().send(c3);
+          m_coneFrame[i].first = false;
+
+
+                int xPlot = int(x * resultResize + resultWidth/2);
+                int yPlot = int(y * resultResize);
+            if (xPlot >= 0 && xPlot <= resultWidth && yPlot >= 0 && yPlot <= resultHeight){
+                cv::circle(result, cv::Point (xPlot,yPlot), 5, cv::Scalar (255, 255, 255), -1);
+            }
+
+        }else if(m_coneFrame[i].second.shouldBeRemoved() == true){
+
+          //m_coneFrame.erase(m_coneFrame.begin()+i)  DO NOT REMOVE LIKE THIS
+          m_coneFrame[i].second.setValidState(false);        
+
+        }
+
+        if(m_coneFrame[i].first == false){
+          m_coneFrame[i].second.addMiss();
+        }
+
+      }
+    }//loop
+
+    cv::flip(result, result, 0);
+  cv::imwrite("results/"+std::to_string(m_count++)+".png", result);
 }
 
 opendlv::logic::sensation::Point Attention::Cartesian2Spherical(double &x, double &y, double &z)
@@ -851,6 +975,8 @@ Eigen::MatrixXd Attention::RemoveDuplicates(Eigen::MatrixXd needSorting)
   return needSorting;
 
 }
+
+
 
 
 }

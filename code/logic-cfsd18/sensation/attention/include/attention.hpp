@@ -34,6 +34,13 @@
 #include <opendavinci/odcore/wrapper/Eigen.h>
 #include <opendlv/data/environment/Point3.h> 
 
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+#include "cone.hpp"
+
 namespace opendlv {
 namespace logic {
 namespace cfsd18 {
@@ -130,6 +137,10 @@ class Attention : public odcore::base::module::DataTriggeredConferenceClientModu
   double m_dotThreshold;
   uint32_t m_senderStamp = 0;
   Eigen::MatrixXd m_lastBestPlane;
+
+  std::vector<std::pair<bool, Cone>> m_coneFrame;
+  int m_validCones = 0;
+  int m_count = 0;
   
 
 

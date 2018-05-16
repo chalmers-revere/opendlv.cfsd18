@@ -50,7 +50,7 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
   m_pointMatched = Eigen::MatrixXd::Zero(4,1);
   m_lastCameraData = Eigen::MatrixXd::Zero(4,1);
   m_lastLidarData = Eigen::MatrixXd::Zero(4,1);
-  m_coneCollector = Eigen::MatrixXd::Zero(4,20);
+  m_coneCollector = Eigen::MatrixXd::Zero(4,200);
   m_lastObjectId = 0;
 }
 
@@ -231,15 +231,15 @@ void DetectCone::initializeCollection(){
     extractedCones = m_coneCollector.leftCols(m_lastObjectId+1);
     m_newFrame = true;
     m_lastObjectId = 0;
-    m_coneCollector = Eigen::MatrixXd::Zero(4,20);
+    m_coneCollector = Eigen::MatrixXd::Zero(4,200);
   }
   //Initialize for next collection
-  std::cout << "Collection done " << extractedCones.cols() << std::endl;
+  //std::cout << "Collection done " << extractedCones.cols() << std::endl;
   if(extractedCones.cols() > 0){
     //std::cout << "Extracted Cones " << std::endl;
     //std::cout << extractedCones << std::endl;
-    std::cout << "Extracted Cones " << std::endl;
-    std::cout << extractedCones << std::endl;
+    //std::cout << "Extracted Cones " << std::endl;
+    //std::cout << extractedCones << std::endl;
     if(m_recievedFirstImg){
       SendCollectedCones(extractedCones);
     }
@@ -911,8 +911,8 @@ void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
     cone = Spherical2Cartesian(lidarCones(0,p), lidarCones(1,p), lidarCones(2,p));
     lidarCones.col(p) = cone;
   }
-  std::cout << "lidarCones " << std::endl;
-  std::cout << lidarCones << std::endl;
+  //std::cout << "lidarCones " << std::endl;
+  //std::cout << lidarCones << std::endl;
   m_finalPointCloud = lidarCones;
   double yShift = 0;//1872mm
   double zShift = 0;
