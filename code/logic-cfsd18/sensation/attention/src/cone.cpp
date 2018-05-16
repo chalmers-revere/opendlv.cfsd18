@@ -54,13 +54,11 @@ double Cone::getZ(){
 }
 
 void Cone::setX(double x){
-  std::cout << "new x: " << x << " old x: " << m_x << std::endl;
   m_x = x;
 }
 
 void Cone::setY(double y){
 
-  std::cout << "new y: " << y << " old y: " << m_y << std::endl;
   m_y = y;
 }
 void Cone::setZ(double z){
@@ -72,6 +70,10 @@ void Cone::addHit(){
   m_hits++;
   m_missHit = 0;
 
+
+  std::cout << "new x: " << m_x << " new y: " << m_y << std::endl;
+  std::cout << "hits: " << m_hits << std::endl;
+
 }
 int Cone::getHits(){
 
@@ -80,6 +82,7 @@ int Cone::getHits(){
 void Cone::addMiss(){
 
   m_missHit++;
+  std::cout << "misshits: " << m_missHit << std::endl;
 }
 
 int Cone::getMisses(){

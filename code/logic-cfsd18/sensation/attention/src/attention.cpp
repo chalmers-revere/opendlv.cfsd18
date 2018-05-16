@@ -706,6 +706,7 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
         //std::cout << "found match" << std::endl;
             m_coneFrame[k].second.setX(objectPair.second.getX());
             m_coneFrame[k].second.setY(objectPair.second.getY());
+            std::cout << "im here in " << k << std::endl;
             m_coneFrame[k].second.addHit();
             m_coneFrame[k].first = true;
             foundMatch = true;  
@@ -757,6 +758,11 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
                 cv::circle(result, cv::Point (xPlot,yPlot), 5, cv::Scalar (255, 255, 255), -1);
             }
             
+        }else if(m_coneFrame[i].second.shouldBeRemoved() == true){
+
+          //m_coneFrame.erase(m_coneFrame.begin()+i)  DO NOT REMOVE LIKE THIS
+          m_coneFrame[i].second.setValidState(false);        
+
         }else if(m_coneFrame[i].first == true){
 
 
@@ -790,11 +796,6 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
             if (xPlot >= 0 && xPlot <= resultWidth && yPlot >= 0 && yPlot <= resultHeight){
                 cv::circle(result, cv::Point (xPlot,yPlot), 5, cv::Scalar (255, 255, 255), -1);
             }
-
-        }else if(m_coneFrame[i].second.shouldBeRemoved() == true){
-
-          //m_coneFrame.erase(m_coneFrame.begin()+i)  DO NOT REMOVE LIKE THIS
-          m_coneFrame[i].second.setValidState(false);        
 
         }
 
