@@ -690,7 +690,7 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
         posShiftX += m_coneFrame[k].second.getX() - objectPair.second.getX();
         posShiftY += m_coneFrame[k].second.getY() - objectPair.second.getY();
         m++;
-        std::cout << "found match" << std::endl;
+        //std::cout << "found match" << std::endl;
             m_coneFrame[k].second.setX(objectPair.second.getX());
             m_coneFrame[k].second.setY(objectPair.second.getY());
             m_coneFrame[k].second.addHit();
@@ -703,7 +703,7 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
             posShiftX += m_coneFrame[k].second.getX() - objectPair.second.getX();
             posShiftY += m_coneFrame[k].second.getY() - objectPair.second.getY();
             m++;
-        std::cout << "found match" << std::endl;
+        //std::cout << "found match" << std::endl;
             m_coneFrame[k].second.setX(objectPair.second.getX());
             m_coneFrame[k].second.setY(objectPair.second.getY());
             m_coneFrame[k].second.addHit();
@@ -729,10 +729,10 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
 
         if(m_coneFrame[i].first == false && m_coneFrame[i].second.shouldBeInFrame() == true ){  
 
-          std::cout << "is not matched but should be in frame | curr X: " << m_coneFrame[i].second.getX() << " shift: "  << posShiftX/m<< std::endl;
           double x = m_coneFrame[i].second.getX() - posShiftX/m;
           double y = m_coneFrame[i].second.getY() - posShiftY/m;
           double z = m_coneFrame[i].second.getZ();
+          std::cout << "is not matched but should be in frame | x: " << x << " y: " << y << std::endl;
 
           opendlv::logic::sensation::Point conePoint = Cartesian2Spherical(x,y,z);
           opendlv::logic::perception::ObjectDirection coneDirection;
@@ -760,10 +760,12 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
         }else if(m_coneFrame[i].first == true){
 
 
-          std::cout << "send matched cone" << std::endl;
           double x = m_coneFrame[i].second.getX();
           double y = m_coneFrame[i].second.getY();
           double z = m_coneFrame[i].second.getZ();
+
+
+          std::cout << "send matched cone x: " << x << " y: " << y << std::endl;
 
           opendlv::logic::sensation::Point conePoint = Cartesian2Spherical(x,y,z);
           opendlv::logic::perception::ObjectDirection coneDirection;
