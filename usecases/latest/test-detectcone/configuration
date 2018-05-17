@@ -93,10 +93,10 @@ proxy-velodyne16.calibration = VLP-16.xml
 # CONFIGURATION FOR ATTENTION
 #logic-cfsd18-sensation-attention.startAngle = 22500.0
 #logic-cfsd18-sensation-attention.endAngle = 31500.0
-logic-cfsd18-sensation-attention.yBoundary = 12 #[m]
+logic-cfsd18-sensation-attention.yBoundary = 10 #[m]
 logic-cfsd18-sensation-attention.xBoundary = 4 #[m]
 logic-cfsd18-sensation-attention.groundLayerZ = -0.3  #[m]
-logic-cfsd18-sensation-attention.coneHeight = 1 #[m]
+logic-cfsd18-sensation-attention.coneHeight = 4 #[m]
 logic-cfsd18-sensation-attention.connectDistanceThreshold = 0.4 #[m] 0.5
 logic-cfsd18-sensation-attention.layerRangeThreshold = 0.06   #[m]
 logic-cfsd18-sensation-attention.minNumOfPointsForCone = 2
@@ -108,10 +108,10 @@ logic-cfsd18-sensation-attention.senderStamp = 116
 
 %RANSAC
 
-logic-cfsd18-sensation-attention.inlierRangeTreshold = 0.06 #[m] 0.06
+logic-cfsd18-sensation-attention.inlierRangeTreshold = 0.08 #[m] 0.06
 logic-cfsd18-sensation-attention.dotThreshold = 0.1
 logic-cfsd18-sensation-attention.inlierFoundTreshold = 500 #Number of inliers
-logic-cfsd18-sensation-attention.numberOfIterations =  10
+logic-cfsd18-sensation-attention.numberOfIterations =  30
 ###############################################################################
 ###############################################################################
 odcockpit.directoriesForSharedLibaries = /opt/opendlv.cfsd18

@@ -686,30 +686,33 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
       int k = 0;
       int frameSize = m_coneFrame.size();
       bool foundMatch = false;
-      if(objectPair.second.isThisMe(m_coneFrame[k].second.getX(),m_coneFrame[k].second.getY())){
-        posShiftX += m_coneFrame[k].second.getX() - objectPair.second.getX();
-        posShiftY += m_coneFrame[k].second.getY() - objectPair.second.getY();
-        m++;
-        //std::cout << "found match" << std::endl;
-            m_coneFrame[k].second.setX(objectPair.second.getX());
-            m_coneFrame[k].second.setY(objectPair.second.getY());
-            m_coneFrame[k].second.addHit();
-            m_coneFrame[k].first = true;
-            foundMatch = true;
+      if(m_coneFrame[k].second.isValid()){
+        if(objectPair.second.isThisMe(m_coneFrame[k].second.getX(),m_coneFrame[k].second.getY())){
+          posShiftX += m_coneFrame[k].second.getX() - objectPair.second.getX();
+          posShiftY += m_coneFrame[k].second.getY() - objectPair.second.getY();
+          m++;
+          //std::cout << "found match" << std::endl;
+              m_coneFrame[k].second.setX(objectPair.second.getX());
+              m_coneFrame[k].second.setY(objectPair.second.getY());
+              m_coneFrame[k].second.addHit();
+              m_coneFrame[k].first = true;
+              foundMatch = true;
+        }
       }
       while( k < frameSize && !foundMatch){
-
-        if(!m_coneFrame[k].first && objectPair.second.isThisMe(m_coneFrame[k].second.getX(),m_coneFrame[k].second.getY())){
-            posShiftX += m_coneFrame[k].second.getX() - objectPair.second.getX();
-            posShiftY += m_coneFrame[k].second.getY() - objectPair.second.getY();
-            m++;
-        //std::cout << "found match" << std::endl;
-            m_coneFrame[k].second.setX(objectPair.second.getX());
-            m_coneFrame[k].second.setY(objectPair.second.getY());
-            std::cout << "im here in " << k << std::endl;
-            m_coneFrame[k].second.addHit();
-            m_coneFrame[k].first = true;
-            foundMatch = true;  
+        if(m_coneFrame[k].second.isValid()){
+          if(!m_coneFrame[k].first && objectPair.second.isThisMe(m_coneFrame[k].second.getX(),m_coneFrame[k].second.getY())){
+              posShiftX += m_coneFrame[k].second.getX() - objectPair.second.getX();
+              posShiftY += m_coneFrame[k].second.getY() - objectPair.second.getY();
+              m++;
+          //std::cout << "found match" << std::endl;
+              m_coneFrame[k].second.setX(objectPair.second.getX());
+              m_coneFrame[k].second.setY(objectPair.second.getY());
+              std::cout << "im here in " << k << std::endl;
+              m_coneFrame[k].second.addHit();
+              m_coneFrame[k].first = true;
+              foundMatch = true;  
+          }
         }
         k++;
       }
@@ -727,13 +730,19 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
     for(uint32_t i = 0; i < m_coneFrame.size(); i++){
 
       if(m_coneFrame[i].second.isValid()){
+        if(m_coneFrame[i].second.shouldBeRemoved() == true){
 
-        if(m_coneFrame[i].first == false && m_coneFrame[i].second.shouldBeInFrame() == true ){  
+          //m_coneFrame.erase(m_coneFrame.begin()+i)  DO NOT REMOVE LIKE THIS
+          m_coneFrame[i].second.setValidState(false);        
+
+        }else if(m_coneFrame[i].first == false && m_coneFrame[i].second.shouldBeInFrame() == true ){  
 
           double x = m_coneFrame[i].second.getX() - posShiftX/m;
           double y = m_coneFrame[i].second.getY() - posShiftY/m;
           double z = m_coneFrame[i].second.getZ();
           std::cout << "is not matched but should be in frame | x: " << x << " y: " << y << std::endl;
+
+          odcore::data::TimeStamp startT;
 
           opendlv::logic::sensation::Point conePoint = Cartesian2Spherical(x,y,z);
           opendlv::logic::perception::ObjectDirection coneDirection;
@@ -751,6 +760,10 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
           c3.setSenderStamp(m_senderStamp);
           getConference().send(c3);
 
+          odcore::data::TimeStamp processT2;
+
+          double timeElapsed = abs(static_cast<double>(processT2.toMicroseconds()-startT.toMicroseconds())/1000000.0);
+          std::cout << "Time elapsed to Send: " << timeElapsed << std::endl;
                 
                 int xPlot = int(x * resultResize + resultWidth/2);
                 int yPlot = int(y * resultResize);
@@ -758,11 +771,6 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
                 cv::circle(result, cv::Point (xPlot,yPlot), 5, cv::Scalar (255, 255, 255), -1);
             }
             
-        }else if(m_coneFrame[i].second.shouldBeRemoved() == true){
-
-          //m_coneFrame.erase(m_coneFrame.begin()+i)  DO NOT REMOVE LIKE THIS
-          m_coneFrame[i].second.setValidState(false);        
-
         }else if(m_coneFrame[i].first == true){
 
 
@@ -770,6 +778,8 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
           double y = m_coneFrame[i].second.getY();
           double z = m_coneFrame[i].second.getZ();
 
+
+          odcore::data::TimeStamp startT;
 
           std::cout << "send matched cone x: " << x << " y: " << y << std::endl;
 
@@ -790,6 +800,11 @@ void Attention::SendingConesPositions(Eigen::MatrixXd &pointCloudConeROI, vector
           getConference().send(c3);
           m_coneFrame[i].first = false;
 
+
+          odcore::data::TimeStamp processT2;
+
+          double timeElapsed = abs(static_cast<double>(processT2.toMicroseconds()-startT.toMicroseconds())/1000000.0);
+          std::cout << "Time elapsed to Send: " << timeElapsed << std::endl;
 
                 int xPlot = int(x * resultResize + resultWidth/2);
                 int yPlot = int(y * resultResize);

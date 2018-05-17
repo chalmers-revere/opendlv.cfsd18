@@ -101,12 +101,12 @@ bool Cone::isThisMe(double x, double y){
 
 bool Cone::shouldBeInFrame(){
 
-  if(m_hits >= 3 && m_y > 2 && m_missHit < 4 && m_isValid){return true;}else{return false;}
+  if(m_hits >= 3 && m_y > 2 && m_missHit < 2 && m_isValid){return true;}else{return false;}
 }
 
 bool Cone::shouldBeRemoved(){
 
-  if(m_missHit >= 4 || m_y < 2 ){return true;}else{return false;}
+  if(m_missHit >= 2 || m_y < 2 ){return true;}else{return false;}
 
 }
 
@@ -120,6 +120,12 @@ bool Cone::isValid(){
 
   return m_isValid;
 }
+
+/*bool Cone::isNoise(){
+
+
+
+}*/
 
 }
 }
