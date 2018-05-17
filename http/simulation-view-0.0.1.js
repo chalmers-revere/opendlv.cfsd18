@@ -106,6 +106,7 @@ var headingRequest =0;
 var Vx=0;
 var Vy=0;
 var Ax=0;
+var AxReq=0;
 var groundSpeed=0;
 var distanceToAimPoint = 0;
 function addSimulationViewData(data) {
@@ -125,6 +126,9 @@ function addSimulationViewData(data) {
   }
   if (data.dataType == 1093){
     Ax = -data["opendlv_proxy_GroundDecelerationRequest"]["groundDeceleration"];
+  }
+  if (data.dataType == 1017){
+    AxReq = data["opendlv_logic_sensation_Equilibrioception"]["vz"];
   }
   if (data.dataType == 1001) {
     const x = data["opendlv_sim_Frame"]["x"];
@@ -183,7 +187,7 @@ function addSimulationViewData(data) {
     context.fillStyle="black";
     context.font = "20px Courier New";
     context.fillText("X: "+x.toFixed(2)+" | Y: "+y.toFixed(2)+" | Yaw: "+yaw.toFixed(2)+" | Speed: "+groundSpeed.toFixed(2)+" | Ax: "+Ax.toFixed(2), 50, canvas.height-60);
-    context.fillText("Vx: "+Vx.toFixed(2)+" | Vy: "+Vy.toFixed(2)+" | Aim: "+headingRequest.toFixed(2), 50, canvas.height-30);
+    context.fillText("Vx: "+Vx.toFixed(2)+" | Vy: "+Vy.toFixed(2)+" | Aim: "+headingRequest.toFixed(2)+" | AxReq: "+AxReq.toFixed(2), 50, canvas.height-30); //
     //#####################
     context.restore();
 
