@@ -122,13 +122,13 @@ function addSimulationViewData(data) {
     Vy = data["opendlv_sim_KinematicState"]["vy"];
   }
   if (data.dataType == 1092){
-    Ax = data["opendlv_proxy_GroundAccelerationRequest"]["groundAcceleration"];
+    AxReq = data["opendlv_proxy_GroundAccelerationRequest"]["groundAcceleration"];
   }
   if (data.dataType == 1093){
-    Ax = -data["opendlv_proxy_GroundDecelerationRequest"]["groundDeceleration"];
+    AxReq = -data["opendlv_proxy_GroundDecelerationRequest"]["groundDeceleration"];
   }
   if (data.dataType == 1017){
-    AxReq = data["opendlv_logic_sensation_Equilibrioception"]["vz"];
+    Ax= data["opendlv_logic_sensation_Equilibrioception"]["vz"];
   }
   if (data.dataType == 1001) {
     const x = data["opendlv_sim_Frame"]["x"];
