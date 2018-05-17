@@ -1,11 +1,11 @@
 sim-cfsd18-perception-detectcone.detectRange = 10.5
 sim-cfsd18-perception-detectcone.detectWidth = 5.0
 sim-cfsd18-perception-detectcone.mapFilename = simulation-map-closed-lap.txt
-sim-cfsd18-perception-detectcone.startX = 0
-sim-cfsd18-perception-detectcone.startY = 1.5
-sim-cfsd18-perception-detectcone.startHeading = -2.3
-sim-cfsd18-perception-detectcone.fakeSlamActivated = 0
-logic-cfsd18-perception-detectconelane.fakeSlamActivated = 0
+sim-cfsd18-perception-detectcone.startX = -0.77789
+sim-cfsd18-perception-detectcone.startY = 1.2262
+sim-cfsd18-perception-detectcone.startHeading = -2.532
+sim-cfsd18-perception-detectcone.fakeSlamActivated = 1
+logic-cfsd18-perception-detectconelane.fakeSlamActivated = 1
 sim-cfsd18-perception-detectcone.nConesFakeSlam = 5
 
 # x=-4.14 --y=50.209 --yaw=-0.785 >> top right
@@ -31,7 +31,7 @@ logic-cfsd18-cognition-track.previewTime = 0.5
 logic-cfsd18-cognition-track.velocityLimit = 5.0
 logic-cfsd18-cognition-track.ayFactor = 0.5 # how much of the friction that is dedicated to ay (1 = 100%) when setting the speed profile
 logic-cfsd18-cognition-track.mu = 0.9
-logic-cfsd18-cognition-track.rollResistance = -9.81*0.02
+logic-cfsd18-cognition-track.rollResistance = -0.02
 logic-cfsd18-cognition-track.axLimitPositive = 5.0
 logic-cfsd18-cognition-track.axLimitNegative = -5.0
 logic-cfsd18-cognition-track.headingErrorDependency = 0.7 #between 0 and 1, where 0 is no dependency and 1 scales speedProfile with (1-[headingrequest]/[maximum headingRequest])
@@ -48,5 +48,5 @@ logic-cfsd18-cognition-track.wheelBase = 1.53
 logic-cfsd18-cognition-track.frontToCog = 0.765
 logic-cfsd18-cognition-track.wheelAngleLimit = 25.0f #degrees
 
-logic-cfsd18-cognition-track.receiveTimeLimit = 0.000100
-logic-cfsd18-perception-detectconelane.receiveTimeLimit = 0.000100
+logic-cfsd18-cognition-track.receiveTimeLimit = 0.00100
+logic-cfsd18-perception-detectconelane.receiveTimeLimit = 0.00100
