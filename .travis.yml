@@ -21,7 +21,7 @@ env:
   - secure: x1AypIAku76rthaqSsMtWskEyp5i97pj1pDbXTIpA/uxU1e/Ine8PIpxqS2fqfIAQ8WAqZzPA7mp2aG1Wm8rPccyWGUQTKeSvICTJ/HgtTJ1J9DLqMbWR3HaLKb7mJl1R2NKU01GTNTThC4JXcDNcPhpgYBqnPJrjTNqubNZjtP3nfgzDzSi1dxuNt1y0+DKrarX7lK2+bLeMp58SON7iFOYik2fQrhOhbe6LmJJQMS5vlwH7yxq412HObdvfWOP+ajmoRCkBIlDcYGNV7IuuLc09d3j8aJ59mbvq88JLz302zORFyfepD3DsRukgmDaQKmeUhVykW0yE3r3755NBRCrU5BRVZZS1IT4xolvlxNNfqjRQFF9xGVfQyqwwDHG8NnpqeOvzS6r7vtONZsnessnstcbghFfKqODE4aZWQlivr3098hAhDhn3Gso2aUPR94ypooKRXzMY/CovfO4tsvv6a1Uf1RtnEvJ73l6+qPM8U/X2OFqbs3TFNRrCF9qbMyhotBtT7E5r67y5NriDqEW51vq7DiEF5i9KcZ7zg9rugZSSlTqdq2EXr9MqwSzndPaYVGvp1aGQNuT0XneT0L1dyuGV4k3Cc5S6uFzub5i0kXEFiugtK0r/mQHt7e6ZMbbM7Ut2Vp0a7LlRRt1QHsKSnLTWLXh3oE26nRcUPA=
 install:
 - cd docker
-- make buildComplete creatDockerImage
+- make buildComplete createDockerImage
 - docker tag seresearch/opendlv-cfsd18-on-opendlv-core-on-opendavinci-on-base:latest ${IMAGE}:${COMMIT}
 #- docker build -f Dockerfile.amd64 -t ${IMAGE}:${COMMIT} .
 #- docker run -d --name test ${IMAGE}:${COMMIT} communication-test-receive --cid=112
