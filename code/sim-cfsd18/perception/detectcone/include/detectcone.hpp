@@ -53,6 +53,8 @@ class DetectCone : public odcore::base::module::TimeTriggeredConferenceClientMod
   uint32_t m_senderStamp = 1;
   odcore::base::Mutex m_locationMutex;
   int m_sendId;
+  odcore::base::Mutex m_kinematicStateMutex;
+  Eigen::VectorXf m_kinematicState;
   const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD
 
   odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode body();

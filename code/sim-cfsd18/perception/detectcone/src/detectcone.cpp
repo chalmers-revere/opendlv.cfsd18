@@ -44,8 +44,11 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_orangeVisibleInSlam()
 , m_locationMutex()
 , m_sendId()
+, m_kinematicStateMutex()
+, m_kinematicState()
 {
   m_sendId = rand();
+  m_kinematicState.resize(6);
 }
 
 DetectCone::~DetectCone()
@@ -68,6 +71,27 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
       m_heading = yaw;
     }
   }
+
+  if (a_container.getDataType() == opendlv::logic::sensation::Equilibrioception::ID())
+  {
+    auto kinState = a_container.getData<opendlv::logic::sensation::Equilibrioception>();
+    float vx = kinState.getVx();
+    float vy = kinState.getVy();
+    float vxDot = kinState.getVz();
+    float yawRate = kinState.getYawRate();
+    float vyDot = kinState.getRollRate();
+    float yawRateDot = kinState.getPitchRate();
+    {
+      odcore::base::Lock lockKin(m_kinematicStateMutex);
+      m_kinematicState << vx,
+                          vy,
+                          yawRate,
+                          vxDot,
+                          vyDot,
+                          yawRateDot;
+    }
+  }
+
 }
 
 
@@ -104,7 +128,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
   std::string const pathFile = getKeyValueConfiguration().getValue<std::string>("sim-cfsd18-perception-detectcone.pathFilename");
   std::string const XYFile = getKeyValueConfiguration().getValue<std::string>("sim-cfsd18-perception-detectcone.xyFilename");
   std::string const CrashFile = getKeyValueConfiguration().getValue<std::string>("sim-cfsd18-perception-detectcone.crashFilename");
-
+  std::string const speedFilename = kv.getValue<std::string>("sim-cfsd18-perception-detectcone.speedFilename");
   std::string line, word;
   float x, y, angle;
   std::ifstream pathfile("/opt/opendlv.data/"+pathFile, std::ifstream::in);
@@ -217,13 +241,13 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
     sendMatchedContainer(detectedConesSmallMat, type, m_sendId);
     type = 4;
     sendMatchedContainer(detectedConesBigMat, type, m_sendId);
-    std::cout<<"Sending with ID: "<<m_sendId<<"\n";
+    //std::cout<<"Sending with ID: "<<m_sendId<<"\n";
     int rndmId = rand();
     while (m_sendId == rndmId){rndmId = rand();}
     m_sendId = rndmId;
     auto finishRight = std::chrono::system_clock::now();
     auto timeSend = std::chrono::duration_cast<std::chrono::microseconds>(finishRight - startLeft);
-    std::cout << "sendTime:" << timeSend.count() << std::endl;
+    //std::cout << "sendTime:" << timeSend.count() << std::endl;
 
     /*-----THESIS----*/
     step++;
@@ -260,11 +284,12 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
       crashLocation = vehicleLocation;
       crash = true;
     }*/
+    if (!OT) {
     float D = (detectedConesLeft.matrix().row(0)-detectedConesRight.matrix().row(0)).norm()+1.5f;
-    std::cout<<"D: "<<D<<std::endl;
-    std::cout<<"cond1: "<<(detectedConesLeft.matrix().row(0)).norm()<<std::endl;
-    std::cout<<"cond2: "<<(detectedConesRight.matrix().row(0)).norm()<<std::endl;
-    if ((detectedConesLeft.matrix().row(0).norm()>D || detectedConesRight.matrix().row(0).norm()>D) && (!OT)){ // if going far of track, break
+    //std::cout<<"D: "<<D<<std::endl;
+    //std::cout<<"cond1: "<<(detectedConesLeft.matrix().row(0)).norm()<<std::endl;
+    //std::cout<<"cond2: "<<(detectedConesRight.matrix().row(0)).norm()<<std::endl;
+    if (detectedConesLeft.matrix().row(0).norm()>D || detectedConesRight.matrix().row(0).norm()>D){ // if going far of track, break
       std::cout<<"I'M OFF TRACK"<<std::endl;
       reason = "Went off track";
       crashLocation = vehicleLocation;
@@ -272,7 +297,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
       nOffTrack++;
       crash = true;
     }
-
+    }
 
     if (((detectedConesLeft(0,0)<1.0f) && (detectedConesLeft(0,0)>-1.0f))&&((detectedConesLeft(0,1)<0.65f) && (detectedConesLeft(0,1)>-0.65f))&&((vehicleLocation-crashLocation).norm()>3.0f)) {
       std::cout<<"I HIT A CONE"<<std::endl;
@@ -292,7 +317,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
     }
 
     if(crash){
-      std::cout<<"CRASH"<<std::endl;
+      //std::cout<<"CRASH"<<std::endl;
 
       std::ofstream tmpFile;
       tmpFile.open("/opt/opendlv.data/"+CrashFile,std::ios_base::app);
@@ -300,11 +325,11 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
       tmpFile<<"crashCount: "<<crashCount<<std::endl;
       tmpFile<<"Reason: "<<reason<<std::endl;
       tmpFile<<"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< "<<std::endl;
-      tmpFile<<"Time: "<<lapTime<<std::endl;
+      tmpFile<<"Time since last crash: "<<lapTime<<std::endl;
+      tmpFile<<"Timesince start: "<<step2*dt<<std::endl;
       tmpFile<<"startIndex: "<<startIndex<<std::endl;
       tmpFile<<"endIndex: "<<closestPointIndex<<std::endl;
       tmpFile<<"distanceTraveledAlongPath: "<<distanceTraveledAlongPath<<std::endl;
-      std::cout<<"startIndex: "<<startIndex<<std::endl;
       tmpFile<<"Start -> x: "<<globalPath[startIndex]<<" y: "<< globalPath[startIndex+1] <<" yaw: "<<globalPath[startIndex+2]<<std::endl;
       tmpFile<<"Stop -> x: "<<vehicleLocation(0)<<" y: "<< vehicleLocation(1) <<" yaw: "<<yaw<<std::endl;
       tmpFile<<"Calculated average vx: "<<distanceTraveledAlongPath/(step*dt)*3.6f<<" km/h"<<std::endl;
@@ -323,7 +348,19 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
     xyFile.open("/opt/opendlv.data/"+XYFile,std::ios_base::app);
     xyFile<<vehicleLocation(0)<<","<<vehicleLocation(1)<<endl;
     xyFile.close();
+
     // Save velocities
+    if (m_kinematicState.size()>5) {
+    Eigen::VectorXf kinematicState;
+    {
+      odcore::base::Lock lockKin(m_kinematicStateMutex);
+      kinematicState = m_kinematicState;
+    }
+      std::ofstream speedFile;
+      speedFile.open("/opt/opendlv.data/"+speedFilename,std::ios_base::app);
+      speedFile<<kinematicState(0)<<","<<kinematicState(1)<<","<<kinematicState(2)<<","<<kinematicState(3)<<","<<kinematicState(4)<<","<<kinematicState(5)<<std::endl;
+      speedFile.close();
+    }
 
 
 
@@ -341,7 +378,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
       if (nOffTrack>0) {
         tmpFile<<"Total time with penalties: DNF"<<std::endl;
       } else{
-        tmpFile<<"Total time with penalties: "<<totTime-2.0f*(nHitLeft+nHitRight)<<std::endl;
+        tmpFile<<"Total time with penalties: "<<totTime+2.0f*(nHitLeft+nHitRight)<<std::endl;
       }
       tmpFile<<"Total length of path: "<<pathLength<<std::endl;
       tmpFile<<"Total crashes this run: "<<"Hit left: "<<nHitLeft<<" | Hit right: "<<nHitRight<<" | Off track: "<< nOffTrack<<std::endl;
@@ -628,8 +665,8 @@ ArrayXXf DetectCone::simConeDetectorSlam(ArrayXXf globalMap, ArrayXXf location, 
 
 void DetectCone::sendMatchedContainer(Eigen::MatrixXd cones, int type, int startID)
 {
-std::cout << "New location: " << m_location << " and heading: " << m_heading << std::endl;
-std::cout << "Sending " << cones.cols() << " of type " << type << std::endl;
+//std::cout << "New location: " << m_location << " and heading: " << m_heading << std::endl;
+//std::cout << "Sending " << cones.cols() << " of type " << type << std::endl;
 
   opendlv::logic::sensation::Point conePoint;
   for(int n = 0; n < cones.cols(); n++){

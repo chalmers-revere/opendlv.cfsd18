@@ -18,6 +18,7 @@
 */
 
 #include <iostream>
+#include <cmath>
 
 #include <opendavinci/odcore/data/TimeStamp.h>
 #include <opendavinci/odcore/strings/StringToolbox.h>
@@ -62,7 +63,7 @@ void Track::nextContainer(odcore::data::Container &a_container)
   }
 
   if(a_container.getDataType() == opendlv::logic::perception::GroundSurfaceProperty::ID()){
-      std::cout << "TRACK RECIEVED A SURFACE!" << std::endl;
+      //std::cout << "TRACK RECIEVED A SURFACE!" << std::endl;
   //    m_lastTimeStamp = a_container.getSampleTimeStamp();
       auto surfaceProperty = a_container.getData<opendlv::logic::perception::GroundSurfaceProperty>();
       int surfaceId = surfaceProperty.getSurfaceId();
@@ -72,8 +73,8 @@ void Track::nextContainer(odcore::data::Container &a_container)
         m_newFrame = false;
         m_nSurfacesInframe = std::stoul(nSurfacesInframe);
         m_surfaceId = surfaceId; // Currently not used.
-        std::cout << "SurfaceId: " << surfaceId<<std::endl;
-        std::cout << "nSurfacesInframe: " << nSurfacesInframe<<std::endl;
+        //std::cout << "SurfaceId: " << surfaceId<<std::endl;
+        //std::cout << "nSurfacesInframe: " << nSurfacesInframe<<std::endl;
       }
 
   }
@@ -137,15 +138,15 @@ void Track::nextContainer(odcore::data::Container &a_container)
     double receiveTimeLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.receiveTimeLimit");
 
     if (duration>receiveTimeLimit) { //Only for debug
-      std::cout<<"DURATION TIME EXCEEDED"<<std::endl;
-      std::cout << "Surfaces in frame: " <<m_surfaceFrame.size() <<std::endl;
-      std::vector<float> v(4);
+      std::cout<<"DURATION TIME TRACK EXCEEDED: "<<duration<<std::endl;
+      std::cout << "Surfaces to run: " <<m_surfaceFrame.size() <<std::endl;
+      /*std::vector<float> v(4);
       for (std::map<double, std::vector<float> >::iterator it = m_surfaceFrame.begin();it !=m_surfaceFrame.end();it++){
         v = it->second;
         for (size_t i = 0; i < 4; i++) {
           std::cout<<v[i]<<"\n";
         }
-      }
+      }*/
     }
 
     // Run if frame is full or if we have waited to long for the remaining messages
@@ -163,7 +164,7 @@ void Track::nextContainer(odcore::data::Container &a_container)
         m_newId = true; // Allow for new messages to be placed in m_surfaceFrame
         //std::cout << "Cleared buffer " <<std::endl;
       }
-      std::cout << "Run " << surfaceFrame.size() << " surfaces"<< std::endl;
+      //std::cout << "Run " << surfaceFrame.size() << " surfaces"<< std::endl;
       std::thread surfaceCollector(&Track::collectAndRun, this, surfaceFrame); // Run the surface in a thread
       surfaceCollector.detach();
     }
@@ -197,7 +198,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
 
   std::vector<float> v;
   Eigen::MatrixXf localPath(surfaceFrame.size()*2,2);
-  std::cout<<"localPath.rows(): "<<localPath.rows()<<"\n";
+  //std::cout<<"localPath.rows(): "<<localPath.rows()<<"\n";
   {
     odcore::base::Lock lockSurface(m_surfaceMutex);
     int I=0;
@@ -264,7 +265,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
       }
     } //else Only one point remaining
   }
-  std::cout<<"localPath: "<<localPath<<"\n";
+  //std::cout<<"localPath: "<<localPath<<"\n";
   auto kv = getKeyValueConfiguration();
   float const previewTime = kv.getValue<float>("logic-cfsd18-cognition-track.previewTime");
   float const velocityLimit = kv.getValue<float>("logic-cfsd18-cognition-track.velocityLimit");
@@ -282,7 +283,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
   float distanceToAimPoint = std::get<1>(steering);
   float accelerationRequest = Track::driverModelVelocity(localPath, groundSpeedCopy, velocityLimit, axLimitPositive, axLimitNegative, headingRequest, headingErrorDependency, distanceToAimPoint, previewTime, mu, STOP);
 
-std::cout << "Sending headingRequest: " << headingRequest << std::endl;
+//std::cout << "Sending headingRequest: " << headingRequest << std::endl;
   //opendlv::logic::action::AimPoint o1;
   opendlv::proxy::GroundSteeringRequest o1;
   //o1.setAzimuthAngle(headingRequest);
@@ -298,14 +299,14 @@ std::cout << "Sending headingRequest: " << headingRequest << std::endl;
   getConference().send(c4);
 
   if (accelerationRequest >= 0.0f) {
-std::cout << "Sending accelerationRequest: " << accelerationRequest << std::endl;
+//std::cout << "Sending accelerationRequest: " << accelerationRequest << std::endl;
     opendlv::proxy::GroundAccelerationRequest o2;
     o2.setGroundAcceleration(accelerationRequest);
     odcore::data::Container c2(o2);
     getConference().send(c2);
   }
   else if(accelerationRequest < 0.0f){
-std::cout << "Sending decelerationRequest: " << accelerationRequest << std::endl;
+//std::cout << "Sending decelerationRequest: " << accelerationRequest << std::endl;
     opendlv::proxy::GroundDecelerationRequest o3;
     o3.setGroundDeceleration(-accelerationRequest);
     odcore::data::Container c3(o3);
@@ -449,7 +450,7 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
   if (!preSet) {
     // Calculate the distance between vehicle and aimpoint;
     float previewDistance = std::abs(groundSpeedCopy)*previewTime;
-    std::cout << "previewDistance: "<<previewDistance<<"\n";
+    //std::cout << "previewDistance: "<<previewDistance<<"\n";
 
     float sumPoints = localPath.row(0).norm();
     // Sum the distance between all path points until passing previewDistance
@@ -498,8 +499,8 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
   }
 
   float distanceToAimPoint=aimPoint.norm();
-  std::cout << "AimPoint: "<<aimPoint<<"\n";
-  std::cout << "distanceToAimPoint: "<<distanceToAimPoint<<"\n";
+  //std::cout << "AimPoint: "<<aimPoint<<"\n";
+  //std::cout << "distanceToAimPoint: "<<distanceToAimPoint<<"\n";
 
 
   return std::make_tuple(headingRequest,distanceToAimPoint);
@@ -572,7 +573,7 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
     for (int k=0; k<step; k++){
       s+=(localPath.row(k+1)-localPath.row(k)).norm();
     }
-std::cout << "speedProfile = " << speedProfile.transpose() << "\n";
+//std::cout << "speedProfile = " << speedProfile.transpose() << "\n";
     for (i=0; i<speedProfile.size(); i++){
       s+=(localPath.row(i+step+1)-localPath.row(i+step)).norm();
       distanceToCriticalPoint.push_back(s);
@@ -597,10 +598,14 @@ std::cout << "speedProfile = " << speedProfile.transpose() << "\n";
 
     if(brakeTime<=0.0f){
       accelerationRequest = axLimitNegative;
-      if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
+      /*if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = -sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;
         std::cout<<"accreq limited: "<<accelerationRequest<<std::endl;
       }
+      if (std::isnan(accelerationRequest)) {
+        std::cout<<"accelerationRequest 1 is NaN, ay = "<<ay<<std::endl;
+        accelerationRequest = 0.0f;
+      }*/
     }
     else if (brakeTime>0.0f && brakeTime<=2.0f){
       /*if (idx-K>=0 && curveRadii[idx]<10.0f) {
@@ -608,10 +613,14 @@ std::cout << "speedProfile = " << speedProfile.transpose() << "\n";
       }else{*/
         accelerationRequest = std::max((speedProfile(idx)-groundSpeedCopy)/(2*distanceToCriticalPoint[idx]),axLimitNegative);
       //}
-      if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
+      /*if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = -sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;
         std::cout<<"accreq limited: "<<accelerationRequest<<std::endl;
-      }
+        if (std::isnan(accelerationRequest)) {
+          std::cout<<"accelerationRequest 2 is NaN, ay = "<<ay<<std::endl;
+          accelerationRequest = 0.0f;
+        }
+      }*/
       if (accelerationRequest>rollResistance*g) {
         accelerationRequest = 0.0f;
       }
@@ -624,12 +633,16 @@ std::cout << "speedProfile = " << speedProfile.transpose() << "\n";
       if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;
         std::cout<<"accreq limited: "<<accelerationRequest<<std::endl;
+        if (std::isnan(accelerationRequest)) {
+          std::cout<<"accelerationRequest 3 is NaN, ay = "<<ay<<std::endl;
+          accelerationRequest = 0.0f;
+        }
       }
 
     }
 
     if (distanceToAimPoint+ headingRequest> axLimitPositive || axLimitNegative + headingErrorDependency < previewTime) {
-      std::cout<<"YIHAA"<<std::endl;
+      //std::cout<<"YIHAA"<<std::endl;
     }
 
     /*---------------------------------------------------------------------------*/
@@ -704,7 +717,7 @@ std::cout << "speedProfile = " << speedProfile.transpose() << "\n";
   else{
     accelerationRequest = 0.0f;
   }
-  std::cout << "groundSpeedCopy: " << groundSpeedCopy << std::endl;
+  //std::cout << "groundSpeedCopy: " << groundSpeedCopy << std::endl;
   return accelerationRequest;
 }
 
@@ -743,11 +756,11 @@ std::vector<float> Track::curvatureTriCircle(Eigen::MatrixXf localPath, int step
       curveRadii[k] = (A*B*C)/(4*triangleArea);
     }
   }
-  std::cout<<"curveRadii: "<<" ";
+  /*std::cout<<"curveRadii: "<<" ";
   for (size_t i = 0; i < curveRadii.size(); i++) {
     std::cout<<curveRadii[i]<<" ";
   }
-  std::cout<<"\n";
+  std::cout<<"\n";*/
   return curveRadii;
 }
 

@@ -1,0 +1,24 @@
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 0
+Reason: Hit a right side cone
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time: 9.85
+startIndex: 0
+endIndex: 324
+distanceTraveledAlongPath: 53.9776
+Start -> x: -0.77789 y: 1.2262 yaw: -2.532
+Stop -> x: -41.4876 y: -23.1173 yaw: -2.62885
+Calculated average vx: 19.7279 km/h
+--------------------------------- 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 1
+Reason: Hit a right side cone
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time: 6.45
+startIndex: 324
+endIndex: 522
+distanceTraveledAlongPath: 32.9362
+Start -> x: -40.867 y: -23.538 yaw: -2.4396
+Stop -> x: -64.691 y: -9.72734 yaw: -1.98597
+Calculated average vx: 18.383 km/h
+--------------------------------- 

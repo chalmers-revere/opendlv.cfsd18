@@ -29,7 +29,7 @@ services:
     sim-global:
         image: chalmersrevere/opendlv-sim-global-amd64:v0.0.5
         network_mode: "host"
-        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=0 --x=0.5839 --y=-1.3817 --yaw=0.39985"
+        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=0 --x=-0.77789 --y=1.2262 --yaw=-2.532"
 
 
     # microservice for ...
@@ -38,7 +38,7 @@ services:
         network_mode: "host"
         depends_on:
             - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectconelane --cid=${CID} --verbose=1 --id=1"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectconelane --cid=${CID} --verbose=0 --id=1"
 
     # microservice for ...
     sim-cfsd18-perception-detectcone:
@@ -48,7 +48,7 @@ services:
             - odsupercomponent
         volumes:
         - .:/opt/opendlv.data
-        command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-perception-detectcone --cid=${CID} --verbose=1 --id=1 --freq=20"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-perception-detectcone --cid=${CID} --verbose=0 --id=1 --freq=20"
 
     # microservice for ...
     logic-cfsd18-cognition-track:
@@ -56,13 +56,15 @@ services:
         network_mode: "host"
         depends_on:
             - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-cognition-track --cid=${CID} --verbose=1 --id=1"
+        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-cognition-track --cid=${CID} --verbose=0 --id=1"
 
     sim-lynx-vehicle:
         image: seresearch/opendlv-lynx-on-opendlv-core-on-opendavinci-on-base:latest
         network_mode: "host"
         depends_on:
             - odsupercomponent
+        volumes:
+        - .:/opt/opendlv.data
         command: "/opt/opendlv.lynx/bin/opendlv-sim-lynx-bicyclemodel --cid=${CID} --freq=100"
 
     ui-default:
