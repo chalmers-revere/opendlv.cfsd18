@@ -24,7 +24,7 @@ IMAGE_PATH=$(REPOSITORY)/$(IMAGE)
 
 BASE_IMAGE=opendlv-core-on-opendavinci-on-base
 BASE_IMAGE_PATH=$(REPOSITORY)/$(BASE_IMAGE)
-BASE_IMAGE_VERSION=v0.13.0
+BASE_IMAGE_VERSION=v0.14.0
 
 DEV_SUFFIX=-dev
 
@@ -166,4 +166,3 @@ pushDockerImage: createDockerImage
 	$(DOCKER) push $(IMAGE_PATH):$(VERSION)
 	$(DOCKER) push $(IMAGE_DEV_PATH):latest
 	$(DOCKER) push $(IMAGE_DEV_PATH):$(VERSION)
-
