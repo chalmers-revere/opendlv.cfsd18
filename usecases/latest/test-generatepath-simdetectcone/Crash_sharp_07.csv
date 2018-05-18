@@ -1,0 +1,19 @@
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 0
+Reason: Hit a left side cone
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 34.9
+Timesince start: 34.9
+startIndex: 0
+endIndex: 1368
+distanceTraveledAlongPath: 227.307
+Start -> x: -0.77789 y: 1.2262 yaw: -2.532
+Stop -> x: -30.2248 y: 63.1992 yaw: -1.00035
+Calculated average vx: 23.4472 km/h
+--------------------------------- 
+################################# 
+Total time: 81.85
+Total time with penalties: 83.85
+Total length of path: 543.062
+Total crashes this run: Hit left: 1 | Hit right: 0 | Off track: 0
+Calculated average vx: 23.8855 km/h

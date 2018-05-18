@@ -195,7 +195,6 @@ void Track::tearDown()
 }
 
 void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
-
   std::vector<float> v;
   Eigen::MatrixXf localPath(surfaceFrame.size()*2,2);
   //std::cout<<"localPath.rows(): "<<localPath.rows()<<"\n";
@@ -273,15 +272,34 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
   float const axLimitPositive = kv.getValue<float>("logic-cfsd18-cognition-track.axLimitPositive");
   float const axLimitNegative = kv.getValue<float>("logic-cfsd18-cognition-track.axLimitNegative");
   float const headingErrorDependency = kv.getValue<float>("logic-cfsd18-cognition-track.headingErrorDependency");
+  bool const sharp = kv.getValue<bool>("logic-cfsd18-cognition-track.RunSharp");
   float groundSpeedCopy;
   {
     odcore::base::Lock lockGroundSpeed(m_groundSpeedMutex);
     groundSpeedCopy = m_groundSpeed;
   }
-  auto steering = Track::driverModelSteering(localPath, groundSpeedCopy, previewTime);
-  float headingRequest = std::get<0>(steering);
-  float distanceToAimPoint = std::get<1>(steering);
-  float accelerationRequest = Track::driverModelVelocity(localPath, groundSpeedCopy, velocityLimit, axLimitPositive, axLimitNegative, headingRequest, headingErrorDependency, distanceToAimPoint, previewTime, mu, STOP);
+  float previewDistance = std::abs(groundSpeedCopy)*previewTime;
+  float pathLength=0.0f;
+  for (int i = 0; i < localPath.rows()-1; i++) {
+    pathLength+=(localPath.row(i+1)-localPath.row(i)).norm();
+  }
+  if (previewDistance>pathLength) {
+    std::cout<<"previewDistance "<< previewDistance <<" is longer than pathLength "<<pathLength<<std::endl;
+    previewDistance = pathLength;
+  }
+
+  float headingRequest;
+  float distanceToAimPoint;
+  if (sharp) {
+    headingRequest = Track::driverModelSharp(localPath, previewDistance);
+    distanceToAimPoint = 1.0f;
+  }
+  else{
+    auto steering = Track::driverModelSteering(localPath, groundSpeedCopy, previewTime);
+    headingRequest = std::get<0>(steering);
+    distanceToAimPoint = std::get<1>(steering);
+  }
+  float accelerationRequest = Track::driverModelVelocity(localPath, groundSpeedCopy, velocityLimit, axLimitPositive, axLimitNegative, previewDistance, headingRequest, headingErrorDependency, mu, STOP);
 
 //std::cout << "Sending headingRequest: " << headingRequest << std::endl;
   //opendlv::logic::action::AimPoint o1;
@@ -405,6 +423,73 @@ Eigen::MatrixXf Track::placeEquidistantPoints(Eigen::MatrixXf oldPathPoints, boo
   return newPathPoints;
 } // End of placeEquidistantPoints
 
+float Track::driverModelSharp(Eigen::MatrixXf localPath, float previewDistance){
+  auto kv = getKeyValueConfiguration();
+  int n = kv.getValue<int>("logic-cfsd18-cognition-track.nSharp");
+  float K1 = kv.getValue<float>("logic-cfsd18-cognition-track.K1Sharp");
+  float Ky = kv.getValue<float>("logic-cfsd18-cognition-track.KySharp");
+  float C = kv.getValue<float>("logic-cfsd18-cognition-track.bigCSharp");
+  float c = kv.getValue<float>("logic-cfsd18-cognition-track.smallcSharp");
+  float wheelAngleLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.wheelAngleLimit");
+  float headingRequest;
+  if (localPath.rows()>2) {
+
+  float sectionLength = previewDistance/n;
+  std::vector<float> error(n);
+  Eigen::MatrixXf::Index idx;
+  float xMax = localPath.col(0).maxCoeff(&idx);
+  error[0]=localPath(0,1);
+  int k = 1;
+  float sumPoints = 0.0f;
+  for (int i = 0; i < localPath.rows()-1 ; i++) {
+  sumPoints += (localPath.row(i+1)-localPath.row(i)).norm();
+    if (sumPoints>=k*sectionLength) {
+      if(k*sectionLength<xMax){
+        error[k] = localPath(i,1);
+        k++;
+      }
+      else{
+        std::cout<<"index: "<<idx<<std::endl;
+        std::cout<<"localPath(idx): "<<localPath(idx)<<std::endl;
+        error[k] = localPath(idx,1);
+        k++;
+      }
+    }
+    if(k>n-1){
+      break;
+    }
+  }
+  if(k<n-2){
+    error[n-1] = localPath(localPath.rows()-1,1);
+  }
+
+  float ey = std::atan2(localPath(10,1)-localPath(0,1),localPath(10,0)-localPath(0,0));
+    //std::cout<<"K1e1 "<<K1*error[0]<<std::endl;
+    //std::cout<<"Kyey "<<Ky*ey<<std::endl;
+  float errorSum = 0.0f;
+  int j=0;
+  for (int i = 1; i < n; i++) {
+    errorSum += error[i]*1.0f/expf(j)*C;
+    std::cout<<"e "<< i <<": "<<error[i]<<std::endl;
+    //std::cout<<"K "<<i<<": "<<1.0f/expf(j)*C<<std::endl;
+    //std::cout<<"K[i]e[i] i= "<<i<<": "<<error[i]*1.0f/expf(j)*C<<std::endl;
+    j+=c;
+  }
+
+  headingRequest = Ky*ey + K1*error[1] + errorSum;
+  if (headingRequest>=0) {
+    headingRequest = std::min(headingRequest,wheelAngleLimit*3.14159265f/180.0f);
+  } else {
+    headingRequest = std::max(headingRequest,-wheelAngleLimit*3.14159265f/180.0f);
+  }
+  }
+  else{
+    headingRequest = 0.0f;
+  }
+  return headingRequest;
+}
+
+
 std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, float groundSpeedCopy, float previewTime) {
   //driverModelSteering calculates the desired heading of CFSD18 vehicle
   // given the vehicles velocity, a set time to aimpoint and a path in local
@@ -506,7 +591,7 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
   return std::make_tuple(headingRequest,distanceToAimPoint);
 }
 
-float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCopy, float velocityLimit, float axLimitPositive, float axLimitNegative, float headingRequest, float headingErrorDependency, float distanceToAimPoint, float previewTime, float mu, bool STOP){
+float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCopy, float velocityLimit, float axLimitPositive, float axLimitNegative, float previewDistance, float headingRequest, float headingErrorDependency, float mu, bool STOP){
   //driverModelVelocity calculates the desired acceleration of the CFSD18
   //vehicle.
   //
@@ -526,10 +611,18 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
   float accelerationRequest;
   Eigen::VectorXf speedProfile;
   std::vector<float> curveRadii;
-  float axSpeedProfile = std::max(axLimitPositive,-axLimitNegative);//= getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.axSpeedProfile");
   int step;
   float g = 9.81f;
+  float axSpeedProfile = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.axSpeedProfile");
+  if (axSpeedProfile<0) {
+    axSpeedProfile = std::max(axLimitPositive,-axLimitNegative);
+  }
   float ayLimit = sqrtf(powf(mu*g,2)-powf(axSpeedProfile,2));
+  if (std::isnan(ayLimit)) {
+    std::cout<<"ayLimit is NAN, axLimit set too High"<<std::endl;
+    ayLimit = 1.0f;
+    std::cout<<"ayLimit set to: "<<ayLimit<<std::endl;
+  }
 
   if ((!STOP) && (localPath.rows() > 2)){
     // Caluclate curvature of path
@@ -546,15 +639,28 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
         curveRadii = curvatureTriCircle(localPath,step);
       }
 
-    float wheelAngleLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.wheelAngleLimit");
-    float headingError = std::abs(headingRequest)/(wheelAngleLimit*3.14159265f/180.0f);
+    float const wheelAngleLimit = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.wheelAngleLimit");
+    float const distanceBetweenPoints = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.distanceBetweenPoints");
+    int index = floor(previewDistance/distanceBetweenPoints);
+    if (index>localPath.rows()-1) {
+      index = localPath.rows()-1;
+      std::cout<<"INDEX TOO FAR (it was possible)"<<std::endl;
+    }
+    float previewAngle = std::atan2(localPath(index,1),localPath(index,0));
+    if (previewAngle>=0) {
+      previewAngle = std::min(previewAngle,wheelAngleLimit*3.14159265f/180.0f);
+    } else {
+      previewAngle = std::max(previewAngle,-wheelAngleLimit*3.14159265f/180.0f);
+    }
+    float headingError = std::abs(previewAngle)/(wheelAngleLimit*3.14159265f/180.0f);
+    std::cout<<"headingError: "<<headingError<<std::endl;
+    std::cout<<"headinError scaling: "<<1.0f-headingError*headingErrorDependency<<std::endl;
 
     // Set velocity candidate based on expected lateral acceleration limit
     speedProfile.resize(curveRadii.size());
     for (uint32_t k = 0; k < curveRadii.size(); k++){
     speedProfile(k) = std::min(sqrtf(ayLimit*curveRadii[k]),velocityLimit)*(1.0f-headingError*headingErrorDependency);
     }
-
     /*---------------------------------------------------------------------------*/
     //float const distanceBetweenPoints = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.distanceBetweenPoints");
     //float brakeMetersBefore = 4;
@@ -568,12 +674,11 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
     float rollResistance = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.rollResistance");
     int i;
     int idx;
-    int accIdx;
+    int accIdx = 0;
     std::vector<float> distanceToCriticalPoint;
     for (int k=0; k<step; k++){
       s+=(localPath.row(k+1)-localPath.row(k)).norm();
     }
-//std::cout << "speedProfile = " << speedProfile.transpose() << "\n";
     for (i=0; i<speedProfile.size(); i++){
       s+=(localPath.row(i+step+1)-localPath.row(i+step)).norm();
       distanceToCriticalPoint.push_back(s);
@@ -595,7 +700,6 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
     }
     float const wheelBase = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.wheelBase");
     float ay = powf(groundSpeedCopy,2)/(wheelBase/std::tan(std::abs(headingRequest)));
-
     if(brakeTime<=0.0f){
       accelerationRequest = axLimitNegative;
       /*if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
@@ -639,10 +743,6 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
         }
       }
 
-    }
-
-    if (distanceToAimPoint+ headingRequest> axLimitPositive || axLimitNegative + headingErrorDependency < previewTime) {
-      //std::cout<<"YIHAA"<<std::endl;
     }
 
     /*---------------------------------------------------------------------------*/
@@ -761,6 +861,7 @@ std::vector<float> Track::curvatureTriCircle(Eigen::MatrixXf localPath, int step
     std::cout<<curveRadii[i]<<" ";
   }
   std::cout<<"\n";*/
+
   return curveRadii;
 }
 
