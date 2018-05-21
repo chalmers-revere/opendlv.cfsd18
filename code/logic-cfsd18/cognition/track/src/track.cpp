@@ -652,9 +652,9 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
     } else {
       previewAngle = std::max(previewAngle,-wheelAngleLimit*3.14159265f/180.0f);
     }
-    float headingError = std::abs(previewAngle)/(wheelAngleLimit*3.14159265f/180.0f);
-    std::cout<<"headingError: "<<headingError<<std::endl;
-    std::cout<<"headinError scaling: "<<1.0f-headingError*headingErrorDependency<<std::endl;
+    float headingError = std::abs(headingRequest)/(wheelAngleLimit*3.14159265f/180.0f);
+    //std::cout<<"headingError: "<<headingError<<std::endl;
+    //std::cout<<"headinError scaling: "<<1.0f-headingError*headingErrorDependency<<std::endl;
 
     // Set velocity candidate based on expected lateral acceleration limit
     speedProfile.resize(curveRadii.size());
@@ -701,6 +701,9 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
     float const wheelBase = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.wheelBase");
     float ay = powf(groundSpeedCopy,2)/(wheelBase/std::tan(std::abs(headingRequest)));
     if(brakeTime<=0.0f){
+      if (brakeTime<0.0f) {
+        std::cout<<"braking too late, brakeTime: "<<brakeTime<<std::endl;
+      }
       accelerationRequest = axLimitNegative;
       /*if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = -sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;

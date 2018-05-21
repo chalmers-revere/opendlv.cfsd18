@@ -29,7 +29,7 @@ services:
     sim-global:
         image: chalmersrevere/opendlv-sim-global-amd64:v0.0.5
         network_mode: "host"
-        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=0 --x=-0.77789 --y=1.2262 --yaw=-2.532"
+        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=0 --x=-0.31428 --1.4667 --yaw=-3.0138"
 
 
     # microservice for ...
@@ -69,7 +69,7 @@ services:
 
     ui-default:
 #        image: chalmersrevere/opendlv-ui-default-amd64
-        image: opendlv-ui-default:v0.0.1
+        image: cognition-track:2
         network_mode: "host"
         #volumes:
         #- ./simulation-map-closed-lap.txt:/srv/http/simulation-map-closed-lap.txt
