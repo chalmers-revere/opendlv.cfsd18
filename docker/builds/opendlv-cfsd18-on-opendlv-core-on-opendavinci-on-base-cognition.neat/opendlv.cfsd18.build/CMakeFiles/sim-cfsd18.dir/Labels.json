@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/opt/opendlv.cfsd18.build/CMakeFiles/sim-cfsd18"
+		},
+		{
+			"file" : "/opt/opendlv.cfsd18.build/CMakeFiles/sim-cfsd18.rule"
+		},
+		{
+			"file" : "/opt/opendlv.cfsd18.build/CMakeFiles/sim-cfsd18-complete.rule"
+		},
+		{
+			"file" : "/opt/opendlv.cfsd18.build/sim-cfsd18-prefix/src/sim-cfsd18-stamp/sim-cfsd18-install.rule"
+		},
+		{
+			"file" : "/opt/opendlv.cfsd18.build/sim-cfsd18-prefix/src/sim-cfsd18-stamp/sim-cfsd18-mkdir.rule"
+		},
+		{
+			"file" : "/opt/opendlv.cfsd18.build/sim-cfsd18-prefix/src/sim-cfsd18-stamp/sim-cfsd18-download.rule"
+		},
+		{
+			"file" : "/opt/opendlv.cfsd18.build/sim-cfsd18-prefix/src/sim-cfsd18-stamp/sim-cfsd18-update.rule"
+		},
+		{
+			"file" : "/opt/opendlv.cfsd18.build/sim-cfsd18-prefix/src/sim-cfsd18-stamp/sim-cfsd18-patch.rule"
+		},
+		{
+			"file" : "/opt/opendlv.cfsd18.build/sim-cfsd18-prefix/src/sim-cfsd18-stamp/sim-cfsd18-configure.rule"
+		},
+		{
+			"file" : "/opt/opendlv.cfsd18.build/sim-cfsd18-prefix/src/sim-cfsd18-stamp/sim-cfsd18-build.rule"
+		},
+		{
+			"file" : "/opt/opendlv.cfsd18.build/sim-cfsd18-prefix/src/sim-cfsd18-stamp/sim-cfsd18-test.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"sim-cfsd18"
+		],
+		"name" : "sim-cfsd18"
+	}
+}

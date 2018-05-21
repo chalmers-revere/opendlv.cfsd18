@@ -1,0 +1,25 @@
+Sending build context to Docker daemon  7.727MB
+Step 1/7 : FROM seresearch/opendlv-core-on-opendavinci-on-base
+ ---> 9b377af0972c
+Step 2/7 : MAINTAINER Chalmers Revere "revere@chalmers.se"
+ ---> Using cache
+ ---> fe9e07041f1d
+Step 3/7 : ADD opt.nonDev /opt
+ ---> cdf7afc7ab1a
+Step 4/7 : RUN chown -R 1000:1000 /opt/opendlv.cfsd18
+ ---> Running in 08f38cf43923
+Removing intermediate container 08f38cf43923
+ ---> f805e43a34f1
+Step 5/7 : ENV QT_X11_NO_MITSHM=1
+ ---> Running in ee6850a89cf4
+Removing intermediate container ee6850a89cf4
+ ---> 03d88142cfed
+Step 6/7 : ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/opendlv.cfsd18/lib
+ ---> Running in 843707fb22ce
+Removing intermediate container 843707fb22ce
+ ---> b8210f138f18
+Step 7/7 : WORKDIR /opt/opendlv.cfsd18/bin
+Removing intermediate container 4e835783f2fa
+ ---> 5b73b0d83976
+Successfully built 5b73b0d83976
+Successfully tagged seresearch/opendlv-core-on-opendavinci-on-base-182b8d4:124

@@ -32,7 +32,7 @@ function setupSimulationView() {
     return xmlHttp.responseText;
   }
 
-var map = getResourceFrom("simulation-map-closed-lap.txt");
+var map = getResourceFrom("trackTest2.csv");
 map.trim().split("\n").forEach(function(wall) {
   const wallArray = wall.trim().split(",");
   if (wallArray.length == 3) {
@@ -186,8 +186,9 @@ function addSimulationViewData(data) {
     // Outputs
     context.fillStyle="black";
     context.font = "20px Courier New";
-    context.fillText("X: "+x.toFixed(2)+" | Y: "+y.toFixed(2)+" | Yaw: "+yaw.toFixed(2)+" | Speed: "+groundSpeed.toFixed(2)+" | Ax: "+Ax.toFixed(2), 50, canvas.height-60);
-    context.fillText("Vx: "+Vx.toFixed(2)+" | Vy: "+Vy.toFixed(2)+" | Aim: "+headingRequest.toFixed(2)+" | AxReq: "+AxReq.toFixed(2), 50, canvas.height-30); //
+    /*context.fillText("X: "+x.toFixed(2)+" | Y: "+y.toFixed(2)+" | Yaw: "+yaw.toFixed(2)+" | Speed: "+groundSpeed.toFixed(2)+" | Ax: "+Ax.toFixed(2), 50, canvas.height-60);
+    context.fillText("Vx: "+Vx.toFixed(2)+" | Vy: "+Vy.toFixed(2)+" | Aim: "+headingRequest.toFixed(2)+" | AxReq: "+AxReq.toFixed(2), 50, canvas.height-30); //*/
+    context.fillText("Vx: "+Vx.toFixed(2)+" | Vy: "+Vy.toFixed(2), 50, canvas.height-30); //
     //#####################
     context.restore();
 
@@ -217,19 +218,19 @@ function addSimulationViewData(data) {
       context.beginPath();
       if(type == 1){
         context.fillStyle = "#003cb3";
-        coneSize = 6;
+        coneSize = 6;//0.22*g_scale;
       }
       if(type == 2){
         context.fillStyle = "#ffbf00";
-        coneSize = 6;
+        coneSize = 6;//0.22*g_scale;
       }
       if(type == 3){
         context.fillStyle = "#ff9000";
-        coneSize = 6;
+        coneSize = 6;//0.22*g_scale;
       }
       if(type == 4){
         context.fillStyle = "#ff9000";
-        coneSize = 10;
+        coneSize = 10;//0.3*g_scale;
       }
       context.save();
       context.fillRect(sx1, sy1, coneSize, coneSize);

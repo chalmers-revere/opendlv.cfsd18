@@ -1,0 +1,19 @@
+Start testing: May 21 14:02 UTC
+----------------------------------------------------------
+1/1 Testing: detectconetestsuite.hpp-TestSuite
+1/1 Test: detectconetestsuite.hpp-TestSuite
+Command: "/opt/opendlv.cfsd18.build/sim-cfsd18-prefix/src/sim-cfsd18-build/perception/detectcone/detectconetestsuite.hpp-TestSuite"
+Directory: /opt/opendlv.cfsd18.build/sim-cfsd18-prefix/src/sim-cfsd18-build/perception/detectcone
+"detectconetestsuite.hpp-TestSuite" start time: May 21 14:02 UTC
+Output:
+----------------------------------------------------------
+Running opendlv-sim-cfsd18-perception-detectcone-detectconetestsuite.hpp tests (1 test).OK!
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"detectconetestsuite.hpp-TestSuite" end time: May 21 14:02 UTC
+"detectconetestsuite.hpp-TestSuite" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: May 21 14:02 UTC
