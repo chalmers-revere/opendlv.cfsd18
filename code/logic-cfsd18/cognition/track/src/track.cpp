@@ -663,11 +663,18 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
     speedProfile(k) = std::min(sqrtf(ayLimit*curveRadii[k]),velocityLimit)*(1.0f-headingError*headingErrorDependency);
     }
     /*---------------------------------------------------------------------------*/
+    //std::cout<<"SpeedProfile: "<<speedProfile.transpose()<<std::endl;
+    /*for (uint32_t i = 0; i < curveRadii.size(); ++i)
+    {
+      std::cout<<curveRadii[i]<<std::endl;
+    }*/
+    
     //float const distanceBetweenPoints = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.distanceBetweenPoints");
     //float brakeMetersBefore = 4;
     //int K = round(brakeMetersBefore/distanceBetweenPoints);
     float tb;
     float tv;
+    float ta;
     float s=0;
     float tmp;
     float brakeTime=100000.0f;
@@ -696,6 +703,7 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
         if (speedProfile(i)<accPointMin) {
           accPointMin = speedProfile(i);
           accIdx = i;
+          ta = tv;
         }
       }
     }
@@ -706,7 +714,7 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
         //std::cout<<"braking too late, brakeTime: "<<brakeTime<<std::endl;
       }
       accelerationRequest = axLimitNegative;
-      //std::cout<<"brake max"<<std::endl;
+      std::cout<<"brake max: "<<accelerationRequest<<std::endl;
       /*if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = -sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;
         std::cout<<"accreq limited: "<<accelerationRequest<<std::endl;
@@ -716,12 +724,13 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
         accelerationRequest = 0.0f;
       }*/
     }
-    else if (brakeTime>0.0f && brakeTime<=1.0f){
+    else if (brakeTime>0.0f && brakeTime<=0.3f){
       /*if (idx-K>=0 && curveRadii[idx]<10.0f) {
         accelerationRequest = std::max((speedProfile(idx)-groundSpeedCopy)/(2*distanceToCriticalPoint[idx-K]),axLimitNegative);
       }else{*/
-        //std::cout<<"brake prematurely"<<std::endl;
         accelerationRequest = std::max((speedProfile(idx)-groundSpeedCopy)/(2*distanceToCriticalPoint[idx]),axLimitNegative);
+        accelerationRequest = axLimitNegative;
+        std::cout<<"brake prematurely: "<<accelerationRequest<<std::endl;
       //}
       /*if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = -sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;
@@ -736,13 +745,17 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
         std::cout<<"roll resistance is enough"<<std::endl;
       }*/
     }
-    else if((speedProfile(accIdx)-groundSpeedCopy) < 0.1f){
+    else if(brakeTime<= 0.5f){
       accelerationRequest = 0.0f;
-      //std::cout<<"no need to accelerate"<<std::endl;
+      std::cout<<"no need to accelerate, braking soon: "<<accelerationRequest<<std::endl;
+    }
+    else if((speedProfile(accIdx)-groundSpeedCopy) < 0.5f && ta<-0.5f){ //UNUSED
+      accelerationRequest = 0.0f;
+      std::cout<<"no need to accelerate: "<<accelerationRequest<<std::endl;
     }
     else{
-      //std::cout<<"accelerate max"<<std::endl;
       accelerationRequest = axLimitPositive;
+      std::cout<<"accelerate max: "<<accelerationRequest<<std::endl;
       if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;
         std::cout<<"accreq limited: "<<accelerationRequest<<std::endl;

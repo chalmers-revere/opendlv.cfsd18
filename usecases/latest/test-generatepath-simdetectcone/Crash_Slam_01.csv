@@ -1,0 +1,32 @@
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 0
+Reason: Hit a left side cone
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 0.1
+Timesince start: 0.1
+startIndex: 0
+endIndex: 0
+distanceTraveledAlongPath: 0
+Start -> x: -0.014851 y: 1.4999 yaw: -3.1317
+Stop -> x: -0.0197841 y: 0.00041353 yaw: -3.13249
+Calculated average vx: 0 km/h
+--------------------------------- 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 1
+Reason: Hit a right side cone
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 1.4
+Timesince start: 1.5
+startIndex: 0
+endIndex: 27
+distanceTraveledAlongPath: 4.00004
+Start -> x: -0.014851 y: 1.4999 yaw: -3.1317
+Stop -> x: -4.37658 y: 2.22625 yaw: 2.7861
+Calculated average vx: 10.2858 km/h
+--------------------------------- 
+################################# 
+Total time: 34.4
+Total time with penalties: 38.4
+Total length of path: 262.816
+Total crashes this run: Hit left: 1 | Hit right: 1 | Off track: 0
+Calculated average vx: 27.5039 km/h
