@@ -502,6 +502,7 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
   //
   //Output
   //   HEADINGREQUEST  [1 x 1] Desired heading angle [rad]
+  std::cout<<"localPath :\n"<<localPath<<std::endl;
   float headingRequest;
   Eigen::Vector2f aimPoint(2);
   bool preSet = false;
@@ -522,6 +523,7 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
             aimPoint << 1,
                         0;
             preSet = true;
+            std::cout<<"PRESET"<<std::endl;
             break;
           }
       }
@@ -533,18 +535,22 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
     }
   }
   if (!preSet) {
+    std::cout<<"localPath not preset: \n"<<localPath<<std::endl;
     // Calculate the distance between vehicle and aimpoint;
     float previewDistance = std::abs(groundSpeedCopy)*previewTime;
     //std::cout << "previewDistance: "<<previewDistance<<"\n";
-
+    std::cout<<"previewDistance: "<<previewDistance<<std::endl;
     float sumPoints = localPath.row(0).norm();
     // Sum the distance between all path points until passing previewDistance
     // or reaching end of path
+    std::cout<<"first distance: "<<sumPoints<<std::endl;
+    std::cout<<"localPath(0,0) "<<localPath(0,0)<<std::endl;
     int k=0;
     while (previewDistance >= sumPoints && k < localPath.rows()-1) {
       sumPoints += (localPath.row(k+1)-localPath.row(k)).norm();
       k++;
     }
+    std::cout<<"second distance: "<<sumPoints-localPath.row(0).norm()<<std::endl;
 
     if (sumPoints >= previewDistance) { // it means that the path is longer than previewDistance
       float distanceP1P2, overshoot, distanceP1AimPoint;
@@ -560,12 +566,12 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
         aimPoint = (localPath.row(k+1)-localPath.row(k))*(distanceP1AimPoint/distanceP1P2) + localPath.row(k);
       }
       else {// Place aimpoint on first path element
-        /* //interpolation
+         //interpolation
         distanceP1P2 = localPath.row(0).norm(); // Distance is equal to the distance to the first point;
         overshoot = sumPoints - previewDistance;
         distanceP1AimPoint = distanceP1P2 - overshoot;
-        aimPoint = localPath.row(0)*(distanceP1AimPoint/distanceP1P2);*/
-        aimPoint = localPath.row(0);
+        aimPoint = localPath.row(0)*(distanceP1AimPoint/distanceP1P2);
+        //aimPoint = localPath.row(0);
       }
     }
     // If the path is too short, place aimpoint at the last path element
@@ -702,10 +708,10 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
     float ay = powf(groundSpeedCopy,2)/(wheelBase/std::tan(std::abs(headingRequest)));
     if(brakeTime<=0.0f){
       if (brakeTime<0.0f) {
-        std::cout<<"braking too late, brakeTime: "<<brakeTime<<std::endl;
+        //std::cout<<"braking too late, brakeTime: "<<brakeTime<<std::endl;
       }
       accelerationRequest = axLimitNegative;
-      std::cout<<"brake max"<<std::endl;
+      //std::cout<<"brake max"<<std::endl;
       /*if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = -sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;
         std::cout<<"accreq limited: "<<accelerationRequest<<std::endl;
@@ -719,7 +725,7 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
       /*if (idx-K>=0 && curveRadii[idx]<10.0f) {
         accelerationRequest = std::max((speedProfile(idx)-groundSpeedCopy)/(2*distanceToCriticalPoint[idx-K]),axLimitNegative);
       }else{*/
-        std::cout<<"brake prematurely"<<std::endl;
+        //std::cout<<"brake prematurely"<<std::endl;
         accelerationRequest = std::max((speedProfile(idx)-groundSpeedCopy)/(2*distanceToCriticalPoint[idx]),axLimitNegative);
       //}
       /*if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
@@ -737,10 +743,10 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
     }
     else if((speedProfile(accIdx)-groundSpeedCopy) < 0.1f){
       accelerationRequest = 0.0f;
-      std::cout<<"no need to accelerate"<<std::endl;
+      //std::cout<<"no need to accelerate"<<std::endl;
     }
     else{
-      std::cout<<"accelerate max"<<std::endl;
+      //std::cout<<"accelerate max"<<std::endl;
       accelerationRequest = axLimitPositive;
       if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;

@@ -1,0 +1,307 @@
+################################# 
+Total time: 37.3
+Total time with penalties: 37.3
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 0
+Calculated average vx: 25.3656 km/h
+################################# 
+Total time: 71.9
+Total time with penalties: 71.9
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 0
+Calculated average vx: 13.1591 km/h
+################################# 
+Total time: 106.25
+Total time with penalties: 106.25
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 0
+Calculated average vx: 8.90481 km/h
+################################# 
+Total time: 140.5
+Total time with penalties: 140.5
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 0
+Calculated average vx: 6.73406 km/h
+################################# 
+Total time: 176.25
+Total time with penalties: 176.25
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 0
+Calculated average vx: 5.36815 km/h
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 0
+Reason: Went off track
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 0.1
+Timesince start: 0.1
+startIndex: 0
+endIndex: 0
+distanceTraveledAlongPath: 0
+Start -> x: -0.014851 y: 1.4999 yaw: -3.1317
+Stop -> x: -0.0170152 y: 1.49986 yaw: -3.13167
+Calculated average vx: 0 km/h
+--------------------------------- 
+################################# 
+Total time: 56.2
+Total time with penalties: DNF
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 1
+Calculated average vx: 16.8352 km/h
+################################# 
+Total time: 111.85
+Total time with penalties: DNF
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 1
+Calculated average vx: 8.45897 km/h
+################################# 
+Total time: 167.55
+Total time with penalties: DNF
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 1
+Calculated average vx: 5.64689 km/h
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 1
+Reason: Cleared timeLimit
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 200.05
+Timesince start: 200.15
+startIndex: 0
+endIndex: 909
+distanceTraveledAlongPath: 934.954
+Start -> x: -0.014851 y: 1.4999 yaw: -3.1317
+Stop -> x: -35.0385 y: -39.1729 yaw: -0.148655
+Calculated average vx: 16.825 km/h
+--------------------------------- 
+################################# 
+Total time: 223.3
+Total time with penalties: DNF
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 1
+Calculated average vx: 4.23706 km/h
+################################# 
+Total time: 279
+Total time with penalties: DNF
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 1
+Calculated average vx: 3.39117 km/h
+################################# 
+Total time: 334.65
+Total time with penalties: DNF
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 1
+Calculated average vx: 2.82724 km/h
+################################# 
+Total time: 390.3
+Total time with penalties: DNF
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 1
+Calculated average vx: 2.42412 km/h
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 2
+Reason: Cleared timeLimit
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 200.05
+Timesince start: 400.2
+startIndex: 909
+endIndex: 288
+distanceTraveledAlongPath: 942.051
+Start -> x: -35.067 y: -39.211 yaw: -0.087509
+Stop -> x: -42.5203 y: -6.92741 yaw: -1.48035
+Calculated average vx: 16.9527 km/h
+--------------------------------- 
+################################# 
+Total time: 446
+Total time with penalties: DNF
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 1
+Calculated average vx: 2.12138 km/h
+################################# 
+Total time: 501.8
+Total time with penalties: DNF
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 1
+Calculated average vx: 1.88548 km/h
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 0
+Reason: Went off track
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 0.1
+Timesince start: 0.1
+startIndex: 0
+endIndex: 0
+distanceTraveledAlongPath: 0
+Start -> x: -0.014851 y: 1.4999 yaw: -3.1317
+Stop -> x: -0.0170152 y: 1.49986 yaw: -3.13167
+Calculated average vx: 0 km/h
+--------------------------------- 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 0
+Reason: Went off track
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 0.1
+Timesince start: 0.1
+startIndex: 0
+endIndex: 0
+distanceTraveledAlongPath: 0
+Start -> x: -0.014851 y: 1.4999 yaw: -3.1317
+Stop -> x: -0.0191017 y: 1.5003 yaw: -3.13239
+Calculated average vx: 0 km/h
+--------------------------------- 
+################################# 
+Total time: 56.45
+Total time with penalties: DNF
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 1
+Calculated average vx: 16.7606 km/h
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 0
+Reason: Went off track
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 0.1
+Timesince start: 0.1
+startIndex: 0
+endIndex: 0
+distanceTraveledAlongPath: 0
+Start -> x: -0.014851 y: 1.4999 yaw: -3.1317
+Stop -> x: -0.0239831 y: 1.50019 yaw: -3.13372
+Calculated average vx: 0 km/h
+--------------------------------- 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 0
+Reason: Went off track
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 0.1
+Timesince start: 0.1
+startIndex: 0
+endIndex: 0
+distanceTraveledAlongPath: 0
+Start -> x: -0.014851 y: 1.4999 yaw: -3.1317
+Stop -> x: -0.0170152 y: 1.49986 yaw: -3.13167
+Calculated average vx: 0 km/h
+--------------------------------- 
+################################# 
+Total time: 37.55
+Total time with penalties: DNF
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 1
+Calculated average vx: 25.1967 km/h
+################################# 
+Total time: 73.65
+Total time with penalties: DNF
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 1
+Calculated average vx: 12.8464 km/h
+################################# 
+Total time: 34.3
+Total time with penalties: 34.3
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 0
+Calculated average vx: 27.5841 km/h
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 0
+Reason: Hit a right side cone
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 6.75
+Timesince start: 6.75
+startIndex: 0
+endIndex: 300
+distanceTraveledAlongPath: 49.964
+Start -> x: -0.014851 y: 1.4999 yaw: -3.1317
+Stop -> x: -42.594 y: -9.90286 yaw: -1.04823
+Calculated average vx: 26.6474 km/h
+--------------------------------- 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 1
+Reason: Hit a left side cone
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 5.5
+Timesince start: 12.25
+startIndex: 300
+endIndex: 567
+distanceTraveledAlongPath: 44.4781
+Start -> x: -41.526 y: -8.8695 yaw: -0.90927
+Stop -> x: -1.36514 y: -20.0118 yaw: -1.55598
+Calculated average vx: 29.1129 km/h
+--------------------------------- 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 2
+Reason: Hit a right side cone
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 5.5
+Timesince start: 17.75
+startIndex: 567
+endIndex: 837
+distanceTraveledAlongPath: 44.9636
+Start -> x: -2.5482 y: -19.914 yaw: -1.5447
+Stop -> x: -43.4314 y: -31.5253 yaw: -2.14264
+Calculated average vx: 29.4307 km/h
+--------------------------------- 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 3
+Reason: Hit a right side cone
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 1
+Timesince start: 18.75
+startIndex: 837
+endIndex: 864
+distanceTraveledAlongPath: 4.47941
+Start -> x: -42.373 y: -31.64 yaw: -1.6656
+Stop -> x: -43.6916 y: -36.9641 yaw: -1.24772
+Calculated average vx: 16.1259 km/h
+--------------------------------- 
+################################# 
+Total time: 35.95
+Total time with penalties: 35.95
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 0
+Calculated average vx: 26.3181 km/h
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 0
+Reason: Hit a right side cone
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 19.9
+Timesince start: 19.9
+startIndex: 0
+endIndex: 861
+distanceTraveledAlongPath: 143.385
+Start -> x: -0.014851 y: 1.4999 yaw: -3.1317
+Stop -> x: -42.772 y: -35.9758 yaw: -1.21971
+Calculated average vx: 25.9389 km/h
+--------------------------------- 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 1
+Reason: Hit a right side cone
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 10.6
+Timesince start: 30.5
+startIndex: 861
+endIndex: 1278
+distanceTraveledAlongPath: 68.9478
+Start -> x: -41.669 y: -35.535 yaw: -1.314
+Stop -> x: 19.4367 y: -31.2407 yaw: 1.53799
+Calculated average vx: 23.4162 km/h
+--------------------------------- 
+################################# 
+Total time: 36.55
+Total time with penalties: 40.55
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 2 | Off track: 0
+Calculated average vx: 25.8861 km/h
+################################# 
+Total time: 36.4
+Total time with penalties: 36.4
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 0
+Calculated average vx: 25.9927 km/h
+################################# 
+Total time: 70.7
+Total time with penalties: 70.7
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 0
+Calculated average vx: 13.3824 km/h
+################################# 
+Total time: 36.25
+Total time with penalties: 36.25
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 0
+Calculated average vx: 26.1003 km/h
