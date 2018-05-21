@@ -671,7 +671,7 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
     float tmp;
     float brakeTime=100000.0f;
     float accPointMin=100000.0f;
-    float rollResistance = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.rollResistance");
+    //float rollResistance = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.rollResistance");
     int i;
     int idx;
     int accIdx = 0;
@@ -705,6 +705,7 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
         std::cout<<"braking too late, brakeTime: "<<brakeTime<<std::endl;
       }
       accelerationRequest = axLimitNegative;
+      std::cout<<"brake max"<<std::endl;
       /*if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = -sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;
         std::cout<<"accreq limited: "<<accelerationRequest<<std::endl;
@@ -714,10 +715,11 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
         accelerationRequest = 0.0f;
       }*/
     }
-    else if (brakeTime>0.0f && brakeTime<=2.0f){
+    else if (brakeTime>0.0f && brakeTime<=1.0f){
       /*if (idx-K>=0 && curveRadii[idx]<10.0f) {
         accelerationRequest = std::max((speedProfile(idx)-groundSpeedCopy)/(2*distanceToCriticalPoint[idx-K]),axLimitNegative);
       }else{*/
+        std::cout<<"brake prematurely"<<std::endl;
         accelerationRequest = std::max((speedProfile(idx)-groundSpeedCopy)/(2*distanceToCriticalPoint[idx]),axLimitNegative);
       //}
       /*if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
@@ -728,14 +730,17 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
           accelerationRequest = 0.0f;
         }
       }*/
-      if (accelerationRequest>rollResistance*g) {
+      /*if (accelerationRequest>rollResistance*g) {
         accelerationRequest = 0.0f;
-      }
+        std::cout<<"roll resistance is enough"<<std::endl;
+      }*/
     }
-    else if((speedProfile(accIdx)-groundSpeedCopy) < 0.5f ){
+    else if((speedProfile(accIdx)-groundSpeedCopy) < 0.1f){
       accelerationRequest = 0.0f;
+      std::cout<<"no need to accelerate"<<std::endl;
     }
     else{
+      std::cout<<"accelerate max"<<std::endl;
       accelerationRequest = axLimitPositive;
       if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;
