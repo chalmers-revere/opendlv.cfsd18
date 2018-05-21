@@ -1,4 +1,0 @@
-/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-perception-detectcone
-/opt/opendlv.cfsd18/lib/libopendlv-sim-cfsd18-perception-detectcone-static.a
-/opt/opendlv.cfsd18/man/man1/opendlv-sim-cfsd18-perception-detectcone.1
-/opt/opendlv.cfsd18/include/opendlv-sim-cfsd18/detectcone.hpp
