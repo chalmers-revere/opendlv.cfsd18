@@ -279,9 +279,11 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
     groundSpeedCopy = m_groundSpeed;
   }
   float previewDistance = std::abs(groundSpeedCopy)*previewTime;
-  float pathLength=0.0f;
-  for (int i = 0; i < localPath.rows()-1; i++) {
-    pathLength+=(localPath.row(i+1)-localPath.row(i)).norm();
+  float pathLength=localPath.row(0).norm();
+  if(localPath.rows()>1){
+    for (int i = 0; i < localPath.rows()-1; i++) {
+      pathLength+=(localPath.row(i+1)-localPath.row(i)).norm();
+    }
   }
   if (previewDistance>pathLength) {
     std::cout<<"previewDistance "<< previewDistance <<" is longer than pathLength "<<pathLength<<std::endl;
@@ -502,12 +504,11 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
   //
   //Output
   //   HEADINGREQUEST  [1 x 1] Desired heading angle [rad]
-  std::cout<<"localPath :\n"<<localPath<<std::endl;
   float headingRequest;
   Eigen::Vector2f aimPoint(2);
   bool preSet = false;
   bool const moveOrigin = getKeyValueConfiguration().getValue<bool>("logic-cfsd18-cognition-track.moveOrigin");
-  if (moveOrigin) {
+  if (moveOrigin && localPath.rows()>2) {
     // Move localPath to front wheel axis
     float const frontToCog = getKeyValueConfiguration().getValue<float>("logic-cfsd18-cognition-track.frontToCog");
     Eigen::MatrixXf foo = Eigen::MatrixXf::Zero(localPath.rows(),2);
@@ -523,7 +524,6 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
             aimPoint << 1,
                         0;
             preSet = true;
-            std::cout<<"PRESET"<<std::endl;
             break;
           }
       }
@@ -535,22 +535,17 @@ std::tuple<float, float> Track::driverModelSteering(Eigen::MatrixXf localPath, f
     }
   }
   if (!preSet) {
-    std::cout<<"localPath not preset: \n"<<localPath<<std::endl;
     // Calculate the distance between vehicle and aimpoint;
     float previewDistance = std::abs(groundSpeedCopy)*previewTime;
     //std::cout << "previewDistance: "<<previewDistance<<"\n";
-    std::cout<<"previewDistance: "<<previewDistance<<std::endl;
     float sumPoints = localPath.row(0).norm();
     // Sum the distance between all path points until passing previewDistance
     // or reaching end of path
-    std::cout<<"first distance: "<<sumPoints<<std::endl;
-    std::cout<<"localPath(0,0) "<<localPath(0,0)<<std::endl;
     int k=0;
     while (previewDistance >= sumPoints && k < localPath.rows()-1) {
       sumPoints += (localPath.row(k+1)-localPath.row(k)).norm();
       k++;
     }
-    std::cout<<"second distance: "<<sumPoints-localPath.row(0).norm()<<std::endl;
 
     if (sumPoints >= previewDistance) { // it means that the path is longer than previewDistance
       float distanceP1P2, overshoot, distanceP1AimPoint;
