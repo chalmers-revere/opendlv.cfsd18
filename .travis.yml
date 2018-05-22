@@ -1,0 +1,32 @@
+os: linux
+language: cpp
+sudo: required
+branches:
+  only:
+  - cognition.main
+services:
+  - docker
+addons:
+  apt:
+    update: true
+env:
+  global:
+    - COMMIT=${TRAVIS_COMMIT::7}
+    - DOCKERHUB='chalmersfsd'
+    - IMAGE=`echo ${TRAVIS_REPO_SLUG#*/}`
+    - secure: IQ5c3TsLOjeNIaD7Y32GrtlAgcVO2HID+ayv9z4Am457xiVrsHDtTmKxat1+efsm8bLJmv+kbxapFyB9dP8j6XaDG1xbtZwb2Amo8qAZILfbJ5kSYtab4AZsK8kDp+fxNVDKYAm6tDXfiF1p8JNCR3xIj9011UML8kW5dKZi1B5pc1N+Z5VRaN9+CXNy0epC2zD88ae7xg/dU0M56LNgnnz0mcl2cC12tu3tzQx/STn5UbLvKFecERyYVYp6kmp+StooeSocE+69kwsndncwz2nL7EfvN8to4ZzBxzNGzfR2C6ZFa0PPu1dS7LtN3VUcnjgpkLXWGOpkpGb90jSsPToHdOFEF+Zxlr13AnD40Hwjhi3D8x+BXFi5qVrrnw+OCIbvZ161E9YNvQIf8MXdcKJQKe2e2Z5omfUsqQSVAeGJNTos8W4KkUb/I/o3w0nhRMdqYYq1Dg6kR0EPZgOxGjLwmNEYdMFTedZYJc5BWHfdiF+9G4c+XxFWnq2PF3P+ur4saSjtzhDHeMoFiI2GrkJFsf0vcM9MxYbJ3TWZttMc14X4TuwYieH78t0A3hL58pEvmKXX/hxCAZuGfGLCK5ll1gzdSiCPkUg+KAxaQjojCFfRssRwJWDUKs9R2xAdEgRfaKIFfK8KojfPQP5ce4w3GJOL9d9ZGgKQpe4gWlA=
+    - secure: VNTCujEAhRgZyvP1a49z//i1pJzcWu4dYUkx/UUMzXqrMvJSlSl7RKS6hAemxtdAGt+mAjIEvA/jkeI6Ga8VLlhtj+yItcUJ+VMMo0YDyrqMtRHchtFMX2zj6IliZ8Vqze7KFVCV26qXk1+3jlOuQU0FSCHUpJNusCSNSZQMFVsPxhdV4vyxr5Ge5G8EUGxF6u2s5mjqey+lwX69/fyPs/wbZvaoT9oVkvYX+XRcAfe8KRUR7kKxs4wFzM0bxd9CYsD1J/qGzyDNEpFiwYPm1/9/bPQ1LeWEcQJh1Q7zr9jSBXmjhgscyhqJdKcpxZ6FueMlI97wcgNsZ/3IXsWkcJYDZDh1NAYLUER1rh8yIQ8aljcIeLC1s0jucu+LUjRU89Bk0OjiNxVed1rI/oRLuhfrlhfKdqx//y2MQfnETb9MWRfMiHwmYgzIGo9zkakSt8XTa1ZR44eNcuIft9lkjcmvPH4SLhe1E+DYJNQqVTi70w8EkzojvnxxyMN0kRVWkGI0C2iv4/WwCJsVZl7f62nDrZVuon5RFGq/uyC5LStMNxyOLZos1r3c6caKDdbUFyd5XdKdqPS50aZsao4SkC4ScfV/p8R/5RESNezQHfY9x8UniGfIk4GRXeu0HSiwHVLz1ZOa/F8ea/97rpYcRXuYhG4b0DWsi8Df3QL66C4=
+install:
+  - cd docker
+  - make buildComplete createDockerImage
+  - docker tag seresearch/opendlv-cfsd18-on-opendlv-core-on-opendavinci-on-base:latest ${IMAGE}:${COMMIT}
+script: skip
+after_success:
+  - docker --version
+  - echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+  - docker tag ${IMAGE}:${COMMIT} ${DOCKERHUB}/${IMAGE}:${COMMIT}
+  - docker push ${DOCKERHUB}/${IMAGE}:${COMMIT}
+notifications:
+  email:
+    on_success: never
+    on_failure: never
