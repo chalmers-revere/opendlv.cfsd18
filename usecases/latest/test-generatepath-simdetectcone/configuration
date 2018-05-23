@@ -1,16 +1,16 @@
 sim-cfsd18-perception-detectcone.detectRange = 12.0
 sim-cfsd18-perception-detectcone.detectWidth = 5.0
-sim-cfsd18-perception-detectcone.mapFilename = track1.csv
-sim-cfsd18-perception-detectcone.pathFilename = path1.csv
-sim-cfsd18-perception-detectcone.speedFilename = Speed_Slam_02.csv
-sim-cfsd18-perception-detectcone.crashFilename = Crash_Slam_02.csv
-sim-cfsd18-perception-detectcone.xyFilename = XY_Slam_02.csv
-sim-cfsd18-perception-detectcone.startX = -0.014851
-sim-cfsd18-perception-detectcone.startY = 1.4999
-sim-cfsd18-perception-detectcone.startHeading = -3.1317
+sim-cfsd18-perception-detectcone.mapFilename = track8small.csv
+sim-cfsd18-perception-detectcone.pathFilename = path8small.csv
+sim-cfsd18-perception-detectcone.speedFilename = Speed_sharpSlam_0x.csv
+sim-cfsd18-perception-detectcone.crashFilename = Crash_sharpSlam_0x.csv
+sim-cfsd18-perception-detectcone.xyFilename = XY_sharpSlam_0x.csv
+sim-cfsd18-perception-detectcone.startX = 0
+sim-cfsd18-perception-detectcone.startY = 1.5
+sim-cfsd18-perception-detectcone.startHeading = 3.1415
 sim-cfsd18-perception-detectcone.fakeSlamActivated = 1
 logic-cfsd18-perception-detectconelane.fakeSlamActivated = 1
-sim-cfsd18-perception-detectcone.nConesFakeSlam = 10
+sim-cfsd18-perception-detectcone.nConesFakeSlam = 5
 sim-cfsd18-perception-detectcone.timeLimit = 200
 
 # x=-4.14 --y=50.209 --yaw=-0.785 >> top right
@@ -32,20 +32,20 @@ sim-lynx-bicyclemodel.magicFormulaC = 1.0
 sim-lynx-bicyclemodel.magicFormulaE = -2.0
 
 logic-cfsd18-cognition-track.RunSharp = 0 #bool
-logic-cfsd18-cognition-track.nSharp = 8
-logic-cfsd18-cognition-track.K1Sharp = 0.17 #rad/m
-logic-cfsd18-cognition-track.KySharp = 0.7
-logic-cfsd18-cognition-track.bigCSharp = 0.17
+logic-cfsd18-cognition-track.nSharp = 10
+logic-cfsd18-cognition-track.K1Sharp = 0.10 #rad/m
+logic-cfsd18-cognition-track.KySharp = 0.5
+logic-cfsd18-cognition-track.bigCSharp = 0.10
 logic-cfsd18-cognition-track.smallcSharp = 1
 
 logic-cfsd18-cognition-track.moveOrigin = 1 #bool
-logic-cfsd18-cognition-track.previewTime = 0.3
+logic-cfsd18-cognition-track.previewTime = 0.5
 logic-cfsd18-cognition-track.velocityLimit = 30.0
 logic-cfsd18-cognition-track.axSpeedProfile = -1 #if <0, ayLimit is set using maximum axLimit
 logic-cfsd18-cognition-track.mu = 0.9
 logic-cfsd18-cognition-track.rollResistance = -0.02
-logic-cfsd18-cognition-track.axLimitPositive = 6.0
-logic-cfsd18-cognition-track.axLimitNegative = -6.0
+logic-cfsd18-cognition-track.axLimitPositive = 8.0
+logic-cfsd18-cognition-track.axLimitNegative = -8.0
 logic-cfsd18-cognition-track.headingErrorDependency = 0.3 #between 0 and 1, where 0 is no dependency and 1 scales speedProfile with (1-[headingrequest]/[maximum headingRequest])
 
 logic-cfsd18-cognition-track.distanceBetweenPoints = 0.5

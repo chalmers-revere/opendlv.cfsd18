@@ -29,7 +29,7 @@ services:
     sim-global:
         image: chalmersrevere/opendlv-sim-global-amd64:v0.0.5
         network_mode: "host"
-        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=0 --x=-0.77789 --y=1.2262 --yaw=-2.532"
+        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=50 --frame-id=0 --x=-0.014851 --y=1.5 --yaw=-3.1317"
 
 
     # microservice for ...
@@ -41,7 +41,7 @@ services:
         volumes:
         - .:/opt/opendlv.data
 #        command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-cognition-blackbox --cid=${CID} --verbose=1 --id=1"
-        command: "/usr/bin/opendlv-sim-cfsd18-cognition-blackbox --cid=${CID} --maxSteering=25.0 --maxAcceleration=5.0 --maxDeceleration=5.0 --receiveTimeLimit=0.001"
+        command: "/usr/bin/opendlv-sim-cfsd18-cognition-blackbox --cid=${CID} --maxSteering=25.0 --maxAcceleration=5.0 --maxDeceleration=5.0 --receiveTimeLimit=0.01"
 
     # microservice for ...
     sim-cfsd18-perception-detectcone:
@@ -72,7 +72,7 @@ services:
 
     ui-default:
 #        image: chalmersrevere/opendlv-ui-default-amd64
-        image: opendlv-ui-default:v0.0.1
+        image: cognition-track:1
         network_mode: "host"
         #volumes:
         #- ./simulation-map-closed-lap.txt:/srv/http/simulation-map-closed-lap.txt

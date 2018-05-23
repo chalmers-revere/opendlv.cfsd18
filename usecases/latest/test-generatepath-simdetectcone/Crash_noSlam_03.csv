@@ -1,0 +1,19 @@
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+crashCount: 0
+Reason: Went off track
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+Time since last crash: 0.05
+Timesince start: 0.05
+startIndex: 0
+endIndex: 0
+distanceTraveledAlongPath: 1.4013e-43
+Start -> x: -0.014851 y: 1.4999 yaw: -3.1317
+Stop -> x: -0.0162459 y: 1.49999 yaw: -3.1317
+Calculated average vx: 1.00893e-41 km/h
+--------------------------------- 
+################################# 
+Total time: 37.6
+Total time with penalties: DNF
+Total length of path: 262.816
+Total crashes this run: Hit left: 0 | Hit right: 0 | Off track: 1
+Calculated average vx: 25.1632 km/h
