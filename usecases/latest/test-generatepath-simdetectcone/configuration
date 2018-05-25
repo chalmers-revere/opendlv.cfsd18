@@ -1,16 +1,16 @@
 sim-cfsd18-perception-detectcone.detectRange = 12.0
 sim-cfsd18-perception-detectcone.detectWidth = 5.0
-sim-cfsd18-perception-detectcone.mapFilename = track8small.csv
-sim-cfsd18-perception-detectcone.pathFilename = path8small.csv
-sim-cfsd18-perception-detectcone.speedFilename = Speed_sharpSlam_0x.csv
-sim-cfsd18-perception-detectcone.crashFilename = Crash_sharpSlam_0x.csv
-sim-cfsd18-perception-detectcone.xyFilename = XY_sharpSlam_0x.csv
-sim-cfsd18-perception-detectcone.startX = 0
+sim-cfsd18-perception-detectcone.mapFilename = track2.csv
+sim-cfsd18-perception-detectcone.pathFilename = path2.csv
+sim-cfsd18-perception-detectcone.speedFilename = Speed_Slam_0x.csv
+sim-cfsd18-perception-detectcone.crashFilename = Crash_Slam_0x.csv
+sim-cfsd18-perception-detectcone.xyFilename = XY_Slam_0x.csv
+sim-cfsd18-perception-detectcone.startX = -0.31428
 sim-cfsd18-perception-detectcone.startY = 1.5
-sim-cfsd18-perception-detectcone.startHeading = 3.1415
+sim-cfsd18-perception-detectcone.startHeading = -3.0138
 sim-cfsd18-perception-detectcone.fakeSlamActivated = 1
 logic-cfsd18-perception-detectconelane.fakeSlamActivated = 1
-sim-cfsd18-perception-detectcone.nConesFakeSlam = 5
+sim-cfsd18-perception-detectcone.nConesFakeSlam = 8
 sim-cfsd18-perception-detectcone.timeLimit = 200
 
 # x=-4.14 --y=50.209 --yaw=-0.785 >> top right
@@ -61,4 +61,4 @@ logic-cfsd18-cognition-track.frontToCog = 0.765
 logic-cfsd18-cognition-track.wheelAngleLimit = 25.0f #degrees
 
 logic-cfsd18-cognition-track.receiveTimeLimit = 0.01000
-logic-cfsd18-perception-detectconelane.receiveTimeLimit = 0.01000
+logic-cfsd18-perception-detectconelane.receiveTimeLimit = 0.1000

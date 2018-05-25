@@ -41,7 +41,7 @@ services:
         volumes:
         - .:/opt/opendlv.data
 #        command: "/opt/opendlv.cfsd18/bin/opendlv-sim-cfsd18-cognition-blackbox --cid=${CID} --verbose=1 --id=1"
-        command: "/usr/bin/opendlv-sim-cfsd18-cognition-blackbox --cid=${CID} --maxSteering=25.0 --maxAcceleration=5.0 --maxDeceleration=5.0 --receiveTimeLimit=0.01"
+        command: "/usr/bin/opendlv-sim-cfsd18-cognition-blackbox --cid=${CID} --maxSteering=25.0 --maxAcceleration=5.0 --maxDeceleration=5.0 --receiveTimeLimit=0.1"
 
     # microservice for ...
     sim-cfsd18-perception-detectcone:

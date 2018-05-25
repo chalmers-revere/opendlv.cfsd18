@@ -286,7 +286,7 @@ void Track::collectAndRun(std::map< double, std::vector<float> > surfaceFrame){
     }
   }
   if (previewDistance>pathLength) {
-    std::cout<<"previewDistance "<< previewDistance <<" is longer than pathLength "<<pathLength<<std::endl;
+    //std::cout<<"previewDistance "<< previewDistance <<" is longer than pathLength "<<pathLength<<std::endl;
     previewDistance = pathLength;
   }
 
@@ -751,16 +751,16 @@ float Track::driverModelVelocity(Eigen::MatrixXf localPath, float groundSpeedCop
     }
     else if((speedProfile(accIdx)-groundSpeedCopy) < 0.5f && ta<-0.5f){ //UNUSED
       accelerationRequest = 0.0f;
-      std::cout<<"no need to accelerate: "<<accelerationRequest<<std::endl;
+      //std::cout<<"no need to accelerate: "<<accelerationRequest<<std::endl;
     }
     else{
       accelerationRequest = axLimitPositive;
       //std::cout<<"accelerate max: "<<accelerationRequest<<std::endl;
       if (sqrtf(powf(ay,2)+powf(accelerationRequest,2)) >= g*mu) {
         accelerationRequest = sqrtf(powf(g*mu,2)-powf(ay,2))*0.9f;
-        std::cout<<"accreq limited: "<<accelerationRequest<<std::endl;
+        //std::cout<<"accreq limited: "<<accelerationRequest<<std::endl;
         if (std::isnan(accelerationRequest)) {
-          std::cout<<"accelerationRequest 3 is NaN, ay = "<<ay<<std::endl;
+          //std::cout<<"accelerationRequest 3 is NaN, ay = "<<ay<<std::endl;
           accelerationRequest = 0.0f;
         }
       }
