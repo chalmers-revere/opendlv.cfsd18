@@ -104,7 +104,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
   int const nConesFakeSlam = kv.getValue<int>("sim-cfsd18-perception-detectcone.nConesFakeSlam");
 
   /*-----THESIS----*/
-  /*float const dt = 1.0 / static_cast<double>(getFrequency());
+  float const dt = 1.0 / static_cast<double>(getFrequency());
   float lapTime = 0.0f;
   int step = 0;
   int step2 =0;
@@ -164,7 +164,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
       pathLength += sqrtf(powf(globalPath[idx2]-globalPath[idx1],2)+powf(globalPath[idx2+1]-globalPath[idx1+1],2));
       idx1 +=3;
       idx2 +=3;
-    }*/
+    }
 
 
   while(getModuleStateAndWaitForRemainingTimeInTimeslice() == odcore::data::dmcp::ModuleStateMessage::RUNNING)
@@ -250,7 +250,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
     //std::cout << "sendTime:" << timeSend.count() << std::endl;
 
     /*-----THESIS----*/
-/*
+
       step++;
       step2++;
       lapTime = step*dt;
@@ -412,7 +412,7 @@ odcore::data::dmcp::ModuleExitCodeMessage::ModuleExitCode DetectCone::body()
         }
       }
       lastClosestPointIndex = closestPointIndex;
-*/
+
   } // End of while
 
   return odcore::data::dmcp::ModuleExitCodeMessage::OKAY;

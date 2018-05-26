@@ -1,0 +1,40 @@
+# docker-compose.yml - Composition of micro-services to run OpenDLV software.
+# Copyright (C) 2016 Christian Berger
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version  of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Date: 2016-10-13
+
+version: '2'
+
+services:
+    sim-global:
+        image: chalmersrevere/opendlv-sim-global-amd64:v0.0.5
+        network_mode: "host"
+        command: "/usr/bin/opendlv-sim-global --cid=${CID} --freq=20 --frame-id=0 --x=-0.014851 --y=1.5 --yaw=-3.1317"
+
+
+    # microservice for ...
+    sim-cfsd18-cognition-blackboxcomplete:
+        image: blackboxcomplete:1
+        network_mode: "host"
+        volumes:
+        - .:/opt/opendlv.data
+        command: "/usr/bin/opendlv-sim-cfsd18-cognition-blackbox --cid=${CID} --maxSteering=25.0 --maxAcceleration=5.0 --maxDeceleration=5.0 --dt=0.05 --timeLimit=100 --mapfilename=track1.csv --pathFile=path1.csv --XYFile=XY_blackboxcomplete_0x.csv --CrashFile=Crash_blackboxcomplete_0x.csv --SpeedFile=Speed_blackboxcomplete_0x.csv"
+
+    ui-default:
+#        image: chalmersrevere/opendlv-ui-default-amd64
+        image: cognition-track:1
+        network_mode: "host"
+        command: "--cid=${CID}"
