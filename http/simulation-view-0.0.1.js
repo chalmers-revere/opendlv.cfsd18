@@ -32,7 +32,7 @@ function setupSimulationView() {
     return xmlHttp.responseText;
   }
 
-var map = getResourceFrom("trackTest2.csv");
+var map = getResourceFrom("trackFSG.csv");
 map.trim().split("\n").forEach(function(wall) {
   const wallArray = wall.trim().split(",");
   if (wallArray.length == 3) {
@@ -61,16 +61,16 @@ map.trim().split("\n").forEach(function(wall) {
 
         if (e.ctrlKey) {
           g_scale += deltaY;
-          if (g_scale < 10) {
-            g_scale = 10;
+          if (g_scale < 1) {
+            g_scale = 1;
           }
           if (g_scale > 500) {
             g_scale = 500;
           }
 
           g_scaleSim += deltaY;
-          if (g_scaleSim < 10) {
-            g_scaleSim = 10;
+          if (g_scaleSim < 1) {
+            g_scaleSim = 1;
           }
           if (g_scaleSim > 500) {
             g_scaleSim = 500;
@@ -109,6 +109,9 @@ var Ax=0;
 var AxReq=0;
 var groundSpeed=0;
 var distanceToAimPoint = 0;
+var Ay =0;
+var yawRateDot =0;
+var yawRate =0;
 function addSimulationViewData(data) {
   if (data.dataType == 1172){
     headingRequest = data["opendlv_logic_action_AimPoint"]["azimuthAngle"];
@@ -129,6 +132,9 @@ function addSimulationViewData(data) {
   }
   if (data.dataType == 1017){
     Ax= data["opendlv_logic_sensation_Equilibrioception"]["vz"];
+    Ay = data["opendlv_logic_sensation_Equilibrioception"]["rollRate"];
+    yawRateDot = data["opendlv_logic_sensation_Equilibrioception"]["pitchRate"];
+    yawRate = data["opendlv_logic_sensation_Equilibrioception"]["yawRate"];
   }
   if (data.dataType == 1001) {
     const x = data["opendlv_sim_Frame"]["x"];
@@ -188,7 +194,8 @@ function addSimulationViewData(data) {
     context.font = "20px Courier New";
     /*context.fillText("X: "+x.toFixed(2)+" | Y: "+y.toFixed(2)+" | Yaw: "+yaw.toFixed(2)+" | Speed: "+groundSpeed.toFixed(2)+" | Ax: "+Ax.toFixed(2), 50, canvas.height-60);
     context.fillText("Vx: "+Vx.toFixed(2)+" | Vy: "+Vy.toFixed(2)+" | Aim: "+headingRequest.toFixed(2)+" | AxReq: "+AxReq.toFixed(2), 50, canvas.height-30); //*/
-    context.fillText("Vx: "+Vx.toFixed(2)+" | Vy: "+Vy.toFixed(2), 50, canvas.height-30); //
+    context.fillText("Vx: "+Vx.toFixed(2)+" | Vy: "+Vy.toFixed(2) +" | Ax: "+Ax.toFixed(2) +" | Ay: "+Ay.toFixed(2), 50, canvas.height-60); //
+    context.fillText(" | AxReq: "+AxReq.toFixed(2)+" | Aim: "+headingRequest.toFixed(2), 50, canvas.height-30);
     //#####################
     context.restore();
 
