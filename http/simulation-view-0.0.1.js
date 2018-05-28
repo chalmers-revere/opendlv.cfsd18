@@ -32,7 +32,7 @@ function setupSimulationView() {
     return xmlHttp.responseText;
   }
 
-var map = getResourceFrom("trackFSG.csv");
+var map = getResourceFrom("trackTest2R.csv");
 map.trim().split("\n").forEach(function(wall) {
   const wallArray = wall.trim().split(",");
   if (wallArray.length == 3) {
@@ -195,7 +195,7 @@ function addSimulationViewData(data) {
     /*context.fillText("X: "+x.toFixed(2)+" | Y: "+y.toFixed(2)+" | Yaw: "+yaw.toFixed(2)+" | Speed: "+groundSpeed.toFixed(2)+" | Ax: "+Ax.toFixed(2), 50, canvas.height-60);
     context.fillText("Vx: "+Vx.toFixed(2)+" | Vy: "+Vy.toFixed(2)+" | Aim: "+headingRequest.toFixed(2)+" | AxReq: "+AxReq.toFixed(2), 50, canvas.height-30); //*/
     context.fillText("Vx: "+Vx.toFixed(2)+" | Vy: "+Vy.toFixed(2) +" | Ax: "+Ax.toFixed(2) +" | Ay: "+Ay.toFixed(2), 50, canvas.height-60); //
-    context.fillText(" | AxReq: "+AxReq.toFixed(2)+" | Aim: "+headingRequest.toFixed(2), 50, canvas.height-30);
+    context.fillText("AxReq: "+AxReq.toFixed(2)+" | Aim: "+headingRequest.toFixed(2), 50, canvas.height-30);
     //#####################
     context.restore();
 
