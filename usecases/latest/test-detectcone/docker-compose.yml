@@ -9,34 +9,40 @@ services:
         command: "/opt/od4/bin/odsupercomponent --cid=${CID} --verbose=1 --configuration=/opt/opendlv.data/configuration"
 
     # microservice for perception-detectcone
-#    logic-cfsd18-perception-detectcone:
-#        image: ${IMAGE}
-#        working_dir: /opt/tmp
-#        depends_on:
-#          - odsupercomponent
-#        ipc: host
-#        user: odv
-#        network_mode: host
-#        environment:
-#           - DISPLAY=$DISPLAY
-#        volumes:
-#          - /tmp/.X11-unix:/tmp/.X11-unix
-#          - .:/opt/tmp
-#        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectcone --cid=${CID} --id=1"
+    logic-cfsd18-perception-detectcone:
+       image: ${IMAGE}
+       working_dir: /opt/tmp
+       depends_on:
+         - odsupercomponent
+       ipc: host
+       user: odv
+       network_mode: host
+       environment:
+          - DISPLAY=$DISPLAY
+       volumes:
+         - /tmp/.X11-unix:/tmp/.X11-unix
+         - .:/opt/tmp
+       command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-perception-detectcone --cid=${CID} --id=1"
     
     # microservice for cfsd18-sensation-attention
-    cfsd18-sensation-attention:
-        image: ${IMAGE}
-        network_mode: "host"
-        working_dir: /opt/tmp
-        ipc: host
-        user: odv
-        volumes:
-          - /tmp/.X11-unix:/tmp/.X11-unix
-          - .:/opt/tmp
-        depends_on:
-        - odsupercomponent
-        command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-sensation-attention --cid=${CID} --id=1"
+    # cfsd18-sensation-attention:
+    #     image: ${IMAGE}
+    #     network_mode: "host"
+    #     working_dir: /opt/tmp
+    #     ipc: host
+    #     user: odv
+    #     volumes:
+    #       - /tmp/.X11-unix:/tmp/.X11-unix
+    #       - .:/opt/tmp
+    #     depends_on:
+    #     - odsupercomponent
+    #     command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-sensation-attention --cid=${CID} --id=1"
+    
+    # cfsd18-sensation-attention:
+    #   image: "attention:test"
+    #   network_mode: "host"
+    #   ipc: host
+    #   command: "cfsd18-sensation-attention --cid=${CID} --verbose --id=116 --xBoundary=4 --yBoundary=12 --groundLayerZ=-0.3 --coneHeight=1 --connectDistanceThreshold=0.4 --layerRangeThreshold=0.06 --minNumOfPointsForCone=2 --maxNumOfPointsForCone=80 --farConeRadiusThreshold=0.2 --nearConeRadiusThreshold=0.25 --zRangeThreshold=0.08 --inlierRangeThreshold=0.06 --dotThreshold=0.1 --inlierFoundThreshold=150 --numberOfIterations=10"
 
     # #proxy-velodyne16
     # velodyne16:

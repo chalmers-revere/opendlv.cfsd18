@@ -45,6 +45,8 @@
 
 #include <tiny_dnn/tiny_dnn.h>
 
+#include "point.hpp"
+
 namespace opendlv {
 namespace logic {
 namespace cfsd18 {
@@ -62,29 +64,25 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   void setUp();
   void tearDown();
 
-	//bool CheckContainer(uint32_t objectId, odcore::data::TimeStamp timestamp);
+  bool ExtractSharedImage(odcore::data::image::SharedImage *); 
   void initializeCollection();
-  bool ExtractSharedImage(odcore::data::image::SharedImage *);
-  void saveImg(double currentTime);
-  void featureBased();
-  void reconstruction(cv::Mat, cv::Mat &, cv::Mat &, cv::Mat &, cv::Mat &);
-  void blockMatching(cv::Mat &, cv::Mat, cv::Mat);
-  void xyz2xy(cv::Mat, cv::Point3f, cv::Point2f &);
-  float_t depth2resizeRate(double, double);
-  void convertImage(cv::Mat, int, int, tiny_dnn::vec_t &);
-  void slidingWindow(const std::string &);
-  void backwardDetection(cv::Mat, std::vector<cv::Point3f>, std::vector<int>&);
-  void efficientSlidingWindow(const std::string &, int, int);
-  void softmax(cv::Vec<double,5>, cv::Vec<double,5> &);
+  void saveRecord(cv::Mat);
+  void blockMatching(cv::Mat&, cv::Mat, cv::Mat);
+  void reconstruction(cv::Mat, cv::Mat&, cv::Mat&, cv::Mat&, cv::Mat&);
+  void convertImage(cv::Mat, int, int, tiny_dnn::vec_t&);
+  void slidingWindow(const std::string&);
   std::vector <cv::Point> imRegionalMax(cv::Mat, int, double, int);
-  int medianVector(std::vector<std::pair<float, int>>);
-  void forwardDetection(cv::Mat);
-  void forwardDetectionRoI(cv::Mat, tiny_dnn::network<tiny_dnn::sequential>);
+  float median(std::vector<float>);
+  float mean(std::vector<float>);
+  void whiteBalance(cv::Mat);
+  void gather_points(cv::Mat, std::vector<float>, std::vector<int>&, std::vector<float>&);
+  void filterKeypoints(std::vector<cv::Point3f>&);
+  void xyz2xy(cv::Mat, cv::Point3f, cv::Point2f&, int&);
+  void backwardDetection(cv::Mat, std::vector<cv::Point3f>, std::vector<int>&);
+  void forwardDetectionORB(cv::Mat);
 
-  // void matchPoints(Eigen::MatrixXd, Eigen::MatrixXd);
-  // void findMatch(Eigen::MatrixXd, Eigen::MatrixXd);
   Eigen::MatrixXd Spherical2Cartesian(double, double, double);
-  void Cartesian2Spherical(double, double, double, opendlv::logic::sensation::Point &);
+  void Cartesian2Spherical(double, double, double, opendlv::logic::sensation::Point&);
   void SendCollectedCones(Eigen::MatrixXd);
   void SendMatchedContainer(Eigen::MatrixXd);
 
@@ -110,6 +108,9 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   uint32_t m_senderStamp = 0;
   uint32_t m_attentionSenderStamp = 0;
   uint32_t m_count = 0;
+  int m_patchSize = 64;
+  int m_width = 672;
+  int m_height = 376;
 
   const double DEG2RAD = 0.017453292522222; // PI/180.0
   const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD;

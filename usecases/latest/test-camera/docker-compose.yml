@@ -1,0 +1,100 @@
+version: '2'
+
+services:
+    odsupercomponent:
+        image: ${IMAGE}
+        network_mode: "host"
+        volumes:
+        - .:/opt/opendlv.data
+        command: "/opt/od4/bin/odsupercomponent --cid=${CID} --verbose=1 --configuration=/opt/opendlv.data/configuration"
+
+    # #proxy-velodyne16
+    # proxy-velodyne16:
+    #     image: chalmersrevere/opendlv-device-lidar-vlp16-multi:v0.0.3
+    #     network_mode: "host"
+    #     volumes:
+    #         - .:/opt/opendlv.data
+    #     ipc: host
+    #     # user: odv
+    #     working_dir: "/opt/opendlv.data"
+    #     command: "opendlv-device-lidar-vlp16 --vlp16_ip=0.0.0.0 --vlp16_port=2368 --cid=${CID}"
+
+    # proxy-camera
+    proxy-camera:
+       image: ${IMAGE}
+       network_mode: host
+       depends_on:
+           - odsupercomponent
+       group_add:
+           - video
+       ipc: host
+       user: odv
+       devices:
+           - "/dev/video1:/dev/video1"
+       environment:
+           - DISPLAY=$DISPLAY
+       volumes:
+           - /tmp/.X11-unix:/tmp/.X11-unix
+       command: "/opt/opendlv.core/bin/opendlv-core-system-proxy-camera --cid=${CID}  --id=0 --freq=30"
+
+    # # proxy-ellipse2n
+    # # image need to be built locally
+    # proxy-ellipse2n:
+    #     image: "ellipseproxy:ellipsev0.0.2"
+    #     network_mode: "host"
+    #     ipc: host
+    #     devices:
+    #         - "/dev/ttyUSB0:/dev/ttyUSB0"
+    #     volumes:
+    #         - /etc/passwd:/etc/passwd
+    #         - /etc/groups:/etc/groups
+    #     command: "opendlv-proxy-ellipse2n --cid=${CID} --id=112"
+
+
+    # # recorder
+    # odrecorderh264:
+    #    image: ${IMAGE}
+    #    depends_on:
+    #        - odsupercomponent
+    #        - proxy-camera
+    #        # - proxy-velodyne16
+    #        # - proxy-ellipse2n
+    #    volumes:
+    #        - ~/recordings:/opt/recordings
+    #    user: odv
+    #    network_mode: host
+    #    ipc: host
+    #    working_dir: "/opt/recordings"
+    #    command: "/opt/od4/bin/odrecorderh264 --cid=${CID}"
+
+
+    # #signal-viewer
+    # signal-viewer:
+    #     image: chalmersrevere/opendlv-signal-viewer-multi:v0.0.4
+    #     network_mode: "host"
+    #     ports:
+    #         - "8080:8080" 
+    #     command: "--cid=${CID}"
+
+    # #vehicle-viewer
+    # vehicle-viewer:
+    #    image: chalmersrevere/opendlv-vehicle-view-multi:v0.0.8
+    #    network_mode: "host"
+    #    ports:
+    #        - "8081:8081" 
+    #    command: "--cid=${CID}"
+
+    # odcockpit:
+    #    image: ${IMAGE}
+    #    network_mode: host
+    #    environment:
+    #    - DISPLAY=$DISPLAY
+    #    volumes:
+    #    - /tmp/.X11-unix:/tmp/.X11-unix
+    #    - ~/opendlv/opendlv.cfsd18/code/logic-cfsd18/perception/detectconelane/src:/opt/testdata
+    #    - ~/recordings:/opt/recordings
+    #    ipc: host
+    #    user: odv
+    #    depends_on:
+    #        - odsupercomponent
+    #    command: "/opt/od4/bin/odcockpit --cid=${CID}" 

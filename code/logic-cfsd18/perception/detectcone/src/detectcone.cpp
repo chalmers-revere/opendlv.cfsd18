@@ -45,12 +45,15 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_lidarIsWorking(false)
 , m_checkLiarMilliseconds()
 , m_count(0)
+, m_patchSize(64)
+, m_width(672)
+, m_height(376)
 {
   m_diffVec = 0;
   m_pointMatched = Eigen::MatrixXd::Zero(4,1);
   m_lastCameraData = Eigen::MatrixXd::Zero(4,1);
   m_lastLidarData = Eigen::MatrixXd::Zero(4,1);
-  m_coneCollector = Eigen::MatrixXd::Zero(4,200);
+  m_coneCollector = Eigen::MatrixXd::Zero(4,2000);
   m_lastObjectId = 0;
 }
 
@@ -70,9 +73,6 @@ void DetectCone::setUp()
   m_attentionSenderStamp = kv.getValue<int>("logic-cfsd18-perception-detectcone.attentionSenderStamp");
   std::cout << "setup OK " << std::endl;
 
-  // slidingWindow("slidingWindow");
-
-  efficientSlidingWindow("efficientSlidingWindow", 336, 60);
   slidingWindow("slidingWindow");
 }
 
@@ -108,7 +108,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
     odcore::data::image::SharedImage sharedImg =
     a_container.getData<odcore::data::image::SharedImage>();
     odcore::data::TimeStamp timeStamp = a_container.getReceivedTimeStamp();
-    std::cout << timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds() << std::endl;
+    // std::cout << timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds() << std::endl;
     m_lastTimeStamp = timeStamp;
     if (!ExtractSharedImage(&sharedImg)) {
       std::cout << "[" << getName() << "] " << "[Unable to extract shared image." << std::endl;
@@ -117,7 +117,8 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
       m_recievedFirstImg = true;
     }
 
-    forwardDetectionRoI(m_img, m_slidingWindow);
+    forwardDetectionORB(m_img);
+    // saveRecord(m_img);
 
     // if (((timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds()) > m_checkLiarMilliseconds*1000)){
     //   std::cout << "Lidar fails! Camera detection only! " << std::endl;
@@ -227,19 +228,19 @@ void DetectCone::initializeCollection(){
   Eigen::MatrixXd extractedCones;
   {
     odcore::base::Lock lockCone(m_coneMutex);
-	  std::cout << "FRAME IN LOCK: " << m_newFrame << std::endl;
+    std::cout << "FRAME IN LOCK: " << m_newFrame << std::endl;
     extractedCones = m_coneCollector.leftCols(m_lastObjectId+1);
     m_newFrame = true;
     m_lastObjectId = 0;
-    m_coneCollector = Eigen::MatrixXd::Zero(4,200);
+    m_coneCollector = Eigen::MatrixXd::Zero(4,20);
   }
   //Initialize for next collection
-  //std::cout << "Collection done " << extractedCones.cols() << std::endl;
+  std::cout << "Collection done " << extractedCones.cols() << std::endl;
   if(extractedCones.cols() > 0){
     //std::cout << "Extracted Cones " << std::endl;
     //std::cout << extractedCones << std::endl;
-    //std::cout << "Extracted Cones " << std::endl;
-    //std::cout << extractedCones << std::endl;
+    std::cout << "Extracted Cones " << std::endl;
+    std::cout << extractedCones << std::endl;
     if(m_recievedFirstImg){
       SendCollectedCones(extractedCones);
     }
@@ -282,20 +283,6 @@ bool DetectCone::ExtractSharedImage(
   return isExtracted;
 }
 
-void DetectCone::saveImg(double currentTime) {
-  std::string imgName = std::to_string(currentTime);
-  cv::imwrite("recording/"+imgName+".png", m_img);
-}
-
-void DetectCone::featureBased() {
-  cv::Mat m_hsv, channel[3];
-  cv::cvtColor(m_img, m_hsv, CV_RGB2HSV);
-  cv::split(m_hsv, channel);
-  //cv::adaptiveThreshold(adapThreshImg, channel[1], 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, m_adapThreshKernelSize, m_adapThreshConst);
-  cv::imshow("img", channel[0]);
-  cv::waitKey(0);
-}
-
 void DetectCone::blockMatching(cv::Mat &disp, cv::Mat imgL, cv::Mat imgR){
   cv::Mat grayL, grayR;
 
@@ -307,10 +294,28 @@ void DetectCone::blockMatching(cv::Mat &disp, cv::Mat imgL, cv::Mat imgR){
   sbm.state->numberOfDisparities = 32;
 
   sbm(grayL, grayR, disp, CV_32F);
+  // disp /= 16;
   // cv::normalize(disp, disp, 0, 255, CV_MINMAX, CV_8U);
 }
 
 void DetectCone::reconstruction(cv::Mat img, cv::Mat &Q, cv::Mat &disp, cv::Mat &rectified, cv::Mat &XYZ){
+  // cv::Mat mtxLeft = (cv::Mat_<double>(3, 3) <<
+  //   350.6847, 0, 332.4661,
+  //   0, 350.0606, 163.7461,
+  //   0, 0, 1);
+  // cv::Mat distLeft = (cv::Mat_<double>(5, 1) << -0.1674, 0.0158, 0.0057, 0, 0);
+  // cv::Mat mtxRight = (cv::Mat_<double>(3, 3) <<
+  //   351.9498, 0, 329.4456,
+  //   0, 351.0426, 179.0179,
+  //   0, 0, 1);
+  // cv::Mat distRight = (cv::Mat_<double>(5, 1) << -0.1700, 0.0185, 0.0048, 0, 0);
+  // cv::Mat R = (cv::Mat_<double>(3, 3) <<
+  //   0.9997, 0.0015, 0.0215,
+  //   -0.0015, 1, -0.00008,
+  //   -0.0215, 0.00004, 0.9997);
+  // cv::Mat T = (cv::Mat_<double>(3, 1) << -119.1807, 0.1532, 1.1225);
+  // cv::Size stdSize = cv::Size(640, 360);
+
   cv::Mat mtxLeft = (cv::Mat_<double>(3, 3) <<
     349.891, 0, 334.352,
     0, 349.891, 187.937,
@@ -325,15 +330,17 @@ void DetectCone::reconstruction(cv::Mat img, cv::Mat &Q, cv::Mat &disp, cv::Mat 
   cv::Mat R;
   cv::Rodrigues(rodrigues, R);
   cv::Mat T = (cv::Mat_<double>(3, 1) << -0.12, 0, 0);
-  cv::Size stdSize = cv::Size(672, 376);
+  cv::Size stdSize = cv::Size(m_width, m_height);
 
   int width = img.cols;
   int height = img.rows;
   cv::Mat imgL(img, cv::Rect(0, 0, width/2, height));
   cv::Mat imgR(img, cv::Rect(width/2, 0, width/2, height));
 
-  cv::resize(imgL, imgL, stdSize);
-  cv::resize(imgR, imgR, stdSize);
+  if(height != m_height){
+    cv::resize(imgL, imgL, stdSize);
+    cv::resize(imgR, imgR, stdSize);
+  }
 
   //std::cout << imgR.size() <<std::endl;
 
@@ -362,22 +369,11 @@ void DetectCone::reconstruction(cv::Mat img, cv::Mat &Q, cv::Mat &disp, cv::Mat 
   cv::reprojectImageTo3D(disp, XYZ, Q);
 }
 
-void DetectCone::xyz2xy(cv::Mat Q, cv::Point3f xyz, cv::Point2f &xy){
-  double X = xyz.x;
-  double Y = xyz.y;
-  double Z = xyz.z;
-  double Cx = -Q.at<double>(0,3);
-  double Cy = -Q.at<double>(1,3);
-  double f = Q.at<double>(2,3);
-  double a = Q.at<double>(3,2);
-  double b = Q.at<double>(3,3);
-  double d = (f - Z * b ) / ( Z * a);
-  xy.x = X * ( d * a + b ) + Cx;
-  xy.y = Y * ( d * a + b ) + Cy;
-}
-
-float_t DetectCone::depth2resizeRate(double x, double y){
-  return 2*(1.6078-0.4785*std::sqrt(std::sqrt(x*x+y*y)));
+void DetectCone::saveRecord(cv::Mat img){
+  // cv::Mat Q, disp, XYZ;
+  // cv::resize(img, img, cv::Size(1344,376));
+  // reconstruction(img, Q, disp, img, XYZ);
+  cv::imwrite("images/"+std::to_string(m_count++)+".png", img);
 }
 
 void DetectCone::convertImage(cv::Mat img, int w, int h, tiny_dnn::vec_t &data){
@@ -395,29 +391,29 @@ void DetectCone::convertImage(cv::Mat img, int w, int h, tiny_dnn::vec_t &data){
 }
 
 
-void DetectCone::slidingWindow(const std::string &dictionary) {
+void DetectCone::slidingWindow(const std::string& dictionary) {
   using conv    = tiny_dnn::convolutional_layer;
-  using pool    = tiny_dnn::max_pooling_layer;
   using fc      = tiny_dnn::fully_connected_layer;
   using tanh    = tiny_dnn::tanh_layer;
-  using leaky_relu    = tiny_dnn::leaky_relu_layer;
+  using relu    = tiny_dnn::relu_layer;
   using softmax = tiny_dnn::softmax_layer;
 
   tiny_dnn::core::backend_t backend_type = tiny_dnn::core::default_engine();
 
-  m_slidingWindow << conv(25, 25, 4, 3, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh() 
-     // << dropout(22*22*16, 0.25)                    
-     << pool(22, 22, 16, 2, backend_type)                               
-     << conv(11, 11, 4, 16, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh() 
-     // << dropout(8*8*32, 0.25)                    
-     << pool(8, 8, 32, 2, backend_type) 
-     << fc(4 * 4 * 32, 128, true, backend_type) << leaky_relu()  
-     << fc(128, 5, true, backend_type) << softmax(5);
+  m_slidingWindow << conv(64, 64, 4, 3, 16, tiny_dnn::padding::valid, true, 2, 2, backend_type) << tanh()                                                   
+     << conv(31, 31, 3, 16, 16, tiny_dnn::padding::valid, true, 2, 2, backend_type) << tanh() 
+     // << dropout(15*15*16, 0.25)
+     << conv(15, 15, 3, 16, 32, tiny_dnn::padding::valid, true, 2, 2, backend_type) << tanh() 
+     << conv(7, 7, 3, 32, 32, tiny_dnn::padding::valid, true, 2, 2, backend_type) << tanh() 
+     // << dropout(3*3*32, 0.25)                     
+     << fc(3 * 3 * 32, 128, true, backend_type) << relu()  
+     << fc(128, 5, true, backend_type) << softmax(5); 
 
   // load nets
   std::ifstream ifs(dictionary.c_str());
   ifs >> m_slidingWindow;
 }
+
 
 
 void DetectCone::backwardDetection(cv::Mat img, std::vector<cv::Point3f> pts, std::vector<int>& outputs){
@@ -432,43 +428,36 @@ void DetectCone::backwardDetection(cv::Mat img, std::vector<cv::Point3f> pts, st
 
   for(size_t i = 0; i < pts.size(); i++){
     cv::Point2f point2D;
-    xyz2xy(Q, pts[i], point2D);
+    int radius;
+    xyz2xy(Q, pts[i], point2D, radius);
 
     int x = point2D.x;
     int y = point2D.y;
 
-    // std::cout << "Camera region center: " << x << ", " << y << std::endl;
-    float_t ratio = depth2resizeRate(pts[i].x, pts[i].z);
-    if (ratio > 0) {
-      int length = ratio * 25;
-      int radius = (length-1)/2;
-      // std::cout << "radius: " << radius << std::endl;
+    cv::Rect roi;
+    roi.x = std::max(x - radius, 0);
+    roi.y = std::max(y - radius, 0);
+    roi.width = std::min(x + radius, rectified.cols) - roi.x;
+    roi.height = std::min(y + radius, rectified.rows) - roi.y;
 
-      cv::Rect roi;
-      roi.x = std::max(x - radius, 0);
-      roi.y = std::max(y - radius, 0);
-      roi.width = std::min(x + radius, rectified.cols) - roi.x;
-      roi.height = std::min(y + radius, rectified.rows) - roi.y;
-
-      //cv::circle(img, cv::Point (x,y), radius, cv::Scalar (0,0,0));
-      // // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
-      //cv::namedWindow("roi", cv::WINDOW_NORMAL);
-      //cv::imshow("roi", img);
-      //cv::waitKey(0);
-      //cv::destroyAllWindows();
-      if (0 > roi.x || 0 > roi.width || roi.x + roi.width > rectified.cols || 0 > roi.y || 0 > roi.height || roi.y + roi.height > rectified.rows){
-        std::cout << "Wrong roi!" << std::endl;
-        outputs.push_back(-1);
-      }
-      else{
-        auto patchImg = rectified(roi);
-        tiny_dnn::vec_t data;
-        convertImage(patchImg, 25, 25, data);
-        inputs.push_back({data});
-        outputs.push_back(0);
-        verifiedIndex.push_back(i);
-        porperty.push_back(cv::Vec3i(x,y,radius));
-      }
+    //cv::circle(img, cv::Point (x,y), radius, cv::Scalar (0,0,0));
+    // // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
+    //cv::namedWindow("roi", cv::WINDOW_NORMAL);
+    //cv::imshow("roi", img);
+    //cv::waitKey(0);
+    //cv::destroyAllWindows();
+    if (0 > roi.x || 0 > roi.width || roi.x + roi.width > rectified.cols || 0 > roi.y || 0 > roi.height || roi.y + roi.height > rectified.rows){
+      std::cout << "Wrong roi!" << std::endl;
+      outputs.push_back(-1);
+    }
+    else{
+      auto patchImg = rectified(roi);
+      tiny_dnn::vec_t data;
+      convertImage(patchImg, 25, 25, data);
+      inputs.push_back({data});
+      outputs.push_back(0);
+      verifiedIndex.push_back(i);
+      porperty.push_back(cv::Vec3i(x,y,radius));
     }
   }
   
@@ -518,57 +507,58 @@ void DetectCone::backwardDetection(cv::Mat img, std::vector<cv::Point3f> pts, st
 }
 
 
-void DetectCone::efficientSlidingWindow(const std::string &dictionary, int width, int height) {
-  using conv    = tiny_dnn::convolutional_layer;
-  using tanh    = tiny_dnn::tanh_layer;
-  tiny_dnn::core::backend_t backend_type = tiny_dnn::core::backend_t::internal;
+// void DetectCone::efficientSlidingWindow(const std::string &dictionary, int width, int height) {
+//   using conv    = tiny_dnn::convolutional_layer;
+//   using tanh    = tiny_dnn::tanh_layer;
+//   tiny_dnn::core::backend_t backend_type = tiny_dnn::core::backend_t::internal;
 
-  m_efficientSlidingWindow << conv(width, height, 3, 3, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
-     << conv(width-2, height-2, 3, 8, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
-     // << dropout((width-4)*(height-4)*8, 0.25)
-     << conv(width-4, height-4, 3, 8, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
-     << conv(width-6, height-6, 3, 8, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
-     // << dropout((width-8)*(height-8)*8, 0.25)
-     << conv(width-8, height-8, 3, 8, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
-     << conv(width-10, height-10, 3, 8, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
-     // << dropout((width-12)*(height-12)*16, 0.25)
-     << conv(width-12, height-12, 3, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
-     << conv(width-14, height-14, 3, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
-     // << dropout((width-16)*(height-16)*16, 0.25)
-     << conv(width-16, height-16, 3, 16, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
-     << conv(width-18, height-18, 3, 32, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
-     // << dropout((width-20)*(height-20)*32, 0.25)
-     << conv(width-20, height-20, 3, 32, 64, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
-     << conv(width-22, height-22, 3, 64, 5, tiny_dnn::padding::valid, true, 1, 1, backend_type);
+//   m_efficientSlidingWindow << conv(width, height, 3, 3, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+//      << conv(width-2, height-2, 3, 8, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+//      // << dropout((width-4)*(height-4)*8, 0.25)
+//      << conv(width-4, height-4, 3, 8, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+//      << conv(width-6, height-6, 3, 8, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+//      // << dropout((width-8)*(height-8)*8, 0.25)
+//      << conv(width-8, height-8, 3, 8, 8, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+//      << conv(width-10, height-10, 3, 8, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+//      // << dropout((width-12)*(height-12)*16, 0.25)
+//      << conv(width-12, height-12, 3, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+//      << conv(width-14, height-14, 3, 16, 16, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+//      // << dropout((width-16)*(height-16)*16, 0.25)
+//      << conv(width-16, height-16, 3, 16, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+//      << conv(width-18, height-18, 3, 32, 32, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+//      // << dropout((width-20)*(height-20)*32, 0.25)
+//      << conv(width-20, height-20, 3, 32, 64, tiny_dnn::padding::valid, true, 1, 1, backend_type) << tanh()
+//      << conv(width-22, height-22, 3, 64, 5, tiny_dnn::padding::valid, true, 1, 1, backend_type);
 
-  // load nets
-  std::ifstream ifs(dictionary.c_str());
-  ifs >> m_efficientSlidingWindow;
-}
+//   // load nets
+//   std::ifstream ifs(dictionary.c_str());
+//   ifs >> m_efficientSlidingWindow;
+// }
 
-void DetectCone::softmax(cv::Vec<double,5> x, cv::Vec<double,5> &y) {
-  double min, max, denominator = 0;
-  cv::minMaxLoc(x, &min, &max);
-  for (int j = 0; j < 5; j++) {
-    y[j] = std::exp(x[j] - max);
-    denominator += y[j];
-  }
-  for (int j = 0; j < 5; j++) {
-    y[j] /= denominator;
-  }
-}
+// void DetectCone::softmax(cv::Vec<double,5> x, cv::Vec<double,5> &y) {
+//   double min, max, denominator = 0;
+//   cv::minMaxLoc(x, &min, &max);
+//   for (int j = 0; j < 5; j++) {
+//     y[j] = std::exp(x[j] - max);
+//     denominator += y[j];
+//   }
+//   for (int j = 0; j < 5; j++) {
+//     y[j] /= denominator;
+//   }
+// }
 
 // float DetectCone::medianVector(std::vector<float> input){    
 //   std::nth_element(input.begin(), input.begin() + input.size() / 2, input.end());
 //   return input[input.size() / 2];
 // }
-int DetectCone::medianVector(std::vector<std::pair<float, int>> input){
-  int n = input.size()/2;
-  std::nth_element(input.begin(), input.begin()+n, input.end());
 
-  // int median = input[n].first;
-  return input[n].second;
-}
+// int DetectCone::medianVector(std::vector<std::pair<float, int>> input){
+//   int n = input.size()/2;
+//   std::nth_element(input.begin(), input.begin()+n, input.end());
+
+//   // int median = input[n].first;
+//   return input[n].second;
+// }
 
 std::vector <cv::Point> DetectCone::imRegionalMax(cv::Mat input, int nLocMax, double threshold, int minDistBtwLocMax)
 {
@@ -603,159 +593,192 @@ std::vector <cv::Point> DetectCone::imRegionalMax(cv::Mat input, int nLocMax, do
     return locations;
 }
 
-void DetectCone::forwardDetection(cv::Mat imgSource) {
-  double threshold = 0.9;
-  int patchSize = 25;
-  int patchRadius = int((patchSize-1)/2);
-  int col = 336;
-  int row = 188;
-  int heightUp = 70;
-  int heightDown = 130;
-  int inputWidth = col;
-  int inputHeight = heightDown-heightUp;
-
-  int outputWidth  = inputWidth - (patchSize - 1);
-  int outputHeight  = inputHeight - (patchSize - 1);
-
-  cv::Rect roi;
-  roi.x = 0;
-  roi.y = heightUp;
-  roi.width = inputWidth;
-  roi.height = inputHeight;
-
-  cv::Mat Q, disp, rectified, XYZ, resize_img;
-  reconstruction(imgSource, Q, disp, rectified, XYZ);
-  cv::resize(rectified, resize_img, cv::Size (col, row));
-
-  auto patchImg = resize_img(roi);
-
-  // convert imagefile to vec_t
-  tiny_dnn::vec_t data;
-  convertImage(patchImg, inputWidth, inputHeight, data);
-
-  // recognize
-  auto prob = m_efficientSlidingWindow.predict(data);
-
-  cv::Mat probMap = cv::Mat::zeros(outputHeight, outputWidth, CV_64FC(5));
-  for (int c = 0; c < 5; ++c)
-    for (int y = 0; y < outputHeight; ++y)
-      for (int x = 0; x < outputWidth; ++x)
-         probMap.at<cv::Vec<double,5>>(y, x)[c] = prob[c * outputWidth * outputHeight + y * outputWidth + x];
-
-  cv::Vec<double,5> probSoftmax(5);
-  cv::Mat probMapSoftmax = cv::Mat::zeros(outputHeight, outputWidth, CV_64F);
-  cv::Mat probMapIndex = cv::Mat::zeros(outputHeight, outputWidth, CV_32S);
-  for (int y = 0; y < outputHeight; ++y){
-    for (int x = 0; x < outputWidth; ++x){
-      softmax(probMap.at<cv::Vec<double,5>>(y, x), probSoftmax);
-      for (int c = 0; c < 4; ++c)
-        if(probSoftmax[c+1] > threshold){
-          probMapSoftmax.at<double>(y, x) = probSoftmax[c+1];
-          probMapIndex.at<int>(y, x) = c+1;
-        }
-    }
+float DetectCone::median(std::vector<float> vec) {
+  int size = vec.size();
+  float tvecan;
+  if (size % 2 == 0) { // even
+    tvecan = (vec[vec.size() / 2 - 1] + vec[vec.size() / 2]) / 2;
   }
 
-  std::vector <cv::Point> cone;
-  cv::Point position, positionShift = cv::Point(patchRadius, patchRadius+heightUp);
-  int label;
-  cone = imRegionalMax(probMapSoftmax, 10, threshold, 20);
-  // std::vector<std::pair<float, int>> coneRegion;
-  // std::vector<cv::Point> coneRegionXY;
+  else //odd
+    tvecan = vec[vec.size() / 2];
+  return tvecan;
+}
 
-  if (cone.size()>0){
-    for(size_t i = 0; i<cone.size(); i++){
-      position = (cone[i] + positionShift)*2;
-      if(position.x>320 && position.x<400 && position.y>250) continue;
+float DetectCone::mean(std::vector<float> vec) {
+  float result = 0;
+  size_t size = vec.size();
+  for(size_t i = 0; i < size; i++){
+    result += vec[i];
+  }
+  result /= size;
+  return result;
+}
 
-      label = probMapIndex.at<int>(cone[i]);
-      
-      //median rectify
-      // int ith = 0;
-      // for(int x = positionResize.x-5; x <= positionResize.x+5; x++){
-      //   for(int y = positionResize.y-5; y <= positionResize.y+5; y++){
-      //     if (x >= 0 && x < 2*col && y >= 0 && y < 2*row){
-      //       float depth = XYZ.at<cv::Point3f>(x, y)[2] * 2;
-      //       if(depth > 0 && depth < 20000){
-      //         coneRegion.push_back(std::pair<float, int>(depth, ith++));
-      //         coneRegionXY.push_back(cv::Point(x, y));
-      //       }
-      //     }
-      //   }  
-      // }
-      // if(coneRegion.size()>0){
-      //   int medianIndex = medianVector(coneRegion);
+void DetectCone::gather_points(//初始化
+  cv::Mat source,
+  std::vector<float> vecQuery,
+  std::vector<int>& vecIndex,
+  std::vector<float>& vecDist
+  )
+{  
+  double radius = 1;
+  unsigned int max_neighbours = 100;
+  cv::flann::KDTreeIndexParams indexParams(2);
+  cv::flann::Index kdtree(source, indexParams); //此部分建立kd-tree索引同上例，故不做详细叙述
+  cv::flann::SearchParams params(1024);//设置knnSearch搜索参数
+  kdtree.radiusSearch(vecQuery, vecIndex, vecDist, radius, max_neighbours, params);
+}
 
-      cv::Point3f point3D = XYZ.at<cv::Point3f>(position);
-      // cv::Point3f point3D2 = XYZ.at<cv::Point3f>(coneRegionXY[medianIndex]) * 2;
-      // std::cout << point3D2 << " " << point3D << std::endl;
-      if (point3D.z > 0 && point3D.z < 10){
-        if (label == 1){
-          cv::circle(rectified, position, 3, {255, 0, 0}, -1);
-          std::cout << "Find one blue cone, XYZ positon: "
-          << point3D << "mm, xy position: " << position << "pixel, certainty: " 
-          << probMapSoftmax.at<double>(cone[i]) << std::endl;
-        }
-        if (label == 2){
-          cv::circle(rectified, position, 3, {0, 255, 255}, -1);
-          std::cout << "Find one yellow cone, XYZ positon: "
-          << point3D << "mm, xy position: " << position << "pixel, certainty: " 
-          << probMapSoftmax.at<double>(cone[i]) << std::endl;
-        }
-        if (label == 3){
-          cv::circle(rectified, position, 3, {0, 165, 255}, -1);
-          std::cout << "Find one orange cone, XYZ positon: "
-          << point3D << "mm, xy position: " << position << "pixel, certainty: " 
-          << probMapSoftmax.at<double>(cone[i]) << std::endl;
-        }
-        if (label == 4){
-          cv::circle(rectified, position, 6, {0, 0, 255}, -1);
-          std::cout << "Find one big orange cone, XYZ positon: "
-          << point3D << "mm, xy position: " << position << "pixel, certainty: " 
-          << probMapSoftmax.at<double>(cone[i]) << std::endl;
+void DetectCone::filterKeypoints(std::vector<cv::Point3f>& point3Ds){
+  std::vector<Pt> data;
+  
+  for(size_t i = 0; i < point3Ds.size(); i++){
+    // if(point3Ds[i].y > 0.5 && point3Ds[i].y < 2){
+      data.push_back(Pt{point3Ds[i],-1});
+    // }
+  }
+  
+  cv::Mat source = cv::Mat(point3Ds).reshape(1);
+  point3Ds.clear();
+  cv::Point3f point3D;
+  int groupId = 0;
+
+  for(size_t j = 0; j < data.size()-1; j++)
+  {   
+    if(data[j].group == -1){
+      std::vector<float> vecQuery(3);//存放 查询点 的容器（本例都是vector类型）
+      vecQuery[0] = data[j].pt.x;
+      vecQuery[1] = data[j].pt.y;
+      vecQuery[2] = data[j].pt.z;
+      std::vector<int> vecIndex;
+      std::vector<float> vecDist;
+
+      gather_points(source, vecQuery, vecIndex, vecDist);//kd tree finish; find the points in the circle with point center vecQuery and radius, return index in vecIndex
+      int num = 0;
+      for(size_t i = 0; i < vecIndex.size(); i++){
+        if(vecIndex[i]!=0)
+          num++;
+      }
+      for (size_t i = 1; i < vecIndex.size(); i++){
+        if (vecIndex[i] == 0 && vecIndex[i+1] != 0){
+          num++;
         }
       }
+      if (num == 0){
+        if (data[j].group == -1){ 
+          data[j].group = groupId++;
+          point3D = data[j].pt;
+          // std::cout<<j<<" type 1"<<" "<<data[j].pt.x<<","<<data[j].pt.y<<" group "<<data[j].group<<std::endl;
+        }
+      }
+      else{   
+        std::vector<Pt> groupAll;
+        std::vector<int> filteredIndex;
+        std::vector<float> centerPointX;
+        std::vector<float> centerPointY;
+        std::vector<float> centerPointZ;
+        for (int v = 0; v < num; v++){
+          groupAll.push_back(data[vecIndex[v]]);
+          filteredIndex.push_back(vecIndex[v]);
+        }
+      
+        int noGroup = 0;
+        for(size_t i = 0; i < groupAll.size(); i++){
+          if(groupAll[i].group == -1)
+            noGroup++;
+        }
+
+        if (noGroup > 0){
+          for (size_t k = 0; k < filteredIndex.size(); k++)
+          { 
+            if (data[filteredIndex[k]].group == -1)
+            { 
+              data[filteredIndex[k]].group = groupId;
+              centerPointX.push_back(data[vecIndex[k]].pt.x);
+              centerPointY.push_back(data[vecIndex[k]].pt.y);
+              centerPointZ.push_back(data[vecIndex[k]].pt.z);
+            }
+          }
+          groupId++;
+          point3D.x = mean(centerPointX);
+          point3D.y = mean(centerPointY);
+          point3D.z = mean(centerPointZ);
+        }
+        else{
+          data[j].group = data[vecIndex[0]].group;
+          point3D = data[j].pt;
+          // std::cout<<j<<" type 2"<<" "<<data[j].pt.x<<","<<data[j].pt.y<<" group "<<data[j].group<<std::endl;
+        }
+      }
+      if(std::isnan(point3D.x)||std::isnan(point3D.y)||std::isnan(point3D.y))
+        continue;
+      point3Ds.push_back(point3D);
     }
   }
 }
 
-void DetectCone::forwardDetectionRoI(cv::Mat imgSource, tiny_dnn::network<tiny_dnn::sequential> nn){
+void DetectCone::xyz2xy(cv::Mat Q, cv::Point3f xyz, cv::Point2f& xy, int& radius){
+  float X = xyz.x;
+  float Y = xyz.y;
+  float Z = xyz.z;
+  float Cx = float(-Q.at<double>(0,3));
+  float Cy = float(-Q.at<double>(1,3));
+  float f = float(Q.at<double>(2,3));
+  float a = float(Q.at<double>(3,2));
+  float b = float(Q.at<double>(3,3));
+  float d = (f - Z * b ) / ( Z * a);
+  xy.x = X * ( d * a + b ) + Cx;
+  xy.y = Y * ( d * a + b ) + Cy;
+  radius = int(0.4f * ( d * a + b ));
+}
+
+void DetectCone::whiteBalance(cv::Mat img){
+  auto meanValue = cv::mean(img);
+  std::cout << "mean value: " << meanValue << std::endl;
+}
+
+void DetectCone::forwardDetectionORB(cv::Mat img){
   //Given RoI by SIFT detector and detected by CNN
-  float_t threshold = 0.5f;
-  int radius = 12;
-  
+  double threshold = 0.1;
+
   std::vector<tiny_dnn::tensor_t> inputs;
   std::vector<int> verifiedIndex;
   std::vector<cv::Point> candidates;
   // std::vector<int> outputs;
 
-  cv::Mat Q, disp, XYZ, img;
-  cv::resize(imgSource, imgSource, cv::Size(1344,376));
-  reconstruction(imgSource, Q, disp, imgSource, XYZ);
-  // img = img.rowRange(176, 376);
-  img = imgSource.rowRange(180, 320);
-  // img.rowRange(0,24) = 0;
-  // img.rowRange(126,150) = 0;
-  // cv::Mat img_hsv;
-  // cv::cvtColor(img, img_hsv, cv::COLOR_BGR2HSV);
+  cv::Mat Q, disp, XYZ, imgRoI, imgSource;
+  reconstruction(img, Q, disp, img, XYZ);
+  img.copyTo(imgSource);
 
-  cv::ORB detector(20);
+  int rowT = 190;
+  int rowB = 320;
+  imgRoI = img.rowRange(rowT, rowB);
+  // whiteBalance(imgRoI);
+
+  cv::ORB detector(100);
   std::vector<cv::KeyPoint> keypoints;
-  detector.detect(img, keypoints);
+  detector.detect(imgRoI, keypoints);
 
-  // cv::Mat Match;
-  // cv::drawKeypoints(img, keypoints, Match);
-  // cv::namedWindow("cv::Match", cv::WINDOW_NORMAL);
-  // cv::imshow("cv::Match", Match);
-  // cv::waitKey(0);
+  cv::Mat probMap = cv::Mat::zeros(m_height, m_width, CV_64F);
+  cv::Mat indexMap = cv::Mat::zeros(m_height, m_width, CV_32S);
 
-  cv::resize(img, img, cv::Size(336, 70));
-  cv::Mat probMap = cv::Mat::zeros(70, 336, CV_64F);
-  cv::Mat indexMap = cv::Mat::zeros(70, 336, CV_32S);
-
+  std::vector<cv::Point3f> point3Ds;
+  cv::Point2f point2D;
   for(size_t i = 0; i < keypoints.size(); i++){
-    int x = int(keypoints[i].pt.x/2);
-    int y = int(keypoints[i].pt.y/2);
+    cv::Point position(int(keypoints[i].pt.x), int(keypoints[i].pt.y)+rowT);
+    cv::Point3f point3D = XYZ.at<cv::Point3f>(position);
+    if(point3D.y>0.8f && point3D.y<1.1f){
+      point3Ds.push_back(point3D);
+    }
+    // std::cout << "position" << position << " " << XYZ.at<cv::Point3f>(position) << std::endl;
+  }
+  filterKeypoints(point3Ds);
+  for(size_t i = 0; i < point3Ds.size(); i++){
+    int radius;
+    xyz2xy(Q, point3Ds[i], point2D, radius);
+    int x = int(point2D.x);
+    int y = int(point2D.y);
 
     cv::Rect roi;
     roi.x = std::max(x - radius, 0);
@@ -763,41 +786,42 @@ void DetectCone::forwardDetectionRoI(cv::Mat imgSource, tiny_dnn::network<tiny_d
     roi.width = std::min(x + radius, img.cols) - roi.x;
     roi.height = std::min(y + radius, img.rows) - roi.y;
 
-    //cv::circle(img, cv::Point (x,y), radius, cv::Scalar (0,0,0));
-    // // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
-    //cv::namedWindow("roi", cv::WINDOW_NORMAL);
-    //cv::imshow("roi", img);
-    //cv::waitKey(0);
+    // cv::circle(img, cv::Point (x,y), 2, cv::Scalar (0,0,0));
+    // cv::namedWindow("roi", cv::WINDOW_NORMAL);
+    // cv::imshow("roi", img);
+    // cv::waitKey(0);
     //cv::destroyAllWindows();
-    if (0 > roi.x || 0 > roi.width || roi.x + roi.width > img.cols || 0 > roi.y || 0 > roi.height || roi.y + roi.height > img.rows){
+
+    if (0 > roi.x || 0 >= roi.width || roi.x + roi.width > img.cols || 0 > roi.y || 0 >= roi.height || roi.y + roi.height > img.rows){
       std::cout << "Wrong roi!" << std::endl;
-      // outputs.push_back(-1);
+      continue;
     }
     else{
       auto patchImg = img(roi);
+      // cv::namedWindow("roi", cv::WINDOW_NORMAL);
+      // cv::imshow("roi", patchImg);
+      // cv::waitKey(0);
       tiny_dnn::vec_t data;
-      convertImage(patchImg, 25, 25, data);
+      convertImage(patchImg, m_patchSize, m_patchSize, data);
       inputs.push_back({data});
       // outputs.push_back(0);
       verifiedIndex.push_back(i);
       candidates.push_back(cv::Point(x,y));
     }
   }
-  
-  std::ofstream savefile;
-  savefile.open("results/"+std::to_string(m_count)+".csv");
 
-  int resultWidth = 672;
-  int resultHeight = 600;
-  double resultResize = 30;
-  cv::Mat result[2] = cv::Mat::zeros(resultHeight, resultWidth, CV_8UC3), coResult;
+  int resultm_width = m_height;
+  int resultm_height = m_height;
+  double resultResize = 20;
+  cv::Mat result = cv::Mat::zeros(resultm_height, resultm_width, CV_8UC3);
+  std::string labels[] = {"background", "blue", "yellow", "orange", "big orange"};
 
   if(inputs.size()>0){
-    auto prob = nn.predict(inputs);
+    auto prob = m_slidingWindow.predict(inputs);
     for(size_t i = 0; i < inputs.size(); i++){
-      size_t maxIndex = 1;
-      float_t maxProb = prob[i][0][1];
-      for(size_t j = 2; j < 5; j++){
+      size_t maxIndex = 0;
+      float_t maxProb = prob[i][0][0];
+      for(size_t j = 1; j < 5; j++){
         if(prob[i][0][j] > maxProb){
           maxIndex = j;
           maxProb = prob[i][0][j];
@@ -809,74 +833,161 @@ void DetectCone::forwardDetectionRoI(cv::Mat imgSource, tiny_dnn::network<tiny_d
       probMap.at<double>(y,x) = maxProb;
       indexMap.at<int>(y,x) = maxIndex;
     }
-    std::vector <cv::Point> cones = imRegionalMax(probMap, 15, threshold, 15);
+    std::vector <cv::Point> cones = imRegionalMax(probMap, 10, threshold, 10);
 
-    std::string labels[] = {"background", "blue", "yellow", "orange", "big orange"};
     for(size_t i = 0; i < cones.size(); i++){
       int x = cones[i].x;
       int y = cones[i].y;
+      double maxProb = probMap.at<double>(y,x);
       int maxIndex = indexMap.at<int>(y,x);
-      cv::Point position(x*2, y*2+180);
+      cv::Point position(x, y);
       cv::Point3f point3D = XYZ.at<cv::Point3f>(position);
       std::string labelName = labels[maxIndex];
+      // float_t ratio = depth2resizeRate(point3D.x, point3D.z);
+      // int length = ratio * 25;
+      // int radius = (length-1)/2;
+      int radius;
+      cv::Point2f position_tmp;
+      xyz2xy(Q, point3D, position_tmp, radius);
+      // std::cout << x << " " << y << " " << point3D << " " << radius << std::endl;
 
-      if (labelName == "background"){
-        std::cout << "No cone detected" << std::endl;
-        cv::circle(imgSource, position, 3, cv::Scalar (0,0,0), -1);
-      } 
-      else{
-        std::cout << "Find one " << labelName << " cone"<< std::endl;
-        if (labelName == "blue")
-          cv::circle(imgSource, position, 3, cv::Scalar (175,238,238), -1);
-        else if (labelName == "yellow")
-          cv::circle(imgSource, position, 3, cv::Scalar (0,255,255), -1);
-        else if (labelName == "orange")
-          cv::circle(imgSource, position, 3, cv::Scalar (0,165,255), -1);
-        else if (labelName == "big orange")
-          cv::circle(imgSource, position, 6, cv::Scalar (0,0,255), -1);
-
-        int xt = int(point3D.x * float(resultResize) + resultWidth/2);
-        int yt = int((point3D.z-1.872f) * float(resultResize));
-        if (xt >= 0 && xt <= resultWidth && yt >= 0 && yt <= resultHeight){
+      if(radius>0){
+        if (labelName == "background"){
+          std::cout << "No cone detected" << std::endl;
+          cv::circle(img, position, radius, cv::Scalar (0,0,0));
+        } 
+        else{
           if (labelName == "blue")
-            cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (255,0,0), -1);
+            cv::circle(img, position, radius, cv::Scalar (255,0,0), 2);
           else if (labelName == "yellow")
-            cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (0,255,255), -1);
+            cv::circle(img, position, radius, cv::Scalar (0,255,255), 2);
           else if (labelName == "orange")
-            cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (0,165,255), -1);
+            cv::circle(img, position, radius, cv::Scalar (0,165,255), 2);
           else if (labelName == "big orange")
-            cv::circle(result[0], cv::Point (xt,yt), 10, cv::Scalar (0,0,255), -1);
-        }
+            cv::circle(img, position, radius, cv::Scalar (0,0,255), 2);
 
-        std::cout << position << " " << labelName << " " << point3D << std::endl;
-        savefile << std::to_string(position.x)+","+std::to_string(position.y)+","
-          +labelName+","+std::to_string(point3D.x)+","+std::to_string(point3D.y)+","+std::to_string(point3D.z)+"\n";
+          int xt = int(point3D.x * float(resultResize) + resultm_width/2);
+          int yt = int(point3D.z * float(resultResize));
+          if (xt >= 0 && xt <= resultm_width && yt >= 0 && yt <= resultm_height){
+            if (labelName == "blue")
+              cv::circle(result, cv::Point (xt,yt), 5, cv::Scalar (255,0,0), -1);
+            else if (labelName == "yellow")
+              cv::circle(result, cv::Point (xt,yt), 5, cv::Scalar (0,255,255), -1);
+            else if (labelName == "orange")
+              cv::circle(result, cv::Point (xt,yt), 5, cv::Scalar (0,165,255), -1);
+            else if (labelName == "big orange")
+              cv::circle(result, cv::Point (xt,yt), 10, cv::Scalar (0,0,255), -1);
+          }
+
+          std::cout << position << " " << labelName << " " << point3D << " " << maxProb << std::endl;
+        }
       }
     }
   }
+      
 
-  for(int i = 0; i < m_finalPointCloud.cols(); i++){
-    savefile << std::to_string(m_finalPointCloud(0,i))+","+std::to_string(m_finalPointCloud(1,i))+","+std::to_string(m_finalPointCloud(2,i))+"\n";
-    int x = int(m_finalPointCloud(0,i) * resultResize + resultWidth/2);
-    int y = int(m_finalPointCloud(1,i) * resultResize);
-    if (x >= 0 && x <= resultWidth && y >= 0 && y <= resultHeight){
-      cv::circle(result[0], cv::Point (x,y), 5, cv::Scalar (255, 255, 255), -1);
-    }
+  for(size_t i = 0; i < keypoints.size(); i++){
+    cv::circle(img, cv::Point(int(keypoints[i].pt.x),int(keypoints[i].pt.y)+rowT), 2, cv::Scalar (255,255,255), -1);
   }
 
-  cv::circle(result[0], cv::Point (int(resultWidth/2),0), 5, cv::Scalar (0, 0, 255), -1);
-  cv::flip(result[0], result[0], 0);
-  imgSource.copyTo(result[1].rowRange(resultHeight-376,resultHeight));
-  cv::hconcat(result[1], result[0], coResult);
-  cv::imwrite("results/"+std::to_string(m_count++)+".png", coResult);
+  cv::line(img, cv::Point(0,rowT), cv::Point(m_width,rowT), cv::Scalar(0,0,255), 2);
+  cv::line(img, cv::Point(0,rowB), cv::Point(m_width,rowB), cv::Scalar(0,0,255), 2);
 
-  // cv::namedWindow("img", cv::WINDOW_NORMAL);
-  // cv::imshow("img", img);
+  // int resultm_width = 672;
+  // int resultm_height = 600;
+  // double resultResize = 30;
+  // cv::Mat result[2] = cv::Mat::zeros(resultm_height, resultm_width, CV_8UC3), coResult;
+  // std::string labels[] = {"background", "blue", "yellow", "orange", "big orange"};
+  // if(inputs.size()>0){
+  //   auto prob = m_slidingWindow.predict(inputs);
+  //   for(size_t i = 0; i < inputs.size(); i++){
+  //     size_t maxIndex = 1;
+  //     double maxProb = prob[i][0][1];
+  //     for(size_t j = 2; j < 5; j++){
+  //       if(prob[i][0][j] > maxProb){
+  //         maxIndex = j;
+  //         maxProb = prob[i][0][j];
+  //       }
+  //     }
+  //     // outputs[verifiedIndex[i]] = maxIndex;
+  //     int x = candidates[i].x;
+  //     int y = candidates[i].y;
+  //     cv::Point position(x*2, y*2+180);
+  //     cv::Point3f point3D = XYZ.at<cv::Point3f>(position);
+  //     std::string labelName = labels[maxIndex];     
+
+  //     if (labelName == "background"){
+  //       std::cout << "No cone detected" << std::endl;
+  //       cv::circle(img, position, 2, cv::Scalar (0,0,0), -1);
+  //     } 
+  //     else{
+  //       // std::cout << "Find one " << labelName << " cone"<< std::endl;
+  //       if (labelName == "blue")
+  //         cv::circle(img, position, 2, cv::Scalar (175,238,238), -1);
+  //       else if (labelName == "yellow")
+  //         cv::circle(img, position, 2, cv::Scalar (0,255,255), -1);
+  //       else if (labelName == "orange")
+  //         cv::circle(img, position, 2, cv::Scalar (0,165,255), -1);
+  //       else if (labelName == "big orange")
+  //         cv::circle(img, position, 4, cv::Scalar (0,0,255), -1);
+
+  //       int xt = int(point3D.x * float(resultResize) + resultm_width/2);
+  //       int yt = int((point3D.z-1.872f) * float(resultResize));
+  //       if (xt >= 0 && xt <= resultm_width && yt >= 0 && yt <= resultm_height){
+  //         if (labelName == "blue")
+  //           cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (255,0,0), -1);
+  //         else if (labelName == "yellow")
+  //           cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (0,255,255), -1);
+  //         else if (labelName == "orange")
+  //           cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (0,165,255), -1);
+  //         else if (labelName == "big orange")
+  //           cv::circle(result[0], cv::Point (xt,yt), 10, cv::Scalar (0,0,255), -1);
+  //       }
+
+  //       std::cout << position << " " << labelName << " " << point3D << std::endl;
+  //       savefile << std::to_string(position.x)+","+std::to_string(position.y)+","+labelName+","+std::to_string(point3D.x)+","+std::to_string(point3D.y)+","+std::to_string(point3D.z)+"\n";
+  //     }
+  //   }
+  // }
+
+  // int resultm_width = m_height;
+  // int resultm_height = m_height;
+  // double resultResize = 20;
+  // cv::Mat result = cv::Mat::zeros(resultm_height, resultm_width, CV_8UC3);
+  // for(size_t i = 0; i < m_finalPointCloud.cols(); i++){
+  //   savefile << std::to_string(m_finalPointCloud(0,i))+","+std::to_string(m_finalPointCloud(1,i))+","+std::to_string(m_finalPointCloud(2,i))+"\n";
+  //   int x = int(m_finalPointCloud(0,i) * resultResize + resultm_width/2);
+  //   int y = int(m_finalPointCloud(1,i) * resultResize);
+  //   if (x >= 0 && x <= resultm_width && y >= 0 && y <= resultm_height){
+  //     cv::circle(result[0], cv::Point (x,y), 5, cv::Scalar (255, 255, 255), -1);
+  //   }
+  // }
+
+  // cv::circle(result[0], cv::Point (int(resultm_width/2),0), 5, cv::Scalar (0, 0, 255), -1);
+  // cv::flip(result, result, 0);
+  // img.copyTo(result[1].rowRange(resultm_height-376,resultm_height));
+  // cv::hconcat(result[1], result[0], coResult);
+
+  // cv::Mat coResult;
+  // cv::hconcat(img, result, coResult);
+  // cv::namedWindow("disp", cv::WINDOW_NORMAL);
+  // cv::imshow("disp", coResult);
   // cv::waitKey(0);
-  // cv::destroyAllWindows();
+  // cv::waitKey(0);
 
-  // for(size_t i = 0; i < pts.size(); i++)
-  //   std::cout << i << ": " << outputs[i] << std::endl;
+  // savePath = imgPath.substr(0,index-7)+"/results/"+filename.substr(0,index2)+".png";
+  cv::imwrite("results/"+std::to_string(m_count++)+".png", img);
+
+  // savePath = imgPath.substr(0,index-7)+"/disp_filtered/"+filename.substr(0,index2)+".png";
+  // std::cout<<savePath<<std::endl;
+  // cv::imwrite(savePath, disp);
+
+  cv::namedWindow("img", cv::WINDOW_NORMAL);
+  // cv::setWindowProperty("img", cv::WND_PROP_FULLSCREEN , cv::WINDOW_FULLSCREEN ); 
+  cv::imshow("img", img);
+  // cv::namedWindow("disp", cv::WINDOW_NORMAL);
+  // cv::imshow("disp", disp);
+  cv::waitKey(10);
 }
 
 Eigen::MatrixXd DetectCone::Spherical2Cartesian(double azimuth, double zenimuth, double distance)
@@ -914,36 +1025,34 @@ void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
   //std::cout << "lidarCones " << std::endl;
   //std::cout << lidarCones << std::endl;
   m_finalPointCloud = lidarCones;
-  double yShift = 0;//1872mm
-  double zShift = 0;
-  std::vector<cv::Point3f> pts;
-  std::vector<int> outputs;
+  // double yShift = 0;//1872mm
+  // double zShift = 0;
+  // std::vector<cv::Point3f> pts;
+  // std::vector<int> outputs;
 
-  // int width = 640;
-  // int height = 1000;
-  // double resultResize = 50;
-  // cv::Mat result[2] = cv::Mat::zeros(height, width, CV_8UC3), coResult;
+  int width = 672;
+  int height = 376;
+  double resultResize = 20;
+  cv::Mat result[2] = cv::Mat::zeros(height, width, CV_8UC3), coResult;
 
   for (int i = 0; i < m_finalPointCloud.cols(); i++){
-    pts.push_back(cv::Point3d(m_finalPointCloud(0,i), -zShift-m_finalPointCloud(2,i), yShift+m_finalPointCloud(1,i)));
-  //   int x = int(m_finalPointCloud(0,i) * resultResize + width/2);
-  //   int y = int(m_finalPointCloud(1,i) * resultResize);
-  //   if (x >= 0 && x <= width && y >= 0 && y <= height){
-  //     cv::circle(result[0], cv::Point (x,y), 5, cv::Scalar (255, 255, 255), -1);
-  //   }
+    // pts.push_back(cv::Point3d(m_finalPointCloud(0,i), -zShift-m_finalPointCloud(2,i), yShift+m_finalPointCloud(1,i)));
+    int x = int(m_finalPointCloud(0,i) * resultResize + width/2);
+    int y = int(m_finalPointCloud(1,i) * resultResize);
+    if (x >= 0 && x <= width && y >= 0 && y <= height){
+      cv::circle(result[0], cv::Point (x,y), 2, cv::Scalar (255, 255, 255), -1);
+    }
   }
 
-  // cv::circle(result[0], cv::Point (int(width/2),0), 5, cv::Scalar (0, 0, 255), -1);
-  // cv::flip(result[0], result[0], 0);
-  // cv::flip(result[0], result[0], 1);
-  // cv::Mat rectified = m_img.colRange(0,1280);
-  // cv::resize(rectified, rectified, cv::Size(640, 360));
-  // // rectified.convertTo(rectified, CV_8UC3);
-  // rectified.copyTo(result[1].rowRange(320,680));
-  // // result[1].rowRange(320,680) = rectified;
-  // cv::hconcat(result[0], result[1], coResult);
+  cv::flip(result[0], result[0], 0);
+  // cv::Mat rectified = m_img.colRange(0,672);
+  // cv::resize(rectified, rectified, cv::Size(672, 376));
+  // rectified.convertTo(rectified, CV_8UC3);
+  // rectified.copyTo(result[1]);
+  // result[1].rowRange(320,680) = rectified;
+  cv::hconcat(result[0], m_img, coResult);
 
-  // cv::imwrite("results/"+std::to_string(m_count++)+".png", coResult);
+  cv::imwrite("results/"+std::to_string(m_count++)+".png", coResult);
 
 
   // forwardDetectionRoI(m_img, m_slidingWindow);
