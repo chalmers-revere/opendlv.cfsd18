@@ -48,6 +48,8 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_patchSize(64)
 , m_width(672)
 , m_height(376)
+, m_yShift(0)
+, m_zShift(1872)
 {
   m_diffVec = 0;
   m_pointMatched = Eigen::MatrixXd::Zero(4,1);
@@ -117,7 +119,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
       m_recievedFirstImg = true;
     }
 
-    forwardDetectionORB(m_img);
+    // forwardDetectionORB(m_img);
     // saveRecord(m_img);
 
     // if (((timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds()) > m_checkLiarMilliseconds*1000)){
@@ -149,7 +151,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
       m_newFrame = false;
     }
     //Check last timestamp if they are from same message
-    //std::cout << "Message Recieved " << std::endl;
+    std::cout << "Message Recieved " << std::endl;
     if (newFrameDist){
        std::thread coneCollector(&DetectCone::initializeCollection, this);
        coneCollector.detach();
@@ -172,7 +174,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
       m_newFrame = false;
     }
     //Check last timestamp if they are from same message
-    //std::cout << "Message Recieved " << std::endl;
+    std::cout << "Message Recieved " << std::endl;
     if (newFrameDist){
        std::thread coneCollector(&DetectCone::initializeCollection, this);
        coneCollector.detach();
@@ -232,7 +234,7 @@ void DetectCone::initializeCollection(){
     extractedCones = m_coneCollector.leftCols(m_lastObjectId+1);
     m_newFrame = true;
     m_lastObjectId = 0;
-    m_coneCollector = Eigen::MatrixXd::Zero(4,20);
+    m_coneCollector = Eigen::MatrixXd::Zero(4,2000);
   }
   //Initialize for next collection
   std::cout << "Collection done " << extractedCones.cols() << std::endl;
@@ -240,7 +242,7 @@ void DetectCone::initializeCollection(){
     //std::cout << "Extracted Cones " << std::endl;
     //std::cout << extractedCones << std::endl;
     std::cout << "Extracted Cones " << std::endl;
-    std::cout << extractedCones << std::endl;
+    // std::cout << extractedCones << std::endl;
     if(m_recievedFirstImg){
       SendCollectedCones(extractedCones);
     }
@@ -810,12 +812,100 @@ void DetectCone::forwardDetectionORB(cv::Mat img){
     }
   }
 
-  int resultm_width = m_height;
-  int resultm_height = m_height;
-  double resultResize = 20;
-  cv::Mat result = cv::Mat::zeros(resultm_height, resultm_width, CV_8UC3);
-  std::string labels[] = {"background", "blue", "yellow", "orange", "big orange"};
+  // // show img result
+  // int resultWidth = m_height;
+  // int resultHeight = m_height;
+  // double resultResize = 20;
+  // cv::Mat result = cv::Mat::zeros(resultHeight, resultWidth, CV_8UC3);
+  // std::string labels[] = {"background", "blue", "yellow", "orange", "big orange"};
+  // if(inputs.size()>0){
+  //   auto prob = m_slidingWindow.predict(inputs);
+  //   for(size_t i = 0; i < inputs.size(); i++){
+  //     size_t maxIndex = 0;
+  //     float_t maxProb = prob[i][0][0];
+  //     for(size_t j = 1; j < 5; j++){
+  //       if(prob[i][0][j] > maxProb){
+  //         maxIndex = j;
+  //         maxProb = prob[i][0][j];
+  //       }
+  //     }
+  //     // outputs[verifiedIndex[i]] = maxIndex;
+  //     int x = candidates[i].x;
+  //     int y = candidates[i].y;
+  //     probMap.at<double>(y,x) = maxProb;
+  //     indexMap.at<int>(y,x) = maxIndex;
+  //   }
+  //   std::vector <cv::Point> cones = imRegionalMax(probMap, 10, threshold, 10);
+  //   m_finalPointCloud = Eigen::MatrixXd::Zero(4,cones.size());
+  //   for(size_t i = 0; i < cones.size(); i++){
+  //     int x = cones[i].x;
+  //     int y = cones[i].y;
+  //     double maxProb = probMap.at<double>(y,x);
+  //     int maxIndex = indexMap.at<int>(y,x);
+  //     cv::Point position(x, y);
+  //     cv::Point3f point3D = XYZ.at<cv::Point3f>(position);
+  //     m_finalPointCloud(0,i) = point3D.x;
+  //     m_finalPointCloud(1,i) = point3D.z-m_zShift;
+  //     m_finalPointCloud(2,i) = -(point3D.y-m_yShift);
+  //     m_finalPointCloud(3,i) = maxIndex;
+  //     std::string labelName = labels[maxIndex];
+  //     // float_t ratio = depth2resizeRate(point3D.x, point3D.z);
+  //     // int length = ratio * 25;
+  //     // int radius = (length-1)/2;
+  //     int radius;
+  //     cv::Point2f position_tmp;
+  //     xyz2xy(Q, point3D, position_tmp, radius);
+  //     // std::cout << x << " " << y << " " << point3D << " " << radius << std::endl;
 
+  //     if(radius>0){
+  //       if (labelName == "background"){
+  //         std::cout << "No cone detected" << std::endl;
+  //         cv::circle(img, position, radius, cv::Scalar (0,0,0));
+  //       } 
+  //       else{
+  //         if (labelName == "blue")
+  //           cv::circle(img, position, radius, cv::Scalar (255,0,0), 2);
+  //         else if (labelName == "yellow")
+  //           cv::circle(img, position, radius, cv::Scalar (0,255,255), 2);
+  //         else if (labelName == "orange")
+  //           cv::circle(img, position, radius, cv::Scalar (0,165,255), 2);
+  //         else if (labelName == "big orange")
+  //           cv::circle(img, position, radius, cv::Scalar (0,0,255), 2);
+
+  //         int xt = int(point3D.x * float(resultResize) + resultWidth/2);
+  //         int yt = int(point3D.z * float(resultResize));
+  //         if (xt >= 0 && xt <= resultWidth && yt >= 0 && yt <= resultHeight){
+  //           if (labelName == "blue")
+  //             cv::circle(result, cv::Point (xt,yt), 5, cv::Scalar (255,0,0), -1);
+  //           else if (labelName == "yellow")
+  //             cv::circle(result, cv::Point (xt,yt), 5, cv::Scalar (0,255,255), -1);
+  //           else if (labelName == "orange")
+  //             cv::circle(result, cv::Point (xt,yt), 5, cv::Scalar (0,165,255), -1);
+  //           else if (labelName == "big orange")
+  //             cv::circle(result, cv::Point (xt,yt), 10, cv::Scalar (0,0,255), -1);
+  //         }
+
+  //         std::cout << position << " " << labelName << " " << point3D << " " << maxProb << std::endl;
+  //       }
+  //     }
+  //   }
+  // }
+      
+
+  // for(size_t i = 0; i < keypoints.size(); i++){
+  //   cv::circle(img, cv::Point(int(keypoints[i].pt.x),int(keypoints[i].pt.y)+rowT), 2, cv::Scalar (255,255,255), -1);
+  // }
+
+  // cv::line(img, cv::Point(0,rowT), cv::Point(m_width,rowT), cv::Scalar(0,0,255), 2);
+  // cv::line(img, cv::Point(0,rowB), cv::Point(m_width,rowB), cv::Scalar(0,0,255), 2);
+
+
+  // show lidar and camera result
+  int resultWidth = 672;
+  int resultHeight = 600;
+  double resultResize = 10;
+  cv::Mat result[2] = cv::Mat::zeros(resultHeight, resultWidth, CV_8UC3), coResult;
+  std::string labels[] = {"background", "blue", "yellow", "orange", "big orange"};
   if(inputs.size()>0){
     auto prob = m_slidingWindow.predict(inputs);
     for(size_t i = 0; i < inputs.size(); i++){
@@ -834,14 +924,19 @@ void DetectCone::forwardDetectionORB(cv::Mat img){
       indexMap.at<int>(y,x) = maxIndex;
     }
     std::vector <cv::Point> cones = imRegionalMax(probMap, 10, threshold, 10);
+    m_finalPointCloud = Eigen::MatrixXd::Zero(4,cones.size());
 
     for(size_t i = 0; i < cones.size(); i++){
       int x = cones[i].x;
       int y = cones[i].y;
-      double maxProb = probMap.at<double>(y,x);
+      // double maxProb = probMap.at<double>(y,x);
       int maxIndex = indexMap.at<int>(y,x);
       cv::Point position(x, y);
       cv::Point3f point3D = XYZ.at<cv::Point3f>(position);
+      // m_finalPointCloud(0,i) = point3D.x;
+      // m_finalPointCloud(1,i) = point3D.z-m_zShift;
+      // m_finalPointCloud(2,i) = -(point3D.y-m_yShift);
+      // m_finalPointCloud(3,i) = maxIndex;
       std::string labelName = labels[maxIndex];
       // float_t ratio = depth2resizeRate(point3D.x, point3D.z);
       // int length = ratio * 25;
@@ -849,145 +944,65 @@ void DetectCone::forwardDetectionORB(cv::Mat img){
       int radius;
       cv::Point2f position_tmp;
       xyz2xy(Q, point3D, position_tmp, radius);
-      // std::cout << x << " " << y << " " << point3D << " " << radius << std::endl;
+      // std::cout << x << " " << y << " " << point3D << " " << radius << std::endl;  
 
-      if(radius>0){
-        if (labelName == "background"){
-          std::cout << "No cone detected" << std::endl;
-          cv::circle(img, position, radius, cv::Scalar (0,0,0));
-        } 
-        else{
+      if (labelName == "background"){
+        std::cout << "No cone detected" << std::endl;
+        cv::circle(img, position, 2, cv::Scalar (0,0,0), -1);
+      } 
+      else{
+        // std::cout << "Find one " << labelName << " cone"<< std::endl;
+        if (labelName == "blue")
+          cv::circle(img, position, 2, cv::Scalar (175,238,238), -1);
+        else if (labelName == "yellow")
+          cv::circle(img, position, 2, cv::Scalar (0,255,255), -1);
+        else if (labelName == "orange")
+          cv::circle(img, position, 2, cv::Scalar (0,165,255), -1);
+        else if (labelName == "big orange")
+          cv::circle(img, position, 4, cv::Scalar (0,0,255), -1);
+
+        int xt = int(point3D.x * float(resultResize) + resultWidth/2);
+        int yt = int((point3D.z-m_zShift) * float(resultResize));
+        if (xt >= 0 && xt <= resultWidth && yt >= 0 && yt <= resultHeight){
           if (labelName == "blue")
-            cv::circle(img, position, radius, cv::Scalar (255,0,0), 2);
+            cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (255,0,0), -1);
           else if (labelName == "yellow")
-            cv::circle(img, position, radius, cv::Scalar (0,255,255), 2);
+            cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (0,255,255), -1);
           else if (labelName == "orange")
-            cv::circle(img, position, radius, cv::Scalar (0,165,255), 2);
+            cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (0,165,255), -1);
           else if (labelName == "big orange")
-            cv::circle(img, position, radius, cv::Scalar (0,0,255), 2);
-
-          int xt = int(point3D.x * float(resultResize) + resultm_width/2);
-          int yt = int(point3D.z * float(resultResize));
-          if (xt >= 0 && xt <= resultm_width && yt >= 0 && yt <= resultm_height){
-            if (labelName == "blue")
-              cv::circle(result, cv::Point (xt,yt), 5, cv::Scalar (255,0,0), -1);
-            else if (labelName == "yellow")
-              cv::circle(result, cv::Point (xt,yt), 5, cv::Scalar (0,255,255), -1);
-            else if (labelName == "orange")
-              cv::circle(result, cv::Point (xt,yt), 5, cv::Scalar (0,165,255), -1);
-            else if (labelName == "big orange")
-              cv::circle(result, cv::Point (xt,yt), 10, cv::Scalar (0,0,255), -1);
-          }
-
-          std::cout << position << " " << labelName << " " << point3D << " " << maxProb << std::endl;
+            cv::circle(result[0], cv::Point (xt,yt), 10, cv::Scalar (0,0,255), -1);
         }
+
+        std::cout << position << " " << labelName << " " << point3D << std::endl;
+        // savefile << std::to_string(position.x)+","+std::to_string(position.y)+","+labelName+","+std::to_string(point3D.x)+","+std::to_string(point3D.y)+","+std::to_string(point3D.z)+"\n";
       }
     }
   }
-      
 
-  for(size_t i = 0; i < keypoints.size(); i++){
-    cv::circle(img, cv::Point(int(keypoints[i].pt.x),int(keypoints[i].pt.y)+rowT), 2, cv::Scalar (255,255,255), -1);
+  for(int i = 0; i < m_finalPointCloud.cols(); i++){
+    // savefile << std::to_string(m_finalPointCloud(0,i))+","+std::to_string(m_finalPointCloud(1,i))+","+std::to_string(m_finalPointCloud(2,i))+"\n";
+    int x = int(m_finalPointCloud(0,i) * resultResize + resultWidth/2);
+    int y = int(m_finalPointCloud(1,i) * resultResize);
+    if (x >= 0 && x <= resultWidth && y >= 0 && y <= resultHeight){
+      cv::circle(result[0], cv::Point (x,y), 5, cv::Scalar (255, 255, 255), -1);
+    }
   }
 
-  cv::line(img, cv::Point(0,rowT), cv::Point(m_width,rowT), cv::Scalar(0,0,255), 2);
-  cv::line(img, cv::Point(0,rowB), cv::Point(m_width,rowB), cv::Scalar(0,0,255), 2);
+  cv::circle(result[0], cv::Point (int(resultWidth/2),0), 5, cv::Scalar (0, 0, 255), -1);
+  cv::flip(result[0], result[0], 0);
+  img.copyTo(result[1].rowRange(resultHeight-376,resultHeight));
+  cv::hconcat(result[1], result[0], coResult);
 
-  // int resultm_width = 672;
-  // int resultm_height = 600;
-  // double resultResize = 30;
-  // cv::Mat result[2] = cv::Mat::zeros(resultm_height, resultm_width, CV_8UC3), coResult;
-  // std::string labels[] = {"background", "blue", "yellow", "orange", "big orange"};
-  // if(inputs.size()>0){
-  //   auto prob = m_slidingWindow.predict(inputs);
-  //   for(size_t i = 0; i < inputs.size(); i++){
-  //     size_t maxIndex = 1;
-  //     double maxProb = prob[i][0][1];
-  //     for(size_t j = 2; j < 5; j++){
-  //       if(prob[i][0][j] > maxProb){
-  //         maxIndex = j;
-  //         maxProb = prob[i][0][j];
-  //       }
-  //     }
-  //     // outputs[verifiedIndex[i]] = maxIndex;
-  //     int x = candidates[i].x;
-  //     int y = candidates[i].y;
-  //     cv::Point position(x*2, y*2+180);
-  //     cv::Point3f point3D = XYZ.at<cv::Point3f>(position);
-  //     std::string labelName = labels[maxIndex];     
+  cv::imwrite("results/"+std::to_string(m_count++)+".png", coResult);
 
-  //     if (labelName == "background"){
-  //       std::cout << "No cone detected" << std::endl;
-  //       cv::circle(img, position, 2, cv::Scalar (0,0,0), -1);
-  //     } 
-  //     else{
-  //       // std::cout << "Find one " << labelName << " cone"<< std::endl;
-  //       if (labelName == "blue")
-  //         cv::circle(img, position, 2, cv::Scalar (175,238,238), -1);
-  //       else if (labelName == "yellow")
-  //         cv::circle(img, position, 2, cv::Scalar (0,255,255), -1);
-  //       else if (labelName == "orange")
-  //         cv::circle(img, position, 2, cv::Scalar (0,165,255), -1);
-  //       else if (labelName == "big orange")
-  //         cv::circle(img, position, 4, cv::Scalar (0,0,255), -1);
-
-  //       int xt = int(point3D.x * float(resultResize) + resultm_width/2);
-  //       int yt = int((point3D.z-1.872f) * float(resultResize));
-  //       if (xt >= 0 && xt <= resultm_width && yt >= 0 && yt <= resultm_height){
-  //         if (labelName == "blue")
-  //           cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (255,0,0), -1);
-  //         else if (labelName == "yellow")
-  //           cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (0,255,255), -1);
-  //         else if (labelName == "orange")
-  //           cv::circle(result[0], cv::Point (xt,yt), 5, cv::Scalar (0,165,255), -1);
-  //         else if (labelName == "big orange")
-  //           cv::circle(result[0], cv::Point (xt,yt), 10, cv::Scalar (0,0,255), -1);
-  //       }
-
-  //       std::cout << position << " " << labelName << " " << point3D << std::endl;
-  //       savefile << std::to_string(position.x)+","+std::to_string(position.y)+","+labelName+","+std::to_string(point3D.x)+","+std::to_string(point3D.y)+","+std::to_string(point3D.z)+"\n";
-  //     }
-  //   }
-  // }
-
-  // int resultm_width = m_height;
-  // int resultm_height = m_height;
-  // double resultResize = 20;
-  // cv::Mat result = cv::Mat::zeros(resultm_height, resultm_width, CV_8UC3);
-  // for(size_t i = 0; i < m_finalPointCloud.cols(); i++){
-  //   savefile << std::to_string(m_finalPointCloud(0,i))+","+std::to_string(m_finalPointCloud(1,i))+","+std::to_string(m_finalPointCloud(2,i))+"\n";
-  //   int x = int(m_finalPointCloud(0,i) * resultResize + resultm_width/2);
-  //   int y = int(m_finalPointCloud(1,i) * resultResize);
-  //   if (x >= 0 && x <= resultm_width && y >= 0 && y <= resultm_height){
-  //     cv::circle(result[0], cv::Point (x,y), 5, cv::Scalar (255, 255, 255), -1);
-  //   }
-  // }
-
-  // cv::circle(result[0], cv::Point (int(resultm_width/2),0), 5, cv::Scalar (0, 0, 255), -1);
-  // cv::flip(result, result, 0);
-  // img.copyTo(result[1].rowRange(resultm_height-376,resultm_height));
-  // cv::hconcat(result[1], result[0], coResult);
-
-  // cv::Mat coResult;
-  // cv::hconcat(img, result, coResult);
-  // cv::namedWindow("disp", cv::WINDOW_NORMAL);
-  // cv::imshow("disp", coResult);
-  // cv::waitKey(0);
-  // cv::waitKey(0);
-
-  // savePath = imgPath.substr(0,index-7)+"/results/"+filename.substr(0,index2)+".png";
-  cv::imwrite("results/"+std::to_string(m_count++)+".png", img);
-
-  // savePath = imgPath.substr(0,index-7)+"/disp_filtered/"+filename.substr(0,index2)+".png";
-  // std::cout<<savePath<<std::endl;
-  // cv::imwrite(savePath, disp);
-
-  cv::namedWindow("img", cv::WINDOW_NORMAL);
-  // cv::setWindowProperty("img", cv::WND_PROP_FULLSCREEN , cv::WINDOW_FULLSCREEN ); 
+  cv::namedWindow("coResult", cv::WINDOW_NORMAL); 
+  cv::imshow("coResult", coResult);
+  cv::namedWindow("img", cv::WINDOW_NORMAL); 
   cv::imshow("img", img);
-  // cv::namedWindow("disp", cv::WINDOW_NORMAL);
-  // cv::imshow("disp", disp);
   cv::waitKey(10);
+
+  SendMatchedContainer(m_finalPointCloud);
 }
 
 Eigen::MatrixXd DetectCone::Spherical2Cartesian(double azimuth, double zenimuth, double distance)
@@ -1025,18 +1040,16 @@ void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
   //std::cout << "lidarCones " << std::endl;
   //std::cout << lidarCones << std::endl;
   m_finalPointCloud = lidarCones;
-  // double yShift = 0;//1872mm
-  // double zShift = 0;
   // std::vector<cv::Point3f> pts;
   // std::vector<int> outputs;
 
   int width = 672;
   int height = 376;
-  double resultResize = 20;
+  double resultResize = 10;
   cv::Mat result[2] = cv::Mat::zeros(height, width, CV_8UC3), coResult;
 
   for (int i = 0; i < m_finalPointCloud.cols(); i++){
-    // pts.push_back(cv::Point3d(m_finalPointCloud(0,i), -zShift-m_finalPointCloud(2,i), yShift+m_finalPointCloud(1,i)));
+    // pts.push_back(cv::Point3d(m_finalPointCloud(0,i), -m_yShift-m_finalPointCloud(2,i), m_zShift+m_finalPointCloud(1,i)));
     int x = int(m_finalPointCloud(0,i) * resultResize + width/2);
     int y = int(m_finalPointCloud(1,i) * resultResize);
     if (x >= 0 && x <= width && y >= 0 && y <= height){
@@ -1050,12 +1063,14 @@ void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
   // rectified.convertTo(rectified, CV_8UC3);
   // rectified.copyTo(result[1]);
   // result[1].rowRange(320,680) = rectified;
-  cv::hconcat(result[0], m_img, coResult);
+  // std::cout << m_img.size() << std::endl;
+  if(!m_img.empty()){
+    cv::hconcat(result[0], m_img, coResult);
+    cv::imwrite("results/"+std::to_string(m_count++)+".png", coResult);
+  }
+  
 
-  cv::imwrite("results/"+std::to_string(m_count++)+".png", coResult);
-
-
-  // forwardDetectionRoI(m_img, m_slidingWindow);
+  // forwardDetectionORB(m_img);
   // backwardDetection(m_img, pts, outputs);
   // for (int i = 0; i < m_finalPointCloud.cols(); i++){
   //   m_finalPointCloud(3,i) = outputs[i];

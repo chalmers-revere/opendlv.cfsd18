@@ -111,6 +111,8 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   int m_patchSize = 64;
   int m_width = 672;
   int m_height = 376;
+  float m_yShift = 0;
+  float m_zShift = 1872;
 
   const double DEG2RAD = 0.017453292522222; // PI/180.0
   const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD;

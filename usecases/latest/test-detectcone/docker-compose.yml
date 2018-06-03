@@ -38,11 +38,11 @@ services:
     #     - odsupercomponent
     #     command: "/opt/opendlv.cfsd18/bin/opendlv-logic-cfsd18-sensation-attention --cid=${CID} --id=1"
     
-    # cfsd18-sensation-attention:
-    #   image: "attention:test"
-    #   network_mode: "host"
-    #   ipc: host
-    #   command: "cfsd18-sensation-attention --cid=${CID} --verbose --id=116 --xBoundary=4 --yBoundary=12 --groundLayerZ=-0.3 --coneHeight=1 --connectDistanceThreshold=0.4 --layerRangeThreshold=0.06 --minNumOfPointsForCone=2 --maxNumOfPointsForCone=80 --farConeRadiusThreshold=0.2 --nearConeRadiusThreshold=0.25 --zRangeThreshold=0.08 --inlierRangeThreshold=0.06 --dotThreshold=0.1 --inlierFoundThreshold=150 --numberOfIterations=10"
+    cfsd18-sensation-attention:
+      image: "attention:test"
+      network_mode: "host"
+      ipc: host
+      command: "cfsd18-sensation-attention --cid=${CID} --id=116 --xBoundary=4 --yBoundary=12 --groundLayerZ=-0.3 --coneHeight=1 --connectDistanceThreshold=0.4 --layerRangeThreshold=0.06 --minNumOfPointsForCone=2 --maxNumOfPointsForCone=80 --farConeRadiusThreshold=0.2 --nearConeRadiusThreshold=0.25 --zRangeThreshold=0.08 --inlierRangeThreshold=0.06 --dotThreshold=0.1 --inlierFoundThreshold=150 --numberOfIterations=10"
 
     # #proxy-velodyne16
     # velodyne16:
