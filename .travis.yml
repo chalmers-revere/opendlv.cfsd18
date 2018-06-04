@@ -19,6 +19,7 @@ env:
 install:
   - cd docker
   - make buildComplete createDockerImage
+  - docker images
   - docker tag seresearch/opendlv-cfsd18-on-opendlv-core-on-opendavinci-on-base:latest ${IMAGE}:${COMMIT}
 script: skip
 after_success:
