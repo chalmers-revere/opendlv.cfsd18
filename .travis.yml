@@ -5,27 +5,29 @@ branches:
   only:
   - cognition.main
 services:
-  - docker
+- docker
 addons:
   apt:
     update: true
 env:
   global:
-    - COMMIT=${TRAVIS_COMMIT::7}
-    - DOCKERHUB='chalmersfsd'
-    - IMAGE=`echo ${TRAVIS_REPO_SLUG#*/}`
-    - secure: IQ5c3TsLOjeNIaD7Y32GrtlAgcVO2HID+ayv9z4Am457xiVrsHDtTmKxat1+efsm8bLJmv+kbxapFyB9dP8j6XaDG1xbtZwb2Amo8qAZILfbJ5kSYtab4AZsK8kDp+fxNVDKYAm6tDXfiF1p8JNCR3xIj9011UML8kW5dKZi1B5pc1N+Z5VRaN9+CXNy0epC2zD88ae7xg/dU0M56LNgnnz0mcl2cC12tu3tzQx/STn5UbLvKFecERyYVYp6kmp+StooeSocE+69kwsndncwz2nL7EfvN8to4ZzBxzNGzfR2C6ZFa0PPu1dS7LtN3VUcnjgpkLXWGOpkpGb90jSsPToHdOFEF+Zxlr13AnD40Hwjhi3D8x+BXFi5qVrrnw+OCIbvZ161E9YNvQIf8MXdcKJQKe2e2Z5omfUsqQSVAeGJNTos8W4KkUb/I/o3w0nhRMdqYYq1Dg6kR0EPZgOxGjLwmNEYdMFTedZYJc5BWHfdiF+9G4c+XxFWnq2PF3P+ur4saSjtzhDHeMoFiI2GrkJFsf0vcM9MxYbJ3TWZttMc14X4TuwYieH78t0A3hL58pEvmKXX/hxCAZuGfGLCK5ll1gzdSiCPkUg+KAxaQjojCFfRssRwJWDUKs9R2xAdEgRfaKIFfK8KojfPQP5ce4w3GJOL9d9ZGgKQpe4gWlA=
-    - secure: VNTCujEAhRgZyvP1a49z//i1pJzcWu4dYUkx/UUMzXqrMvJSlSl7RKS6hAemxtdAGt+mAjIEvA/jkeI6Ga8VLlhtj+yItcUJ+VMMo0YDyrqMtRHchtFMX2zj6IliZ8Vqze7KFVCV26qXk1+3jlOuQU0FSCHUpJNusCSNSZQMFVsPxhdV4vyxr5Ge5G8EUGxF6u2s5mjqey+lwX69/fyPs/wbZvaoT9oVkvYX+XRcAfe8KRUR7kKxs4wFzM0bxd9CYsD1J/qGzyDNEpFiwYPm1/9/bPQ1LeWEcQJh1Q7zr9jSBXmjhgscyhqJdKcpxZ6FueMlI97wcgNsZ/3IXsWkcJYDZDh1NAYLUER1rh8yIQ8aljcIeLC1s0jucu+LUjRU89Bk0OjiNxVed1rI/oRLuhfrlhfKdqx//y2MQfnETb9MWRfMiHwmYgzIGo9zkakSt8XTa1ZR44eNcuIft9lkjcmvPH4SLhe1E+DYJNQqVTi70w8EkzojvnxxyMN0kRVWkGI0C2iv4/WwCJsVZl7f62nDrZVuon5RFGq/uyC5LStMNxyOLZos1r3c6caKDdbUFyd5XdKdqPS50aZsao4SkC4ScfV/p8R/5RESNezQHfY9x8UniGfIk4GRXeu0HSiwHVLz1ZOa/F8ea/97rpYcRXuYhG4b0DWsi8Df3QL66C4=
+  - COMMIT=${TRAVIS_COMMIT::7}
+  - DOCKERHUB='chalmersfsd'
+  - IMAGE=`echo ${TRAVIS_REPO_SLUG#*/}`
+  - secure: or21DVKhxr3bnEUyoZlliLKAccSktg9HXLPwwS6N/XRsvRizDTaepxErCx9rdrE8ju2xJujJrIIDlSsC8QzMEihUVhz0gEmRYy9TTqjp66LNCnfegWrtneI6r5hQdVI2YhBaRpws8Ko2+rHz0n1fO7QB4RdJMTWsfpGrWvZ79aJkti1Gw091ax4DcsYwkHjCzz2zrqv8IUh4xb1IVOr9yqRMB1emPMfPEYdUC7bzlT0y3epWuuMecmY8GV5/JEWY2bnQUra9LpRh8UN3w2MnPsOTxrldWLlR62TmdmDsI4OVeTRzJYv3UJTfrIBqrCVfkFW7zWgrvyGQaJT3OQ5kd/3c/OLAGogYjmvm7qrhmproDr5thYE+XYkVY95zWXhlTxHtrw0BAQmy+zgndC/npw5jFls2PZuAjfQUG9+IwDozsA82/AecwNVKVJj58sVCPD1lN6jJSgNZmnUinOttrs58WREFplXSi2MGx/24raKWZeJRQn7jHnFgkPBEcKEswsFDo7i9tEq2KGD1mSh2l0RRZDdEkLIpbnSXuA2oh/QVt5u4yO/lCIRbaBYPK0ytsq0m4i6EFaKu8UQgfpqMx4QjAqJ99rc1+t3UoltWc1yGIGiEbfnKpUTPdCr7b0Ka207PTeFZr13nB6aMzzSSJvwsIZ1eKQXd5w7et0LyaEg=
+  - secure: NIm/x48sljkPCi3QPj+esNmdX4h7zEbnBTQzflV8rb+jC/jHcV003lMBtuhlNndaB8zkPPeioASA2kwtr+mpZFgihQzJeHChv6OIcasD5pZthRqvVcfY7anWBwOTWdB7fJ2z38PfMRQ18LGwnU+OywM4AmY6mcpIJaatHFdFemB1TP7PZN0t77R7vAa7h0cHIwQQNcPPJM9fak1WSaQqtMnaLPGfCXI5L8lLwL8dye8YCItmYfo/2Yf0kLaPN73sqHrpaP1M3stHrRk/MGEFwGPQB+YruNIyHl7O+2Zf2jpEiIITMild6pgI+PIbm/Ghz5wXq5puVqRTvG8nnht7bgaQZ1LvVF6VnELjfbOG1ySwGCmVvx8OxqXW/j9ZdQHhL+mlEzTI3+hVMVero95n6XYslt2/pLuQmr6flNhnAb7W3Hb9w/UdidHI0fVUjtC8JdQKHzoqYIMizGCVuPm+ZdoqR5W7x0jsoYMBFhNpCqxge+n3gDlCaSuOSSW8PAG76jw6lSHSqwFfRnd3yztYVyUAQntH/O+2F7ajiUY8yUD4it3uUHdDf2F6Otri97Q5q6L5uq7FmobhnaS4LtAX8vdVvtByAHXd2ciNpHVnEkOfB66PmqUaYABvaFtRCpiqnJVjn/yGpiYkRI0ZB9M40jwSC5r5pa2+sMl94CRKToY=
 install:
-  - cd docker
-  - make buildComplete createDockerImage
-  - docker tag seresearch/opendlv-cfsd18-on-opendlv-core-on-opendavinci-on-base:latest ${IMAGE}:${COMMIT}
+- cd docker
+- make buildComplete createDockerImage
+- docker images
+- docker tag seresearch/opendlv-cfsd18-on-opendlv-core-on-opendavinci-on-base:latest
+  ${IMAGE}:${COMMIT}
 script: skip
 after_success:
-  - docker --version
-  - echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-  - docker tag ${IMAGE}:${COMMIT} ${DOCKERHUB}/${IMAGE}:${COMMIT}
-  - docker push ${DOCKERHUB}/${IMAGE}:${COMMIT}
+- docker --version
+- echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+- docker tag ${IMAGE}:${COMMIT} ${DOCKERHUB}/${IMAGE}:${COMMIT}
+- docker push ${DOCKERHUB}/${IMAGE}:${COMMIT}
 notifications:
   email:
     on_success: never
