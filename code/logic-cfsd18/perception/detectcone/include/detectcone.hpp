@@ -79,7 +79,7 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   void filterKeypoints(std::vector<cv::Point3f>&);
   void xyz2xy(cv::Mat, cv::Point3f, cv::Point2f&, int&);
   void backwardDetection(cv::Mat, std::vector<cv::Point3f>, std::vector<int>&);
-  void forwardDetectionORB(cv::Mat);
+  void forwardDetectionORB();
 
   Eigen::MatrixXd Spherical2Cartesian(double, double, double);
   void Cartesian2Spherical(double, double, double, opendlv::logic::sensation::Point&);
@@ -111,8 +111,8 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   int m_patchSize = 64;
   int m_width = 672;
   int m_height = 376;
-  float m_yShift = 0;
-  float m_zShift = 1872;
+  double m_yShift = 0;
+  double m_zShift = 1.872;
 
   const double DEG2RAD = 0.017453292522222; // PI/180.0
   const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD;
