@@ -3,7 +3,7 @@ language: cpp
 sudo: required
 branches:
   only:
-  - cognition.main
+  - master
 services:
 - docker
 addons:
