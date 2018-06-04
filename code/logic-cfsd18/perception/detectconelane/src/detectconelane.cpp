@@ -386,14 +386,6 @@ void DetectConeLane::generateSurfaces(ArrayXXf sideLeft, ArrayXXf sideRight, Arr
     shortSide.resize(tmpShortSide.rows(),tmpShortSide.cols());
     shortSide = tmpShortSide;
   } // End of else
-  /*
-  longSide.resize(2,2);
-  shortSide.resize(2,2);
-  longSide << 3.17316, 1.2082,
-  6.611233, -0.812926;
-  shortSide << 2.14202, -1.47425,
-  5.09234, -3.39936;
-    */
   //std::cout<<"longSide accepted cones: "<<longSide<<"\n";
   //std::cout<<"shortSide accepted cones: "<<shortSide<<"\n";
 
@@ -633,25 +625,6 @@ void DetectConeLane::findSafeLocalPath(ArrayXXf sidePointsLeft, ArrayXXf sidePoi
   } // End of else
 
   DetectConeLane::sendMatchedContainer(virtualPointsLongFinal, virtualPointsShortFinal);
-
-
-/* // All of this should be taken care of in Linus' module
-
-// Match the virtual points from each side into pairs, and find the center of every pair
-ArrayXXf midX = (virtualPointsLong.col(0)+virtualPointsShort.col(0))/2;
-ArrayXXf midY = (virtualPointsLong.col(1)+virtualPointsShort.col(1))/2;
-ArrayXXf tmpLocalPath(nMidPoints,2);
-tmpLocalPath.col(0) = midX;
-tmpLocalPath.col(1) = midY;
-
-// Do the traceback to the vehicle and then go through the midpoint path again to place path points with equal distances between them.
-ArrayXXf firstPoint = DetectConeLane::traceBackToClosestPoint(tmpLocalPath.row(0), tmpLocalPath.row(1), vehicleLocation);
-ArrayXXf localPath(nMidPoints+1,2);
-localPath.row(0) = firstPoint;
-localPath.block(1,0,nMidPoints,2) = tmpLocalPath;
-localPath = DetectConeLane::placeEquidistantPoints(localPath,false,-1,distanceBetweenPoints);
-
-*/
 
 } // End of findSafeLocalPath
 
