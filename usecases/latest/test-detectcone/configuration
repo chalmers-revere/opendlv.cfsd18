@@ -66,7 +66,7 @@ odsupercomponent.pulsetimeack.exclude = odcockpit
 ###############################################################################
 
 logic-cfsd18-perception-detectcone.threshold = 1.5 #[m]
-logic-cfsd18-perception-detectcone.timeDiffMilliseconds = 20 #[ms]
+logic-cfsd18-perception-detectcone.timeDiffMilliseconds = 40 #[ms]
 logic-cfsd18-perception-detectcone.checkLidarMilliseconds = 1000 #[ms]
 logic-cfsd18-perception-detectcone.senderStamp = 118
 logic-cfsd18-perception-detectcone.attentionSenderStamp = 116

@@ -109,7 +109,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
   if (a_container.getDataType() == odcore::data::image::SharedImage::ID()) {
     odcore::data::image::SharedImage sharedImg =
     a_container.getData<odcore::data::image::SharedImage>();
-    odcore::data::TimeStamp timeStamp = a_container.getReceivedTimeStamp();
+    odcore::data::TimeStamp timeStamp = a_container.getSampleTimeStamp();
     // std::cout << timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds() << std::endl;
     // m_lastTimeStamp = timeStamp;
     if (!ExtractSharedImage(&sharedImg)) {
@@ -122,8 +122,9 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
     // coneCollector.detach();
     // forwardDetectionORB();
     // saveRecord(m_img);
-
-    if (((timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds()) > m_checkLiarMilliseconds*1000)){
+      double timeDiff = timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds();
+      std::cout << "Difference between image and cone data " << timeDiff << std::endl;
+    if ((timeDiff > m_checkLiarMilliseconds*1000)){
       std::cout << "Lidar fails! Camera detection only! " << std::endl;
       m_lidarIsWorking = false;
       forwardDetectionORB();
@@ -161,7 +162,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
   bool correctSenderStamp = a_container.getSenderStamp() == m_attentionSenderStamp;
   if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID() && correctSenderStamp) {
     // std::cout << "Recieved Direction" << std::endl;
-    m_lastTimeStamp = a_container.getReceivedTimeStamp();
+    m_lastTimeStamp = a_container.getSampleTimeStamp();
     auto coneDirection = a_container.getData<opendlv::logic::perception::ObjectDirection>();
     uint32_t objectId = coneDirection.getObjectId();
     bool newFrameDist = false;
@@ -184,7 +185,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
 
   else if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID() && correctSenderStamp){
     // std::cout << "Recieved Distance" << std::endl;
-    m_lastTimeStamp = a_container.getReceivedTimeStamp();
+    m_lastTimeStamp = a_container.getSampleTimeStamp();
     auto coneDistance = a_container.getData<opendlv::logic::perception::ObjectDistance>();
     uint32_t objectId = coneDistance.getObjectId();
     bool newFrameDist = false;
@@ -265,7 +266,7 @@ void DetectCone::initializeCollection(){
     //std::cout << "Extracted Cones " << std::endl;
     //std::cout << extractedCones << std::endl;
     std::cout << "Extracted Cones " << std::endl;
-    // std::cout << extractedCones << std::endl;
+    std::cout << extractedCones << std::endl;
     if(m_recievedFirstImg){
       SendCollectedCones(extractedCones);
     }
@@ -1036,6 +1037,7 @@ void DetectCone::SendMatchedContainer(Eigen::MatrixXd cones)
     coneDirection.setZenithAngle(conePoint.getZenithAngle());
     odcore::data::Container c2(coneDirection);
     c2.setSenderStamp(m_senderStamp);
+    c2.setSampleTimeStamp(m_lastTimeStamp);
     getConference().send(c2);
 
     opendlv::logic::perception::ObjectDistance coneDistance;
@@ -1043,13 +1045,15 @@ void DetectCone::SendMatchedContainer(Eigen::MatrixXd cones)
     coneDistance.setDistance(conePoint.getDistance());
     odcore::data::Container c3(coneDistance);
     c3.setSenderStamp(m_senderStamp);
+    c3.setSampleTimeStamp(m_lastTimeStamp);
     getConference().send(c3);
 
     opendlv::logic::perception::ObjectType coneType;
     coneType.setObjectId(n);
     coneType.setType(cones(3,n));
     odcore::data::Container c4(coneType);
-    c3.setSenderStamp(m_senderStamp);
+    c4.setSenderStamp(m_senderStamp);
+    c4.setSampleTimeStamp(m_lastTimeStamp);
     getConference().send(c4);
 /*
     opendlv::logic::sensation::Point conePoint;
