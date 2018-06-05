@@ -93,12 +93,14 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   Eigen::MatrixXd m_finalPointCloud;
   double m_threshold;
   int64_t m_timeDiffMilliseconds;
-  odcore::data::TimeStamp m_lastTimeStamp;
+  odcore::data::TimeStamp m_coneTimeStamp;
+  odcore::data::TimeStamp m_imgTimeStamp;
   Eigen::MatrixXd m_coneCollector;
   uint32_t m_lastObjectId;
   bool m_newFrame;
 
   odcore::base::Mutex m_coneMutex;
+  odcore::base::Mutex m_imgMutex;
   bool m_recievedFirstImg;
   cv::Mat m_img;
   tiny_dnn::network<tiny_dnn::sequential> m_slidingWindow;
@@ -111,8 +113,9 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   int m_patchSize = 64;
   int m_width = 672;
   int m_height = 376;
-  double m_yShift = 0;
-  double m_zShift = 1.872;
+  double m_xShift;                //lateral distance between camera and LiDAR 
+  double m_yShift = 0.833;            //Height difference between camera and LiDAR
+  double m_zShift = 1.872;        //Distance between camera and LiDAR in forward distance
 
   const double DEG2RAD = 0.017453292522222; // PI/180.0
   const double RAD2DEG = 57.295779513082325; // 1.0 / DEG2RAD;

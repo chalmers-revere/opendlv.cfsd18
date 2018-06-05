@@ -33,11 +33,13 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_finalPointCloud()
 , m_threshold()
 , m_timeDiffMilliseconds()
-, m_lastTimeStamp()
+, m_coneTimeStamp()
+, m_imgTimeStamp()
 , m_coneCollector()
 , m_lastObjectId()
 , m_newFrame(true)
 , m_coneMutex()
+, m_imgMutex()
 , m_recievedFirstImg(false)
 , m_img()
 , m_slidingWindow()
@@ -48,7 +50,8 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_patchSize(64)
 , m_width(672)
 , m_height(376)
-, m_yShift(0)
+, m_xShift(0.1)
+, m_yShift(0.833)
 , m_zShift(1.872)
 {
   m_diffVec = 0;
@@ -110,20 +113,20 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
     odcore::data::image::SharedImage sharedImg =
     a_container.getData<odcore::data::image::SharedImage>();
     odcore::data::TimeStamp timeStamp = a_container.getSampleTimeStamp();
-    // std::cout << timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds() << std::endl;
-    // m_lastTimeStamp = timeStamp;
+    // std::cout << timeStamp.toMicroseconds() - m_coneTimeStamp.toMicroseconds() << std::endl;
+    // m_coneTimeStamp = timeStamp;
     if (!ExtractSharedImage(&sharedImg)) {
       std::cout << "[" << getName() << "] " << "[Unable to extract shared image." << std::endl;
       return;
     }else if(!m_recievedFirstImg){
       m_recievedFirstImg = true;
     }
+    m_imgTimeStamp = timeStamp;
     // std::thread coneCollector(&DetectCone::forwardDetectionORB, this);
     // coneCollector.detach();
     // forwardDetectionORB();
     // saveRecord(m_img);
-      double timeDiff = timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds();
-      std::cout << "Difference between image and cone data " << timeDiff << std::endl;
+    double timeDiff = m_imgTimeStamp.toMicroseconds() - m_coneTimeStamp.toMicroseconds();
     if ((timeDiff > m_checkLiarMilliseconds*1000)){
       std::cout << "Lidar fails! Camera detection only! " << std::endl;
       m_lidarIsWorking = false;
@@ -132,6 +135,8 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
     else{
       m_lidarIsWorking = true;
       // std::cout << "Lidar is working!" << std::endl;
+    }
+    /*
       std::vector<cv::Point3f> pts;
       std::vector<int> outputs;
 
@@ -153,7 +158,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
         m_finalPointCloud(3,i) = outputs[i];
       }
       SendMatchedContainer(m_finalPointCloud);
-    }
+    }*/
     // if(!m_lidarIsWorking){
     //   forwardDetectionORB();
     // }
@@ -162,7 +167,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
   bool correctSenderStamp = a_container.getSenderStamp() == m_attentionSenderStamp;
   if (a_container.getDataType() == opendlv::logic::perception::ObjectDirection::ID() && correctSenderStamp) {
     // std::cout << "Recieved Direction" << std::endl;
-    m_lastTimeStamp = a_container.getSampleTimeStamp();
+    m_coneTimeStamp = a_container.getSampleTimeStamp();
     auto coneDirection = a_container.getData<opendlv::logic::perception::ObjectDirection>();
     uint32_t objectId = coneDirection.getObjectId();
     bool newFrameDist = false;
@@ -185,7 +190,7 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
 
   else if(a_container.getDataType() == opendlv::logic::perception::ObjectDistance::ID() && correctSenderStamp){
     // std::cout << "Recieved Distance" << std::endl;
-    m_lastTimeStamp = a_container.getSampleTimeStamp();
+    m_coneTimeStamp = a_container.getSampleTimeStamp();
     auto coneDistance = a_container.getData<opendlv::logic::perception::ObjectDistance>();
     uint32_t objectId = coneDistance.getObjectId();
     bool newFrameDist = false;
@@ -209,10 +214,10 @@ void DetectCone::nextContainer(odcore::data::Container &a_container)
 }
 /*OLD CONE COLLECTOR
 bool DetectCone::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeStamp){
-		if (((timeStamp.toMicroseconds() - m_lastTimeStamp.toMicroseconds()) < m_timeDiffMilliseconds*1000)){
+		if (((timeStamp.toMicroseconds() - m_coneTimeStamp.toMicroseconds()) < m_timeDiffMilliseconds*1000)){
       //std::cout << "Test 2 " << std::endl;
       m_lastObjectId = (m_lastObjectId<objectId)?(objectId):(m_lastObjectId);
-      m_lastTimeStamp = timeStamp;
+      m_coneTimeStamp = timeStamp;
       //std::cout << "FoundCone: " << std::endl;
       //std::cout << m_coneCollector << std::endl;
 
@@ -229,7 +234,7 @@ bool DetectCone::CheckContainer(uint32_t objectId, odcore::data::TimeStamp timeS
         }
       }
       //Initialize for next collection
-      m_lastTimeStamp = timeStamp;
+      m_coneTimeStamp = timeStamp;
       m_lastObjectId = 0;
       m_coneCollector = Eigen::MatrixXd::Zero(4,20);
     }
@@ -293,6 +298,7 @@ bool DetectCone::ExtractSharedImage(
         , imgWidth*imgHeight*nrChannels);
       sharedMem->unlock();
     }
+    odcore::base::Lock lock(m_imgMutex);
     m_img.release();
     m_img = bufferImage.clone();
     bufferImage.release();
@@ -333,7 +339,7 @@ void DetectCone::reconstruction(cv::Mat img, cv::Mat &Q, cv::Mat &disp, cv::Mat 
   cv::Mat rodrigues = (cv::Mat_<double>(3, 1) << -0.0132397, 0.021005, -0.00121284);
   cv::Mat R;
   cv::Rodrigues(rodrigues, R);
-  cv::Mat T = (cv::Mat_<double>(3, 1) << -0.12, 0, 0);
+  cv::Mat T = (cv::Mat_<double>(3, 1) << 0.12, 0, 0);
   cv::Size stdSize = cv::Size(m_width, m_height);
 
   int width = img.cols;
@@ -358,7 +364,6 @@ void DetectCone::reconstruction(cv::Mat img, cv::Mat &Q, cv::Mat &disp, cv::Mat 
   cv::remap(imgR, imgR, rmap[1][0], rmap[1][1], cv::INTER_LINEAR);
 
   blockMatching(disp, imgL, imgR);
-
   rectified = imgL;
 
   cv::reprojectImageTo3D(disp, XYZ, Q);
@@ -413,6 +418,7 @@ void DetectCone::backwardDetection(cv::Mat img, std::vector<cv::Point3f> pts, st
   float_t threshold = 0.7f;
   cv::Mat disp, Q, rectified, XYZ;
   reconstruction(img, Q, disp, rectified, XYZ);
+  std::cout << "reconstructed" << std::endl;
   std::vector<tiny_dnn::tensor_t> inputs;
   std::vector<int> verifiedIndex;
   std::vector<cv::Vec3i> porperty;
@@ -438,7 +444,7 @@ void DetectCone::backwardDetection(cv::Mat img, std::vector<cv::Point3f> pts, st
     //cv::imshow("roi", img);
     //cv::waitKey(0);
     //cv::destroyAllWindows();
-
+    std::cout << "RoI for cone " << i << " is  x: " << x << "y: " << y << std::endl;
     if (0 > roi.x || 0 > roi.width || roi.x + roi.width > rectified.cols || 0 > roi.y || 0 > roi.height || roi.y + roi.height > rectified.rows){
       std::cout << "Wrong roi!" << std::endl;
       outputs.push_back(-1);
@@ -453,6 +459,7 @@ void DetectCone::backwardDetection(cv::Mat img, std::vector<cv::Point3f> pts, st
       porperty.push_back(cv::Vec3i(x,y,radius));
     }
   }
+  std::cout << "RoI extracted" << std::endl;
 
   if(inputs.size()>0){
     auto prob = m_slidingWindow.predict(inputs);
@@ -469,7 +476,7 @@ void DetectCone::backwardDetection(cv::Mat img, std::vector<cv::Point3f> pts, st
       outputs[verifiedIndex[i]] = maxIndex;
       int x = int(porperty[i][0]);
       int y = int(porperty[i][1]);
-      float_t radius = porperty[i][2];
+      float_t radius = 5; //porperty[i][2];
       std::cout << "good5" << std::endl;
       std::string labels[] = {"blue", "yellow", "orange", "big orange"};
       if (maxIndex == 0 || maxProb < threshold){
@@ -682,11 +689,14 @@ void DetectCone::whiteBalance(cv::Mat img){
 
 void DetectCone::forwardDetectionORB(){
   //Given RoI by SIFT detector and detected by CNN
-  if(m_img.empty()){
-    return;
-  }
   cv::Mat img;
-  m_img.copyTo(img);
+  {
+    odcore::base::Lock lock(m_imgMutex);
+    if(m_img.empty()){
+      return;
+    }
+    m_img.copyTo(img);
+  }
   double threshold = 0.1;
 
   std::vector<tiny_dnn::tensor_t> inputs;
@@ -730,8 +740,8 @@ void DetectCone::forwardDetectionORB(){
     cv::Rect roi;
     roi.x = std::max(x - radius, 0);
     roi.y = std::max(y - radius, 0);
-    roi.width = std::min(x + radius, img.cols) - roi.x;
-    roi.height = std::min(y + radius, img.rows) - roi.y;
+    roi.width = std::min(std::max(x + radius, 0), img.cols) - roi.x;
+    roi.height = std::min(std::max(y + radius, 0), img.rows) - roi.y;
 
     // cv::circle(img, cv::Point (x,y), 2, cv::Scalar (0,0,0));
     // cv::namedWindow("roi", cv::WINDOW_NORMAL);
@@ -972,13 +982,51 @@ void DetectCone::Cartesian2Spherical(double x, double y, double z, opendlv::logi
 
 void DetectCone::SendCollectedCones(Eigen::MatrixXd lidarCones)
 {
-  //Convert to cartesian
+  std::cout << "Convert to cartesian" << std::endl;
   Eigen::MatrixXd cone;
   for(int p = 0; p < lidarCones.cols(); p++){
     cone = Spherical2Cartesian(lidarCones(0,p), lidarCones(1,p), lidarCones(2,p));
     lidarCones.col(p) = cone;
   }
-  m_finalPointCloud = lidarCones;
+   std::cout << "Convert to image frame" << std::endl;
+  //m_finalPointCloud = lidarCones;
+  if(m_lidarIsWorking){
+        // std::cout << "Lidar is working!" << std::endl;
+    std::vector<cv::Point3f> pts;
+    std::vector<int> outputs;
+
+    for (int i = 0; i < lidarCones.cols(); i++){
+      pts.push_back(cv::Point3d(m_xShift+lidarCones(0,i), m_yShift+lidarCones(2,i), m_zShift+lidarCones(1,i)));
+    }
+    std::cout << "Start detection" << std::endl;
+    cv::Mat img;
+    //Retrieve Image (Can be extended with timestamp matching)
+    {
+      odcore::base::Lock lock(m_imgMutex);
+      if(m_img.empty()){
+        return;
+      }
+      m_img.copyTo(img);
+      double timeDiff = m_imgTimeStamp.toMicroseconds() - m_coneTimeStamp.toMicroseconds();
+      std::cout << "Difference between image and cone data " << timeDiff << std::endl;
+    }
+    if(!img.empty()){
+      std::cout << "for real this time " << std::endl;  
+      backwardDetection(img, pts, outputs);
+          // cv::Mat rectified = m_img.colRange(0,672);
+          // cv::resize(rectified, rectified, cv::Size(672, 376));
+          // // rectified.convertTo(rectified, CV_8UC3);
+          // // rectified.copyTo(result[1]);
+          // // result[1].rowRange(320,680) = rectified;
+          // cv::hconcat(result[0], m_img, coResult);
+          // cv::imwrite("results/"+std::to_string(m_count++)+".png", coResult);
+    }
+        
+    for (int i = 0; i < lidarCones.cols(); i++){
+      lidarCones(3,i) = outputs[i];
+    }
+    SendMatchedContainer(lidarCones);
+  }
 
   // std::vector<cv::Point3f> pts;
   // std::vector<int> outputs;
@@ -1037,7 +1085,7 @@ void DetectCone::SendMatchedContainer(Eigen::MatrixXd cones)
     coneDirection.setZenithAngle(conePoint.getZenithAngle());
     odcore::data::Container c2(coneDirection);
     c2.setSenderStamp(m_senderStamp);
-    c2.setSampleTimeStamp(m_lastTimeStamp);
+    c2.setSampleTimeStamp(m_coneTimeStamp);
     getConference().send(c2);
 
     opendlv::logic::perception::ObjectDistance coneDistance;
@@ -1045,7 +1093,7 @@ void DetectCone::SendMatchedContainer(Eigen::MatrixXd cones)
     coneDistance.setDistance(conePoint.getDistance());
     odcore::data::Container c3(coneDistance);
     c3.setSenderStamp(m_senderStamp);
-    c3.setSampleTimeStamp(m_lastTimeStamp);
+    c3.setSampleTimeStamp(m_coneTimeStamp);
     getConference().send(c3);
 
     opendlv::logic::perception::ObjectType coneType;
@@ -1053,7 +1101,7 @@ void DetectCone::SendMatchedContainer(Eigen::MatrixXd cones)
     coneType.setType(cones(3,n));
     odcore::data::Container c4(coneType);
     c4.setSenderStamp(m_senderStamp);
-    c4.setSampleTimeStamp(m_lastTimeStamp);
+    c4.setSampleTimeStamp(m_coneTimeStamp);
     getConference().send(c4);
 /*
     opendlv::logic::sensation::Point conePoint;
