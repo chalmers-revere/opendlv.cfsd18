@@ -38,6 +38,7 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_coneCollector()
 , m_lastObjectId()
 , m_newFrame(true)
+, m_processing(false)
 , m_coneMutex()
 , m_imgMutex()
 , m_recievedFirstImg(false)
@@ -272,8 +273,10 @@ void DetectCone::initializeCollection(){
     //std::cout << extractedCones << std::endl;
     std::cout << "Extracted Cones " << std::endl;
     std::cout << extractedCones << std::endl;
-    if(m_recievedFirstImg){
+    if(m_recievedFirstImg && !m_processing){
+      m_processing = true;
       SendCollectedCones(extractedCones);
+      m_processing = false;
     }
   }
 }
@@ -435,8 +438,8 @@ void DetectCone::backwardDetection(cv::Mat img, std::vector<cv::Point3f> pts, st
     cv::Rect roi;
     roi.x = std::max(x - radius, 0);
     roi.y = std::max(y - radius, 0);
-    roi.width = std::min(x + radius, rectified.cols) - roi.x;
-    roi.height = std::min(y + radius, rectified.rows) - roi.y;
+    roi.width = std::min(std::max(x + radius,0), rectified.cols) - roi.x;
+    roi.height = std::min(std::max(y + radius,0), rectified.rows) - roi.y;
 
     //cv::circle(img, cv::Point (x,y), radius, cv::Scalar (0,0,0));
     // // cv::circle(disp, cv::Point (x,y), 3, 0, CV_FILLED);
@@ -444,8 +447,8 @@ void DetectCone::backwardDetection(cv::Mat img, std::vector<cv::Point3f> pts, st
     //cv::imshow("roi", img);
     //cv::waitKey(0);
     //cv::destroyAllWindows();
-    std::cout << "RoI for cone " << i << " is  x: " << x << "y: " << y << std::endl;
-    if (0 > roi.x || 0 > roi.width || roi.x + roi.width > rectified.cols || 0 > roi.y || 0 > roi.height || roi.y + roi.height > rectified.rows){
+    std::cout << "RoI for cone " << i << " is  x: " << roi.x << "y: " << roi.y << std::endl;
+    if (0 >= roi.x || 0 >= roi.width || roi.x + roi.width > rectified.cols || 0 >= roi.y || 0 >= roi.height || roi.y + roi.height >= rectified.rows){
       std::cout << "Wrong roi!" << std::endl;
       outputs.push_back(-1);
     }

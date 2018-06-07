@@ -98,6 +98,7 @@ class DetectCone : public odcore::base::module::DataTriggeredConferenceClientMod
   Eigen::MatrixXd m_coneCollector;
   uint32_t m_lastObjectId;
   bool m_newFrame;
+  bool m_processing;
 
   odcore::base::Mutex m_coneMutex;
   odcore::base::Mutex m_imgMutex;
