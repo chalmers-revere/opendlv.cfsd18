@@ -52,7 +52,7 @@ DetectCone::DetectCone(int32_t const &a_argc, char **a_argv) :
 , m_width(672)
 , m_height(376)
 , m_xShift(0.1)
-, m_yShift(0.833)
+, m_yShift(0.9)//0.833
 , m_zShift(1.872)
 {
   m_diffVec = 0;
@@ -269,10 +269,8 @@ void DetectCone::initializeCollection(){
   //Initialize for next collection
   std::cout << "Collection done " << extractedCones.cols() << std::endl;
   if(extractedCones.cols() > 0){
-    //std::cout << "Extracted Cones " << std::endl;
-    //std::cout << extractedCones << std::endl;
     std::cout << "Extracted Cones " << std::endl;
-    std::cout << extractedCones << std::endl;
+    // std::cout << extractedCones << std::endl;
     if(m_recievedFirstImg && !m_processing){
       m_processing = true;
       SendCollectedCones(extractedCones);
@@ -418,7 +416,7 @@ void DetectCone::slidingWindow(const std::string& dictionary) {
 
 void DetectCone::backwardDetection(cv::Mat img, std::vector<cv::Point3f> pts, std::vector<int>& outputs){
   //Given RoI in 3D world, project back to the camera frame and then detect
-  float_t threshold = 0.7f;
+  float_t threshold = 0.5f;
   cv::Mat disp, Q, rectified, XYZ;
   reconstruction(img, Q, disp, rectified, XYZ);
   std::cout << "reconstructed" << std::endl;
@@ -479,7 +477,7 @@ void DetectCone::backwardDetection(cv::Mat img, std::vector<cv::Point3f> pts, st
       outputs[verifiedIndex[i]] = maxIndex;
       int x = int(porperty[i][0]);
       int y = int(porperty[i][1]);
-      float_t radius = 5; //porperty[i][2];
+      float_t radius = porperty[i][2];
       std::cout << "good5" << std::endl;
       std::string labels[] = {"blue", "yellow", "orange", "big orange"};
       if (maxIndex == 0 || maxProb < threshold){
@@ -495,7 +493,7 @@ void DetectCone::backwardDetection(cv::Mat img, std::vector<cv::Point3f> pts, st
         else if (labels[maxIndex-1] == "orange")
           cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,165,255));
         else if (labels[maxIndex-1] == "big orange")
-          cv::circle(rectified, cv::Point (x,y), radius*2, cv::Scalar (0,0,255));
+          cv::circle(rectified, cv::Point (x,y), radius, cv::Scalar (0,0,255));
       }
     }
   }
