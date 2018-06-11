@@ -465,7 +465,7 @@ float Track::driverModelSharp(Eigen::MatrixXf localPath, float previewDistance){
     error[n-1] = localPath(localPath.rows()-1,1);
   }
 
-  float ey = std::atan2(localPath(10,1)-localPath(0,1),localPath(10,0)-localPath(0,0));
+  float ey = std::atan2(localPath(1,1)-localPath(0,1),localPath(1,0)-localPath(0,0));
     //std::cout<<"K1e1 "<<K1*error[0]<<std::endl;
     //std::cout<<"Kyey "<<Ky*ey<<std::endl;
   float errorSum = 0.0f;
