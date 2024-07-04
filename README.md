@@ -1,3 +1,5 @@
+Moved to https://git.opendlv.org.
+
 # opendlv.cfsd18
 
 ## Building using a Docker builder:
