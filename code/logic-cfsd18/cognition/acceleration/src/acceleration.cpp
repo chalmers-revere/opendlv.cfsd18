@@ -43,7 +43,7 @@ Acceleration::~Acceleration()
 
 void Acceleration::nextContainer(odcore::data::Container &a_container)
 {
-  if (a_container.getDataType() == opendlv::logic::perception::Surface::ID()) {
+  if (a_container.getDataType() == opendlv::logic::perception::GroundSurfaceArea::ID()) {
     // auto kinematicState = a_container.getData<opendlv::coord::KinematicState>();
 
     opendlv::logic::action::AimPoint o1;
@@ -71,7 +71,7 @@ void Acceleration::nextContainer(odcore::data::Container &a_container)
 
 void Acceleration::setUp()
 {
-  // std::string const exampleConfig = 
+  // std::string const exampleConfig =
   //   getKeyValueConfiguration().getValue<std::string>(
   //     "logic-cfsd18-cognition-acceleration.example-config");
 
